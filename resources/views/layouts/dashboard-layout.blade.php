@@ -51,7 +51,7 @@ DESCRIPTION: Shared layout for all dashboards
             display: flex;
             align-items: center;
             gap: 15px;
-            background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
+            background:  #2B5CE6;
         }
 
         .logo-section {
@@ -99,7 +99,7 @@ DESCRIPTION: Shared layout for all dashboards
         }
 
         .user-section {
-            background: rgba(37, 99, 235, 0.6);
+            background: #2563EB;
             padding: 18px 20px;
             margin: 0;
             border-radius: 0;
@@ -120,11 +120,12 @@ DESCRIPTION: Shared layout for all dashboards
         }
 
         .nav-menu {
+            margin-top: 5%;
             list-style: none;
             flex: 1;
             overflow-y: auto;
             padding: 0;
-            margin: 0;
+            margin: ;
         }
 
         .nav-menu::-webkit-scrollbar {

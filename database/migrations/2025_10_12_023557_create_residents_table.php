@@ -33,6 +33,7 @@ return new class extends Migration
             $table->boolean('is_indigenous')->default(false);
             $table->boolean('is_pwd')->default(false);
             $table->boolean('is_senior_citizen')->default(false);
+            $table->boolean('is_4ps')->default(false);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             

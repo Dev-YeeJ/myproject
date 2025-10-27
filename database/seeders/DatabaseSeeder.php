@@ -1,9 +1,9 @@
 <?php
-// database/seeders/DatabaseSeeder.php
 
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate as Illuminate;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Resident;
@@ -186,6 +186,7 @@ class DatabaseSeeder extends Seeder
             'is_indigenous' => false,
             'is_pwd' => false,
             'is_senior_citizen' => false,
+            'is_4ps' => true, // <-- ADDED
             'is_active' => true
         ]);
 
@@ -209,6 +210,7 @@ class DatabaseSeeder extends Seeder
             'is_indigenous' => false,
             'is_pwd' => false,
             'is_senior_citizen' => false,
+            'is_4ps' => true, // <-- ADDED
             'is_active' => true
         ]);
 
@@ -232,6 +234,7 @@ class DatabaseSeeder extends Seeder
             'is_indigenous' => false,
             'is_pwd' => false,
             'is_senior_citizen' => true,
+            'is_4ps' => false, // <-- ADDED
             'is_active' => true
         ]);
 
@@ -255,6 +258,7 @@ class DatabaseSeeder extends Seeder
             'is_indigenous' => false,
             'is_pwd' => false,
             'is_senior_citizen' => false,
+            'is_4ps' => false, // <-- ADDED
             'is_active' => true
         ]);
 
@@ -278,6 +282,7 @@ class DatabaseSeeder extends Seeder
             'is_indigenous' => false,
             'is_pwd' => false,
             'is_senior_citizen' => false,
+            'is_4ps' => false, // <-- ADDED
             'is_active' => true
         ]);
 
@@ -301,6 +306,7 @@ class DatabaseSeeder extends Seeder
             'is_indigenous' => false,
             'is_pwd' => false,
             'is_senior_citizen' => false,
+            'is_4ps' => true, // <-- ADDED
             'is_active' => true
         ]);
 

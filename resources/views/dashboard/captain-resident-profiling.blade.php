@@ -1,7 +1,4 @@
-<!-- ============================================
-FILE: resources/views/dashboards/captain-resident-profiling.blade.php
-DESCRIPTION: Captain Resident Profiling & Household Mapping View
-============================================ -->
+{{-- resources/views/dashboards/captain-resident-profiling.blade.php --}}
 
 @extends('layouts.dashboard-layout')
 
@@ -9,21 +6,21 @@ DESCRIPTION: Captain Resident Profiling & Household Mapping View
 
 @section('nav-items')
     <li class="nav-item">
-        <a href="{{ route('dashboard.captain') }}" class="nav-link">
+        <a href="{{ route('dashboard.captain') }}" class="nav-link ">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.resident-profiling') }}" class="nav-link active">
-            <i class="fas fa-users"></i>
-            <span>Resident Profiling</span>
-        </a>
-    </li>
+    <a href="{{ route('captain.resident-profiling') }}" class="nav-link active">
+        <i class="fas fa-users"></i>
+        <span>Resident Profiling</span>
+    </a>
+</li>
     <li class="nav-item">
         <a href="#" class="nav-link">
             <i class="far fa-file-alt"></i>
-            <span>Document Services</span>
+            <span>Documents Services</span>
         </a>
     </li>
     <li class="nav-item">
@@ -212,6 +209,7 @@ DESCRIPTION: Captain Resident Profiling & Household Mapping View
         cursor: pointer;
         transition: all 0.3s;
         font-size: 0.95rem;
+        text-decoration: none;
     }
 
     .btn-add {
@@ -222,6 +220,18 @@ DESCRIPTION: Captain Resident Profiling & Household Mapping View
     .btn-add:hover {
         background: #1E3A8A;
         transform: translateY(-2px);
+        color: white;
+    }
+    
+    .btn-add-household {
+        background: #10B981;
+        color: white;
+    }
+    
+    .btn-add-household:hover {
+        background: #059669;
+        transform: translateY(-2px);
+        color: white;
     }
 
     .btn-secondary {
@@ -236,43 +246,66 @@ DESCRIPTION: Captain Resident Profiling & Household Mapping View
         transform: translateY(-2px);
     }
 
-    .tabs-section {
-        background: white;
-        border-radius: 12px;
-        padding: 0;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    /* --- View Toggle Buttons --- */
+    .view-toggles {
+        margin-bottom: 30px; 
+        display: flex; 
+        gap: 0; 
+        border-radius: 10px; 
+        overflow: hidden; 
+        border: 2px solid #2B5CE6; 
+        width: fit-content;
     }
-
-    .tabs-header {
-        display: flex;
-        border-bottom: 2px solid #E5E7EB;
-        padding: 0 20px;
-    }
-
-    .tab-item {
-        padding: 16px 24px;
-        cursor: pointer;
-        border-bottom: 3px solid transparent;
-        margin-bottom: -2px;
+    .btn-toggle {
+        padding: 12px 24px;
+        border: none;
         font-weight: 600;
-        color: #666;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
+        cursor: pointer;
         transition: all 0.3s;
-    }
-
-    .tab-item.active {
-        color: #2B5CE6;
-        border-bottom-color: #2B5CE6;
-    }
-
-    .tab-item:hover {
+        font-size: 0.95rem;
+        text-decoration: none;
+        background: white;
         color: #2B5CE6;
     }
+    .btn-toggle.active {
+        background: #2B5CE6;
+        color: white;
+    }
+    .btn-toggle:not(.active):hover {
+        background: #EFF6FF;
+    }
+    /* --- End View Toggle Buttons --- */
 
-    .residents-section {
+
+    /* Search and Filter Section */
+    .filters-section {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Adjusted .search-input to match .filter-select style */
+    .search-input {
+        padding: 10px 16px;
+        border: 1px solid #E5E7EB;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background: white;
+        min-width: 200px; /* Adjust as needed */
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .search-input:focus {
+        border-color: #2B5CE6;
+        box-shadow: 0 0 0 3px rgba(43, 92, 230, 0.2);
+        outline: none;
+    }
+
+
+    /* Resident Directory Header (Original) */
+    .directory-header { /* Renamed from .residents-section for generic use */
         background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
         color: white;
         padding: 20px 30px;
@@ -282,27 +315,14 @@ DESCRIPTION: Captain Resident Profiling & Household Mapping View
         align-items: center;
     }
 
-    .residents-title {
+    .directory-title { /* Renamed from .residents-title for generic use */
         display: flex;
         align-items: center;
         gap: 12px;
         font-size: 1.1rem;
         font-weight: 700;
     }
-
-    .filters-section {
-        display: flex;
-        gap: 12px;
-    }
-
-    .search-input {
-        padding: 10px 16px;
-        border: 1px solid #E5E7EB;
-        border-radius: 8px;
-        width: 280px;
-        font-size: 0.95rem;
-    }
-
+    
     .filter-select {
         padding: 10px 16px;
         border: 1px solid #E5E7EB;
@@ -310,17 +330,23 @@ DESCRIPTION: Captain Resident Profiling & Household Mapping View
         font-size: 0.95rem;
         background: white;
         min-width: 140px;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .filter-select:focus {
+        border-color: #2B5CE6;
+        box-shadow: 0 0 0 3px rgba(43, 92, 230, 0.2);
+        outline: none;
     }
 
-    .residents-table {
-        background: white;
-        border-radius: 0 0 12px 12px;
-        overflow: hidden;
+    /* Table styles remain largely the same */
+    .residents-table { /* Now used for both directories */
+        overflow-x: auto;
     }
-
+    
     .table {
         width: 100%;
         margin: 0;
+        border-collapse: collapse;
     }
 
     .table thead {
@@ -334,6 +360,7 @@ DESCRIPTION: Captain Resident Profiling & Household Mapping View
         font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        text-align: left;
         border-bottom: 2px solid #E5E7EB;
     }
 
@@ -341,10 +368,23 @@ DESCRIPTION: Captain Resident Profiling & Household Mapping View
         padding: 18px 20px;
         vertical-align: middle;
         border-bottom: 1px solid #F3F4F6;
+        text-align: left;
+    }
+
+    .table tbody tr:last-child td {
+        border-bottom: none;
     }
 
     .table tbody tr:hover {
         background: #F9FAFB;
+    }
+
+    /* Table Container (for both directories) */
+    .table-container { /* Renamed from .residents-table-container for generic use */
+        background: white;
+        border-radius: 0 0 12px 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
     }
 
     .resident-name {
@@ -382,11 +422,16 @@ DESCRIPTION: Captain Resident Profiling & Household Mapping View
     }
 
     .badge-spouse {
-        background: #F3F4F6;
-        color: #4B5563;
+        background: #FEF3C7;
+        color: #92400E;
     }
 
     .badge-child {
+        background: #E0E7FF;
+        color: #3730A3;
+    }
+    
+    .badge-member {
         background: #F3F4F6;
         color: #4B5563;
     }
@@ -440,6 +485,62 @@ DESCRIPTION: Captain Resident Profiling & Household Mapping View
         background: #FEE2E2;
     }
 
+    /* NEW: Household Info in table cell */
+    .household-info-cell .name {
+        font-weight: 600;
+        color: #1F2937;
+    }
+    .household-info-cell .head {
+        font-size: 0.85rem;
+        color: #6B7280;
+        margin-top: 4px;
+    }
+    .household-info-cell .address {
+        font-size: 0.85rem;
+        color: #6B7280;
+    }
+
+
+    .alert {
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .alert-success {
+        background: #D1FAE5;
+        color: #065F46;
+        border: 1px solid #6EE7B7;
+    }
+    
+    .pagination-container {
+        padding: 20px;
+        background: white;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.07);
+    }
+    
+    .no-results-found { /* Generic for both empty tables */
+        text-align: center;
+        padding: 60px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .no-results-found i {
+        font-size: 3rem; 
+        color: #ccc; 
+        margin-bottom: 15px;
+    }
+    .no-results-found p {
+        color: #999;
+        font-size: 1.1rem;
+    }
+
+
     @media (max-width: 1200px) {
         .stats-row {
             grid-template-columns: repeat(2, 1fr);
@@ -457,15 +558,10 @@ DESCRIPTION: Captain Resident Profiling & Household Mapping View
             text-align: left;
         }
 
-        .residents-section {
+        .directory-header, .filters-section {
             flex-direction: column;
             align-items: flex-start;
             gap: 15px;
-        }
-
-        .filters-section {
-            flex-direction: column;
-            width: 100%;
         }
 
         .search-input,
@@ -473,14 +569,115 @@ DESCRIPTION: Captain Resident Profiling & Household Mapping View
             width: 100%;
         }
     }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 400px;
+        width: 90%;
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .modal-icon {
+        width: 48px;
+        height: 48px;
+        background: #FEE2E2;
+        color: #EF4444;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .modal-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #1F2937;
+    }
+
+    .modal-body {
+        margin-bottom: 25px;
+        color: #6B7280;
+        line-height: 1.6;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    .btn-cancel {
+        padding: 10px 20px;
+        background: #F3F4F6;
+        color: #4B5563;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-cancel:hover {
+        background: #E5E7EB;
+    }
+
+    .btn-confirm-delete {
+        padding: 10px 20px;
+        background: #EF4444;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-confirm-delete:hover {
+        background: #DC2626;
+    }
 </style>
+
+{{-- Get the current view from the request, default to 'residents' --}}
+@php $view = request('view', 'residents'); @endphp
+
+@if(session('success'))
+<div class="alert alert-success">
+    <i class="fas fa-check-circle"></i>
+    <span>{{ session('success') }}</span>
+</div>
+@endif
 
 <div class="profiling-header">
     <div class="profiling-title">Resident Profiling & Household Mapping</div>
     <div class="profiling-subtitle">Manage comprehensive resident information and household data</div>
     <div class="barangay-badge">
         <span class="badge-icon">PH</span>
-        <span>Barangay Bantug, Malasiqui, Pangasinan</span>
+        <span>Barangay Calbueg, Malasiqui, Pangasinan</span>
     </div>
     <div class="total-registered">
         <div class="total-registered-label">Total Registered</div>
@@ -542,128 +739,314 @@ DESCRIPTION: Captain Resident Profiling & Household Mapping View
             </div>
         </div>
         <div class="stat-box-icon icon-purple-bg">
-            <i class="fas fa-graduation-cap"></i>
-        </div>
+        <i class="fas fa-graduation-cap"></i>
+    </div>
     </div>
 </div>
 
 <div class="action-buttons">
-    <button class="btn-action btn-add">
+    <a href="{{ route('captain.resident.create') }}" class="btn-action btn-add">
         <i class="fas fa-user-plus"></i>
         <span>Add Resident</span>
-    </button>
-    <button class="btn-action btn-secondary">
+    </a>
+    <a href="{{ route('captain.household.create') }}" class="btn-action btn-add-household">
         <i class="fas fa-home"></i>
         <span>Add Household</span>
-    </button>
+    </a>
     <button class="btn-action btn-secondary">
         <i class="fas fa-download"></i>
         <span>Export Data</span>
     </button>
 </div>
 
-<div class="tabs-section">
-    <div class="tabs-header">
-        <div class="tab-item active">
-            <i class="fas fa-users"></i>
-            <span>Residents</span>
-        </div>
-        <div class="tab-item">
-            <i class="fas fa-home"></i>
-            <span>Households</span>
-        </div>
-        <div class="tab-item">
-            <i class="fas fa-map-marked-alt"></i>
-            <span>Map View</span>
-        </div>
-    </div>
-</div>
-
-<div class="residents-section">
-    <div class="residents-title">
+<!-- View Toggle Buttons --><div class="view-toggles">
+    <a href="{{ route('captain.resident-profiling', ['view' => 'residents']) }}" class="btn-toggle {{ $view === 'residents' ? 'active' : '' }}">
         <i class="fas fa-users"></i>
-        <span>Resident Directory ({{ $totalResidents }})</span>
+        <span>Resident Directory</span>
+    </a>
+    <a href="{{ route('captain.resident-profiling', ['view' => 'households']) }}" class="btn-toggle {{ $view === 'households' ? 'active' : '' }}">
+        <i class="fas fa-home"></i>
+        <span>Household Directory</span>
+    </a>
+</div>
+
+<!-- Check which view to display -->@if($view === 'households')
+
+    <!-- =================================== --><!-- ==   HOUSEHOLD DIRECTORY VIEW    == --><!-- =================================== --><div class="directory-header">
+        <div class="directory-title">
+            <i class="fas fa-home"></i>
+            <span>Household Directory ({{ $totalHouseholds }})</span>
+        </div>
+        <form method="GET" action="{{ route('captain.resident-profiling') }}" class="filters-section">
+            <input type="hidden" name="view" value="households">
+            <input type="text" name="search" class="search-input" placeholder="🔍 Search by household or head name..." value="{{ request('search') }}">
+            {{-- Optionally add household-specific filters here, e.g., by Purok or Status --}}
+            <select name="status" class="filter-select" onchange="this.form.submit()">
+                <option value="">All Status</option>
+                <option value="complete" {{ request('status') == 'complete' ? 'selected' : '' }}>Complete</option>
+                <option value="incomplete" {{ request('status') == 'incomplete' ? 'selected' : '' }}>Incomplete</option>
+            </select>
+        </form>
     </div>
-    <div class="filters-section">
-        <input type="text" class="search-input" placeholder="🔍 Search residents...">
-        <select class="filter-select">
-            <option>All Status</option>
-            <option>Household Head</option>
-            <option>Spouse</option>
-            <option>Child</option>
-        </select>
-        <select class="filter-select">
-            <option>All</option>
-            <option>Male</option>
-            <option>Female</option>
-        </select>
+
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Household Name & Head</th>
+                    <th>Address</th>
+                    <th>Purok</th>
+                    <th>Total Members</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($households as $household)
+                <tr>
+                    <td>
+                        <div class="household-info-cell">
+                            <div class="name">{{ $household->household_name ?? 'Household ' . $household->id }}</div>
+                            @if($household->head)
+                                <div class="head">Head: {{ $household->head->first_name }} {{ $household->head->last_name }}</div>
+                            @else
+                                <div class="head">No Head Assigned</div>
+                            @endif
+                        </div>
+                    </td>
+                    <td>{{ $household->address }}</td>
+                    <td>{{ $household->purok ?? 'N/A' }}</td>
+                    <td>{{ $household->total_members }}</td>
+                    <td>
+                        <span class="badge {{ $household->status === 'complete' ? 'badge-green' : 'badge-orange' }}">
+                            {{ ucfirst($household->status) }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-icons">
+                            <a href="{{ route('captain.household.edit', $household->id) }}" class="action-icon edit" title="Edit Household">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{{ route('captain.resident.create', ['household_id' => $household->id]) }}" class="action-icon view" title="Add Member">
+                                <i class="fas fa-user-plus"></i>
+                            </a>
+                            <button class="action-icon delete" title="Delete Household" onclick="showDeleteHouseholdModal({{ $household->id }}, '{{ $household->household_name ?? 'Household ' . $household->id }}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="6">
+                        <div class="no-results-found">
+                            <i class="fas fa-home"></i>
+                            <p>No households found.</p>
+                        </div>
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination Links --><div class="pagination-container">
+        {{ $households->withQueryString()->links() }}
+    </div>
+
+@else
+
+    <!-- =================================== --><!-- ==    RESIDENT DIRECTORY VIEW    == --><!-- =================================== --><div class="directory-header">
+        <div class="directory-title">
+            <i class="fas fa-users"></i>
+            <span>Resident Directory ({{ $totalResidents }})</span>
+        </div>
+        <form method="GET" action="{{ route('captain.resident-profiling') }}" class="filters-section">
+            <input type="hidden" name="view" value="residents">
+            <input type="text" name="search" class="search-input" placeholder="🔍 Search residents..." value="{{ request('search') }}">
+            <select name="status" class="filter-select" onchange="this.form.submit()">
+                <option value="">All Status</option>
+                <option value="Household Head" {{ request('status') == 'Household Head' ? 'selected' : '' }}>Household Head</option>
+                <option value="Spouse" {{ request('status') == 'Spouse' ? 'selected' : '' }}>Spouse</option>
+                <option value="Child" {{ request('status') == 'Child' ? 'selected' : '' }}>Child</option>
+                <option value="Member" {{ request('status') == 'Member' ? 'selected' : '' }}>Member</option>
+            </select>
+            <select name="gender" class="filter-select" onchange="this.form.submit()">
+                <option value="">All</option>
+                <option value="Male" {{ request('gender') == 'Male' ? 'selected' : '' }}>Male</option>
+                <option value="Female" {{ request('gender') == 'Female' ? 'selected' : '' }}>Female</option>
+            </select>
+        </form>
+    </div>
+
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Gender</th>
+                    <th>Status</th>
+                    <th>Address</th>
+                    <th>Contact</th>
+                    <th>Occupation</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($residents as $resident)
+                <tr>
+                    <td>
+                        <div class="resident-name">{{ $resident->first_name }} {{ $resident->last_name }}</div>
+                        @if($resident->suffix)
+                        <div class="resident-suffix">{{ $resident->suffix }}</div>
+                        @endif
+                    </td>
+                    <td>{{ $resident->age }}</td>
+                    <td>
+                        <span class="badge {{ $resident->gender === 'Male' ? 'badge-male' : 'badge-female' }}">
+                            {{ $resident->gender }}
+                        </span>
+                    </td>
+                    <td>
+                        @php
+                            $statusClass = 'badge-member'; // Default
+                            if ($resident->household_status === 'Household Head') $statusClass = 'badge-head';
+                            if ($resident->household_status === 'Spouse') $statusClass = 'badge-spouse';
+                            if ($resident->household_status === 'Child') $statusClass = 'badge-child';
+                        @endphp
+                        <span class="badge {{ $statusClass }}">
+                            {{ $resident->household_status }}
+                        </span>
+                    </td>
+                    <td>{{ $resident->address }}</td>
+                    <td>
+                        <div class="contact-info">
+                            <i class="fas fa-phone"></i>
+                            <span>{{ $resident->contact_number ?? 'N/A' }}</span>
+                        </div>
+                    </td>
+                    <td>{{ $resident->occupation ?? 'N/A' }}</td>
+                    <td>
+                        <div class="action-icons">
+                            <a href="{{ route('captain.resident.show', $resident->id) }}" class="action-icon view" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{{ route('captain.resident.edit', $resident->id) }}" class="action-icon edit" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button class="action-icon delete" title="Delete" onclick="showDeleteModal({{ $resident->id }}, '{{ $resident->first_name }} {{ $resident->last_name }}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="8">
+                        <div class="no-results-found">
+                            <i class="fas fa-users"></i>
+                            <p>No residents found</p>
+                        </div>
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination Links --><div class="pagination-container">
+        {{ $residents->withQueryString()->links() }}
+    </div>
+
+@endif
+
+
+<!-- Resident Delete Confirmation Modal --><div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="modal-title">Delete Resident</div>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to remove <strong id="residentName"></strong> from the system?</p>
+            <p>This action cannot be undone.</p>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <form id="deleteForm" method="POST" style="display: inline;">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn-confirm-delete">Delete Resident</button>
+            </form>
+        </div>
     </div>
 </div>
 
-<div class="residents-table">
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Age</th>
-                <th>Gender</th>
-                <th>Status</th>
-                <th>Address</th>
-                <th>Contact</th>
-                <th>Occupation</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($residents as $resident)
-            <tr>
-                <td>
-                    <div class="resident-name">{{ $resident->first_name }} {{ $resident->last_name }}</div>
-                    <div class="resident-suffix">{{ $resident->suffix }}</div>
-                </td>
-                <td>{{ $resident->age }}</td>
-                <td>
-                    <span class="badge {{ $resident->gender === 'Male' ? 'badge-male' : 'badge-female' }}">
-                        {{ $resident->gender }}
-                    </span>
-                </td>
-                <td>
-                    <span class="badge {{ $resident->household_status === 'Household Head' ? 'badge-head' : ($resident->household_status === 'Spouse' ? 'badge-spouse' : 'badge-child') }}">
-                        {{ $resident->household_status }}
-                    </span>
-                </td>
-                <td>{{ $resident->address }}</td>
-                <td>
-                    <div class="contact-info">
-                        <i class="fas fa-phone"></i>
-                        <span>{{ $resident->contact_number }}</span>
-                    </div>
-                </td>
-                <td>{{ $resident->occupation }}</td>
-                <td>
-                    <div class="action-icons">
-                        <button class="action-icon view" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="action-icon edit" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="action-icon delete" title="Delete">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="8" style="text-align: center; padding: 40px;">
-                    <i class="fas fa-users" style="font-size: 3rem; color: #ccc; margin-bottom: 10px;"></i>
-                    <p style="color: #999;">No residents found</p>
-                </td>
-            </tr>
-            @endforelse
-        </tbody>
-    </table>
+<!-- Household Delete Confirmation Modal --><div id="deleteHouseholdModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="modal-title">Delete Household</div>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to remove <strong id="householdName"></strong>?</p>
+            <p>This will remove the household and **all associated residents**. This action is permanent.</p>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn-cancel" onclick="closeDeleteHouseholdModal()">Cancel</button>
+            <form id="deleteHouseholdForm" method="POST" style="display: inline;">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn-confirm-delete">Delete Household</button>
+            </form>
+        </div>
+    </div>
 </div>
+
+<script>
+    // --- Resident Delete Modal ---
+    function showDeleteModal(residentId, residentName) {
+        document.getElementById('residentName').textContent = residentName;
+        // Correct route: /captain/resident/{id}
+        document.getElementById('deleteForm').action = `/captain/resident/${residentId}`;
+        document.getElementById('deleteModal').classList.add('show');
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('show');
+    }
+
+    // --- Household Delete Modal ---
+    function showDeleteHouseholdModal(householdId, householdName) {
+        document.getElementById('householdName').textContent = householdName;
+        // Correct route: /captain/household/{id}
+        document.getElementById('deleteHouseholdForm').action = `/captain/household/${householdId}`;
+        document.getElementById('deleteHouseholdModal').classList.add('show');
+    }
+
+    function closeDeleteHouseholdModal() {
+        document.getElementById('deleteHouseholdModal').classList.remove('show');
+    }
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        const residentModal = document.getElementById('deleteModal');
+        const householdModal = document.getElementById('deleteHouseholdModal');
+        if (event.target === residentModal) {
+            closeDeleteModal();
+        }
+        if (event.target === householdModal) {
+            closeDeleteHouseholdModal();
+        }
+    }
+</script>
 
 @endsection
+
+"
+
