@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Resident;
 use App\Models\Household;
+use App\Models\Medicine; // Import the Medicine model
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB; // Import DB facade
@@ -72,7 +73,7 @@ class CaptainController extends Controller
                         ->orWhere('household_number', 'like', "%{$search}%") // Search by number
                         ->orWhereHas('head', function ($q_head) use ($search) {
                             $q_head->where('first_name', 'like', "%{$search}%")
-                                   ->orWhere('last_name', 'like', "%{$search}%");
+                                    ->orWhere('last_name', 'like', "%{$search}%");
                         });
                 });
             }
@@ -294,7 +295,7 @@ class CaptainController extends Controller
 
         // Update new household count
         if ($newHouseholdId) {
-             // Avoid double update if household didn't change
+            // Avoid double update if household didn't change
             if ($oldHouseholdId != $newHouseholdId) {
                 $newHousehold = Household::find($newHouseholdId);
                 if ($newHousehold) {
@@ -304,15 +305,15 @@ class CaptainController extends Controller
                     $newHousehold->save();
                 }
             } else {
-                 // If household is the same, still might need update if resident status changed (though unlikely needed here)
-                 // For safety, we can update it anyway if it's the same ID.
+                // If household is the same, still might need update if resident status changed (though unlikely needed here)
+                // For safety, we can update it anyway if it's the same ID.
                 $household = Household::find($newHouseholdId);
-                 if ($household) {
+                if ($household) {
                     $household->total_members = Resident::where('household_id', $household->id)
                         ->where('is_active', true)
                         ->count();
                     $household->save();
-                 }
+                }
             }
         }
 
@@ -440,5 +441,77 @@ class CaptainController extends Controller
         return redirect()->route('captain.resident-profiling', ['view' => 'households'])
                          ->with('success', 'Household and all associated residents removed successfully!');
     }
-}
 
+    // ============================================
+    // HEALTH & SOCIAL SERVICES
+    // ============================================
+
+    /**
+     * Display the health and social services page
+     */
+    public function healthAndSocialServices(Request $request)
+    {
+        $user = Auth::user();
+
+        // --- Query Real Data ---
+        // Get all medicines, and we will use the Accessor for status
+        $allMedicines = Medicine::all();
+
+        $stats = [
+            'total_medicines' => $allMedicines->count(),
+            // Use collection 'where' to filter by the 'status' Accessor
+            'low_stock_medicines' => $allMedicines->where('status', 'Low Stock')->count(),
+            'expired_medicines' => $allMedicines->where('status', 'Expired')->count(),
+            'pending_requests' => 0, // Placeholder
+        ];
+
+        // --- Get Medicine Data for Table ---
+        $medicines = Medicine::orderBy('item_name')->get();
+
+        // The 'status' attribute is now automatically handled by the Accessor in the Medicine model
+
+        return view('dashboard.captain-health-services', compact(
+            'user',
+            'stats',
+            'medicines'
+        ));
+    }
+
+
+    // ============================================
+    // MEDICINE (HEALTH SERVICES) CRUD
+    // ============================================
+
+    /**
+     * Show form to add new medicine
+     */
+    public function createMedicine()
+    {
+        $user = Auth::user();
+        return view('dashboard.captain-medicine-create', compact('user'));
+    }
+
+    /**
+     * Store new medicine
+     */
+    public function storeMedicine(Request $request)
+    {
+        // Validates based on your migration file
+        $validated = $request->validate([
+            'item_name' => 'required|string|max:255',
+            'brand_name' => 'nullable|string|max:255',
+            'dosage' => 'required|string|max:255',
+            'quantity' => 'required|integer|min:0',
+            'low_stock_threshold' => 'required|integer|min:0',
+            'expiration_date' => 'required|date',
+        ]);
+        
+        // We do NOT save 'status', it will be calculated by the Model Accessor
+        // to prevent stale data.
+
+        Medicine::create($validated);
+
+        return redirect()->route('captain.health-services')
+                         ->with('success', 'Medicine added to inventory successfully!');
+    }
+}

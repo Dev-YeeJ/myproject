@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Resident;
 use App\Models\Household;
+use App\Models\Medicine; // <-- IMPORT MEDICINE MODEL
 
 class DatabaseSeeder extends Seeder
 {
@@ -343,5 +344,57 @@ class DatabaseSeeder extends Seeder
             'contact_number' => '09291234567',
             'is_active' => true,
         ]);
+        
+        // ==========================================
+        // HEALTH & SOCIAL SERVICES DATA (MEDICINES)
+        // ==========================================
+        Medicine::create([
+            'name' => 'Paracetamol 500mg',
+            'category' => 'Analgesic',
+            'stock' => 50,
+            'unit' => 'pcs',
+            'expiration_date' => '2025-12-31',
+        ]);
+
+        Medicine::create([
+            'name' => 'Amoxicillin 250mg',
+            'category' => 'Antibiotic',
+            'stock' => 8,
+            'unit' => 'pcs',
+            'expiration_date' => '2025-06-30',
+        ]);
+
+        Medicine::create([
+            'name' => 'Loratadine 10mg',
+            'category' => 'Antihistamine',
+            'stock' => 75,
+            'unit' => 'pcs',
+            'expiration_date' => '2026-01-31',
+        ]);
+
+        Medicine::create([
+            'name' => 'Salbutamol Nebule',
+            'category' => 'Respiratory',
+            'stock' => 20,
+            'unit' => 'pcs',
+            'expiration_date' => '2025-08-31',
+        ]);
+
+        Medicine::create([
+            'name' => 'Cough Syrup (120ml)',
+            'category' => 'Cough & Cold',
+            'stock' => 5,
+            'unit' => 'bottles',
+            'expiration_date' => '2024-10-01', // This will show as 'Expired'
+        ]);
+
+        Medicine::create([
+            'name' => 'Multivitamins',
+            'category' => 'Supplement',
+            'stock' => 9,
+            'unit' => 'strips',
+            'expiration_date' => '2025-11-30',
+        ]);
     }
 }
+

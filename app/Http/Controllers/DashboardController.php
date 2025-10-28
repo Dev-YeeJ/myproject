@@ -247,7 +247,7 @@ class DashboardController extends Controller
             ];
         }
 
-        return view('dashboards.secretary', compact('user', 'stats'));
+        return view('dashboard.secretary', compact('user', 'stats'));
     }
 
     /**
@@ -353,7 +353,7 @@ class DashboardController extends Controller
             ];
         }
 
-        return view('dashboards.health', compact('user', 'stats'));
+        return view('dashboard.health', compact('user', 'stats'));
     }
 
     /**
