@@ -8,7 +8,10 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Resident;
 use App\Models\Household;
-use App\Models\Medicine; // <-- IMPORT MEDICINE MODEL
+use App\Models\Medicine;
+use App\Models\DocumentRequest;
+use App\Models\DocumentType; // <-- IMPORTED
+use App\Models\Template; // <-- IMPORTED
 
 class DatabaseSeeder extends Seeder
 {
@@ -143,7 +146,8 @@ class DatabaseSeeder extends Seeder
 
         // Create Households first
         $household1 = Household::create([
-            'household_number' => 'HH-001',
+            // 'household_number' => 'HH-001', // <-- REMOVED (auto-generated)
+            'household_name' => 'Cruz Household', // <-- ADDED
             'address' => 'Block 1, Lot 5',
             'purok' => 'Purok 1',
             'total_members' => 3,
@@ -151,7 +155,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $household2 = Household::create([
-            'household_number' => 'HH-002',
+            // 'household_number' => 'HH-002', // <-- REMOVED (auto-generated)
+            'household_name' => 'Garcia Household', // <-- ADDED
             'address' => 'Block 2, Lot 10',
             'purok' => 'Purok 2',
             'total_members' => 1,
@@ -159,7 +164,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $household3 = Household::create([
-            'household_number' => 'HH-003',
+            // 'household_number' => 'HH-003', // <-- REMOVED (auto-generated)
+            'household_name' => 'Reyes Household', // <-- ADDED
             'address' => 'Block 3, Lot 15',
             'purok' => 'Purok 3',
             'total_members' => 1,
@@ -167,9 +173,9 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Create Residents matching your table
-        Resident::create([
-            'first_name' => 'Juan',
-            'middle_name' => 'Dela',
+        $resident1 = Resident::create([
+            'first_name' => 'Mark',
+            'middle_name' => '',
             'last_name' => 'Cruz',
             'suffix' => 'Santos',
             'date_of_birth' => '1979-01-15',
@@ -187,11 +193,14 @@ class DatabaseSeeder extends Seeder
             'is_indigenous' => false,
             'is_pwd' => false,
             'is_senior_citizen' => false,
-            'is_4ps' => true, // <-- ADDED
-            'is_active' => true
+            'is_4ps' => true, 
+            'is_active' => true,
+            'precinct_number' => '0021A', // <-- ADDED
+            'pwd_id_number' => null, // <-- ADDED
+            'disability_type' => null, // <-- ADDED
         ]);
 
-        Resident::create([
+        $resident2 = Resident::create([
             'first_name' => 'Maria',
             'middle_name' => '',
             'last_name' => 'Santos',
@@ -211,11 +220,14 @@ class DatabaseSeeder extends Seeder
             'is_indigenous' => false,
             'is_pwd' => false,
             'is_senior_citizen' => false,
-            'is_4ps' => true, // <-- ADDED
-            'is_active' => true
+            'is_4ps' => true, 
+            'is_active' => true,
+            'precinct_number' => '0021A', // <-- ADDED
+            'pwd_id_number' => null, // <-- ADDED
+            'disability_type' => null, // <-- ADDED
         ]);
 
-        Resident::create([
+        $resident3 = Resident::create([
             'first_name' => 'Pedro',
             'middle_name' => '',
             'last_name' => 'Garcia',
@@ -233,13 +245,16 @@ class DatabaseSeeder extends Seeder
             'monthly_income' => 8000,
             'is_registered_voter' => true,
             'is_indigenous' => false,
-            'is_pwd' => false,
+            'is_pwd' => true, // <-- MODIFIED
             'is_senior_citizen' => true,
-            'is_4ps' => false, // <-- ADDED
-            'is_active' => true
+            'is_4ps' => false, 
+            'is_active' => true,
+            'precinct_number' => '0030C', // <-- ADDED
+            'pwd_id_number' => 'PWD-12345', // <-- ADDED
+            'disability_type' => 'Physical - Mobility', // <-- ADDED
         ]);
 
-        Resident::create([
+        $resident4 = Resident::create([
             'first_name' => 'Ana',
             'middle_name' => '',
             'last_name' => 'Reyes',
@@ -259,11 +274,14 @@ class DatabaseSeeder extends Seeder
             'is_indigenous' => false,
             'is_pwd' => false,
             'is_senior_citizen' => false,
-            'is_4ps' => false, // <-- ADDED
-            'is_active' => true
+            'is_4ps' => false, 
+            'is_active' => true,
+            'precinct_number' => '0045A', // <-- ADDED
+            'pwd_id_number' => null, // <-- ADDED
+            'disability_type' => null, // <-- ADDED
         ]);
 
-        Resident::create([
+        $resident5 = Resident::create([
             'first_name' => 'Carlos',
             'middle_name' => '',
             'last_name' => 'Mendoza',
@@ -283,8 +301,11 @@ class DatabaseSeeder extends Seeder
             'is_indigenous' => false,
             'is_pwd' => false,
             'is_senior_citizen' => false,
-            'is_4ps' => false, // <-- ADDED
-            'is_active' => true
+            'is_4ps' => false, 
+            'is_active' => true,
+            'precinct_number' => '0021A', // <-- ADDED
+            'pwd_id_number' => null, // <-- ADDED
+            'disability_type' => null, // <-- ADDED
         ]);
 
         Resident::create([
@@ -307,8 +328,11 @@ class DatabaseSeeder extends Seeder
             'is_indigenous' => false,
             'is_pwd' => false,
             'is_senior_citizen' => false,
-            'is_4ps' => true, // <-- ADDED
-            'is_active' => true
+            'is_4ps' => true, 
+            'is_active' => true,
+            'precinct_number' => null, // <-- ADDED
+            'pwd_id_number' => null, // <-- ADDED
+            'disability_type' => null, // <-- ADDED
         ]);
 
         // Create Sample Residents (keeping original ones with resident role)
@@ -349,52 +373,163 @@ class DatabaseSeeder extends Seeder
         // HEALTH & SOCIAL SERVICES DATA (MEDICINES)
         // ==========================================
         Medicine::create([
-            'name' => 'Paracetamol 500mg',
-            'category' => 'Analgesic',
-            'stock' => 50,
-            'unit' => 'pcs',
+            'item_name' => 'Paracetamol',
+            'brand_name' => 'Biogesic',
+            'dosage' => '500mg',
+            'quantity' => 50,
+            'low_stock_threshold' => 10,
             'expiration_date' => '2025-12-31',
         ]);
 
         Medicine::create([
-            'name' => 'Amoxicillin 250mg',
-            'category' => 'Antibiotic',
-            'stock' => 8,
-            'unit' => 'pcs',
+            'item_name' => 'Amoxicillin',
+            'brand_name' => 'Generic',
+            'dosage' => '250mg',
+            'quantity' => 8,
+            'low_stock_threshold' => 10,
             'expiration_date' => '2025-06-30',
         ]);
 
         Medicine::create([
-            'name' => 'Loratadine 10mg',
-            'category' => 'Antihistamine',
-            'stock' => 75,
-            'unit' => 'pcs',
+            'item_name' => 'Loratadine',
+            'brand_name' => 'Allerta',
+            'dosage' => '10mg',
+            'quantity' => 75,
+            'low_stock_threshold' => 10,
             'expiration_date' => '2026-01-31',
         ]);
 
         Medicine::create([
-            'name' => 'Salbutamol Nebule',
-            'category' => 'Respiratory',
-            'stock' => 20,
-            'unit' => 'pcs',
+            'item_name' => 'Salbutamol Nebule',
+            'brand_name' => 'Ventolin',
+            'dosage' => '2.5mg/mL',
+            'quantity' => 20,
+            'low_stock_threshold' => 5,
             'expiration_date' => '2025-08-31',
         ]);
 
         Medicine::create([
-            'name' => 'Cough Syrup (120ml)',
-            'category' => 'Cough & Cold',
-            'stock' => 5,
-            'unit' => 'bottles',
+            'item_name' => 'Cough Syrup',
+            'brand_name' => 'Robitussin',
+            'dosage' => '120ml',
+            'quantity' => 5,
+            'low_stock_threshold' => 5,
             'expiration_date' => '2024-10-01', // This will show as 'Expired'
         ]);
 
         Medicine::create([
-            'name' => 'Multivitamins',
-            'category' => 'Supplement',
-            'stock' => 9,
-            'unit' => 'strips',
+            'item_name' => 'Multivitamins',
+            'brand_name' => 'Centrum',
+            'dosage' => '1 strip',
+            'quantity' => 9,
+            'low_stock_threshold' => 10,
             'expiration_date' => '2025-11-30',
+        ]);
+
+        // ==========================================
+        // DOCUMENT SERVICES DATA (NEWLY ADDED)
+        // ==========================================
+
+        // --- 1. Seed Document Types ---
+        $docType1 = DocumentType::create([
+            'name' => 'Barangay Clearance',
+            'price' => 50.00,
+            'requires_payment' => true,
+            'is_active' => true,
+        ]);
+        
+        $docType2 = DocumentType::create([
+            'name' => 'Certificate of Residency',
+        ]);
+
+        $docType3 = DocumentType::create([
+            'name' => 'Certificate of Indigency',
+        ]);
+
+        $docType4 = DocumentType::create([
+            'name' => 'Business Permit',
+        ]);
+
+        $docType5 = DocumentType::create([
+            'name' => 'Construction Permit',
+        ]);
+
+        // --- 2. Seed Templates ---
+        Template::create([
+            'document_type_id' => $docType1->id,
+            'name' => 'Standard Barangay Clearance Template',
+            'content' => 'This is to certify that [Resident Name] is a resident of...',
+            'is_active' => true,
+        ]);
+
+        Template::create([
+            'document_type_id' => $docType2->id,
+        ]);
+
+        // --- 3. Seed Document Requests (using the IDs from above) ---
+        DocumentRequest::create([
+            'resident_id' => $resident1->id, // Mark Cruz
+            'document_type_id' => $docType1->id, // Barangay Clearance
+            'tracking_number' => 'BC-2024-001',
+            // 'document_type' => 'Barangay Clearance', // <-- REMOVED (use ID)
+            'purpose' => 'Employment Requirements',
+            'price' => 50,
+            'priority' => 'Normal',
+            'payment_status' => 'Unpaid',
+            'status' => 'Pending',
+            'created_at' => '2024-12-10 09:00:00',
+        ]);
+
+        DocumentRequest::create([
+            'resident_id' => $resident2->id, // Maria Santos
+            'document_type_id' => $docType2->id, // Certificate of Residency
+            'tracking_number' => 'CR-2024-002',
+            // 'document_type' => 'Certificate of Residency', // <-- REMOVED (use ID)
+            'purpose' => 'Bank Account Opening',
+            'price' => 50,
+            'priority' => 'Normal',
+            'payment_status' => 'Paid',
+            'status' => 'Ready for Pickup',
+            'created_at' => '2024-12-09 11:30:00',
+        ]);
+
+        DocumentRequest::create([
+            'resident_id' => $resident3->id, // Pedro Garcia
+            'document_type_id' => $docType3->id, // Certificate of Indigency
+            'tracking_number' => 'CT-2024-003',
+            // 'document_type' => 'Certificate of Indigency', // <-- REMOVED (use ID)
+            'purpose' => 'Medical Assistance Application',
+            'price' => 0,
+            'priority' => 'Urgent',
+            'payment_status' => 'Waived',
+            'status' => 'Processing',
+            'created_at' => '2024-12-08 14:15:00',
+        ]);
+
+        DocumentRequest::create([
+            'resident_id' => $resident4->id, // Ana Reyes
+            'document_type_id' => $docType4->id, // Business Permit
+            'tracking_number' => 'BP-2024-004',
+            // 'document_type' => 'Business Permit', // <-- REMOVED (use ID)
+            'purpose' => 'Sari-sari Store Operation',
+            'price' => 200,
+            'priority' => 'Normal',
+            'payment_status' => 'Paid',
+            'status' => 'Under Review',
+            'created_at' => '2024-12-07 10:00:00',
+        ]);
+
+        DocumentRequest::create([
+            'resident_id' => $resident5->id, // Carlos Mendoza
+            'document_type_id' => $docType5->id, // Construction Permit
+            'tracking_number' => 'CP-2024-005',
+            // 'document_type' => 'Construction Permit', // <-- REMOVED (use ID)
+            'purpose' => 'House Extension',
+            'price' => 500,
+            'priority' => 'Normal',
+            'payment_status' => 'Paid',
+            'status' => 'Completed',
+            'created_at' => '2024-12-01 16:45:00',
         ]);
     }
 }
-

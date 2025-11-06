@@ -1,25 +1,26 @@
-{{-- resources/views/dashboard/health-medicine-create.blade.php --}}
-{{-- This is the "Add Medicine" form for the BHW (Health) role --}}
+{{-- resources/views/dashboard/captain-medicine-create.blade.php --}}
 
 @extends('layouts.dashboard-layout')
 
 @section('title', 'Add New Medicine')
 
 @section('nav-items')
-    {{-- MODIFIED: Navigation items for BHW Dashboard --}}
+    {{-- Navigation items for Captain Dashboard --}}
     <li class="nav-item">
         <a href="{{ route('dashboard.health') }}" class="nav-link">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
     </li>
+    
     <li class="nav-item">
-        {{-- MODIFIED: Active link for Health & Social Services --}}
-        <a href="{{ route('captain.health-services') }}" class="nav-link active">
+        {{-- Active link for Health & Social Services --}}
+        <a href="{{ route('health.health-services') }}" class="nav-link active">
             <i class="fas fa-heart"></i>
             <span>Health & Social Services</span>
         </a>
-    </li>
+   
+    
 @endsection
 
 @section('content')
@@ -65,8 +66,7 @@
         </div>
     @endif
 
-    {{-- MODIFIED: Form action points to BHW route --}}
-    <form action="{{ route('captain.medicine.store') }}" method="POST">
+    <form action="{{ route('health.medicine.store') }}" method="POST">
         @csrf
         
         <div class="row">
@@ -103,8 +103,7 @@
         </div>
 
         <div class="form-footer">
-            {{-- MODIFIED: Cancel button links back to BHW page --}}
-            <a href="{{ route('health.health-services') }}" class="btn btn-outline-secondary">Cancel</a>
+            <a href="{{ route('captain.health-services') }}" class="btn btn-outline-secondary">Cancel</a>
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save"></i> Save Medicine
             </button>

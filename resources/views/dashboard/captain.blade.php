@@ -19,7 +19,8 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
+        {{-- UPDATED: Link to the new document services route --}}
+        <a href="{{ route('captain.document-services') }}" class="nav-link">
             <i class="far fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
@@ -244,7 +245,7 @@
         border-bottom: none; /* No border for the last item */
         padding-bottom: 0;
     }
-     .activity-content-wrapper > .activity-item:first-of-type {
+    .activity-content-wrapper > .activity-item:first-of-type {
         padding-top: 0;
     }
 
@@ -276,7 +277,7 @@
         border-bottom: 1px solid #F3F4F6;
     }
     /* Adjusted last/first item selectors for direct children of wrapper */
-     .activity-content-wrapper > .event-item:last-of-type {
+    .activity-content-wrapper > .event-item:last-of-type {
         border-bottom: none; /* No border for the last item */
         padding-bottom: 0;
     }
@@ -317,16 +318,16 @@
             grid-template-columns: repeat(2, 1fr);
         }
     }
-     @media (max-width: 991px) { /* Adjusted breakpoint for better fit */
+    @media (max-width: 991px) { /* Adjusted breakpoint for better fit */
         .activities-grid {
             grid-template-columns: 1fr; /* Stack activities on medium screens */
         }
         .activity-card {
-             margin-bottom: 20px; /* Add space between stacked cards */
+            margin-bottom: 20px; /* Add space between stacked cards */
         }
-         .activities-grid > .activity-card:last-of-type {
-             margin-bottom: 0;
-         }
+        .activities-grid > .activity-card:last-of-type {
+            margin-bottom: 0;
+        }
     }
 
     @media (max-width: 768px) {
@@ -334,12 +335,12 @@
             padding: 30px; /* Adjust header padding for smaller screens */
         }
         .header-date-block {
-             position: static;
-             margin-top: 20px;
-             text-align: left;
+            position: static;
+            margin-top: 20px;
+            text-align: left;
         }
         .header-date-value {
-             font-size: 1.25rem;
+            font-size: 1.25rem;
         }
         .stats-grid {
             grid-template-columns: 1fr;
@@ -378,9 +379,9 @@
             <div class="stat-info">
                 <h3>₱{{ number_format($stats['monthly_budget'] ?? 0) }}</h3>
                 <p>Monthly Budget</p>
-                 <div class="stat-trend {{ ($stats['budget_remaining'] ?? 0) < ($stats['monthly_budget'] ?? 0) * 0.2 ? 'text-danger' : 'text-primary' }}">
-                     <i class="fas fa-wallet"></i> ₱{{ number_format($stats['budget_remaining'] ?? 0) }} remaining
-                 </div>
+                <div class="stat-trend {{ ($stats['budget_remaining'] ?? 0) < ($stats['monthly_budget'] ?? 0) * 0.2 ? 'text-danger' : 'text-primary' }}">
+                    <i class="fas fa-wallet"></i> ₱{{ number_format($stats['budget_remaining'] ?? 0) }} remaining
+                </div>
             </div>
             <div class="stat-icon icon-purple"><i class="fas fa-peso-sign"></i></div>
         </div>
@@ -391,8 +392,8 @@
                 <h3>{{ number_format($stats['pending_documents'] ?? 0) }}</h3>
                 <p>Pending Documents</p>
                 <div class="stat-trend {{ ($stats['documents_completed_today'] ?? 0) > 0 ? 'text-success' : '' }}">
-                   <i class="fas {{ ($stats['documents_completed_today'] ?? 0) > 0 ? 'fa-check' : 'fa-clock' }}"></i>
-                   {{ $stats['documents_completed_today'] ?? 0 }} completed today
+                    <i class="fas {{ ($stats['documents_completed_today'] ?? 0) > 0 ? 'fa-check' : 'fa-clock' }}"></i>
+                    {{ $stats['documents_completed_today'] ?? 0 }} completed today
                 </div>
             </div>
             <div class="stat-icon icon-green"><i class="fas fa-file-alt"></i></div>
@@ -403,9 +404,9 @@
             <div class="stat-info">
                 <h3>{{ number_format($stats['active_projects'] ?? 0) }}</h3>
                 <p>Active Projects</p>
-                 <div class="stat-trend">
-                     <i class="fas fa-tasks"></i> {{ $stats['projects_near_completion'] ?? 0 }} near completion
-                 </div>
+                <div class="stat-trend">
+                    <i class="fas fa-tasks"></i> {{ $stats['projects_near_completion'] ?? 0 }} near completion
+                </div>
             </div>
             <div class="stat-icon icon-orange"><i class="fas fa-folder-open"></i></div>
         </div>
@@ -415,9 +416,9 @@
             <div class="stat-info">
                 <h3>{{ number_format($stats['recent_incidents'] ?? 0) }}</h3>
                 <p>Recent Incidents (7 days)</p>
-                 <div class="stat-trend">
-                     <i class="fas fa-check-circle"></i> {{ $stats['resolved_incidents'] ?? 0 }} resolved total
-                 </div>
+                <div class="stat-trend">
+                    <i class="fas fa-check-circle"></i> {{ $stats['resolved_incidents'] ?? 0 }} resolved total
+                </div>
             </div>
             <div class="stat-icon icon-purple"><i class="fas fa-exclamation-triangle"></i></div>
         </div>
@@ -427,9 +428,9 @@
             <div class="stat-info">
                 <h3>{{ number_format($stats['health_programs'] ?? 0) }}</h3>
                 <p>Health Programs</p>
-                 <div class="stat-trend">
-                     <i class="fas fa-notes-medical"></i> {{ $stats['ongoing_programs'] ?? 0 }} ongoing
-                 </div>
+                <div class="stat-trend">
+                    <i class="fas fa-notes-medical"></i> {{ $stats['ongoing_programs'] ?? 0 }} ongoing
+                </div>
             </div>
             {{-- Assuming you add an .icon-pink style in your layout CSS --}}
             <div class="stat-icon icon-pink"><i class="fas fa-heart"></i></div>
@@ -453,7 +454,7 @@
                         <div class="activity-meta">by Secretary Maria • 2 hours ago</div>
                     </div>
                 </div>
-                 <div class="activity-item">
+                <div class="activity-item">
                     <div class="activity-icon"></div>
                     <div class="activity-content">
                         <div class="activity-title">Barangay clearance issued</div>
@@ -461,7 +462,7 @@
                     </div>
                 </div>
                 <div class="activity-item">
-                     <div class="activity-icon"></div>
+                    <div class="activity-icon"></div>
                     <div class="activity-content">
                         <div class="activity-title">Incident report filed</div>
                         <div class="activity-meta">by Tanod Juan • 5 hours ago</div>
@@ -469,12 +470,12 @@
                 </div>
                 <div class="activity-item">
                     <div class="activity-icon"></div>
-                   <div class="activity-content">
-                       <div class="activity-title">Project milestone completed</div>
-                       <div class="activity-meta">by Kagawad Pedro • 1 day ago</div>
-                   </div>
-               </div>
-               <div class="activity-item">
+                    <div class="activity-content">
+                        <div class="activity-title">Project milestone completed</div>
+                        <div class="activity-meta">by Kagawad Pedro • 1 day ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
                     <div class="activity-icon"></div>
                     <div class="activity-content">
                         <div class="activity-title">Health assistance approved</div>
@@ -491,7 +492,7 @@
                 <h3>Upcoming Events</h3>
             </div>
             <div class="activity-content-wrapper">
-                 {{-- Placeholder content - Replace with dynamic data --}}
+                {{-- Placeholder content - Replace with dynamic data --}}
                 <div class="event-item">
                     <div class="event-icon">
                         <i class="fas fa-calendar-alt"></i>
@@ -501,7 +502,7 @@
                         <div class="event-time">Dec 15, 2024 at 2:00 PM</div>
                     </div>
                 </div>
-                 <div class="event-item">
+                <div class="event-item">
                     <div class="event-icon">
                         <i class="fas fa-calendar-alt"></i>
                     </div>
@@ -532,4 +533,3 @@
         </div>
     </div>
 @endsection
-

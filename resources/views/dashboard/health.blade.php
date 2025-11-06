@@ -1,4 +1,4 @@
-{{-- resources/views/dashboards/bhw.blade.php --}}
+{{-- resources/views/dashboard/health.blade.php --}}
 {{-- This is the MAIN dashboard for the BHW user role --}}
 
 @extends('layouts.dashboard-layout')
@@ -6,15 +6,16 @@
 @section('title', 'BHW Dashboard')
 
 @section('nav-items')
-    {{-- MODIFIED: Only two navigation items as requested --}}
+    {{-- MODIFIED: Updated the link for Health & Social Services --}}
     <li class="nav-item">
         <a href="{{ route('dashboard.health') }}" class="nav-link active"> {{-- Dashboard is active --}}
             <i class="fas fa-home"></i>
-            <span>Dashboard</span>  
+            <span>Dashboard</span>   
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later, e.g., route('bhw.health-services') --}}
+        {{-- MODIFIED: Points to the new health services page --}}
+        <a href="{{ route('health.health-services') }}" class="nav-link"> 
             <i class="fas fa-heart"></i>
             <span>Health & Social Services</span>
         </a>
@@ -362,7 +363,7 @@
         </div>
     </div>
 
-    <div classs="activities-grid">
+    <div class="activities-grid"> {{-- Corrected class from 'classs' --}}
         
         {{-- MODIFIED: Added <div> wrapper and .activity-content-wrapper --}}
         <div>

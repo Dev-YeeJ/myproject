@@ -449,8 +449,9 @@ DESCRIPTION: Shared layout for all dashboards
         <div class="sidebar-header">
             <div class="logo-section">
                 <div class="logo">
-                    <i class="fas fa-shield-alt" style="color: var(--primary-blue); font-size: 1.5rem;"></i>
+                   <img src="{{ asset('images/barangay-seal.png') }}" alt="Barangay Seal">
                 </div>
+                
                 <div class="brand-info">
                     <div class="brand-name">iBMIS</div>
                     <div class="brand-subtitle">Barangay Calbueg</div>

@@ -5,6 +5,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Household extends Model
 {
@@ -17,7 +20,7 @@ class Household extends Model
      */
     protected $fillable = [
         'household_name', // A descriptive name for the household (e.g., "Dela Cruz Family")
-        'household_number', // A unique identifier (e.g., "HH-001")
+        // 'household_number', // <-- REMOVED from fillable, will be auto-generated
         'address', // Specific address like Block/Lot/Street
         'purok', // Zone or Purok designation
         'total_members', // Cached count of active members
@@ -31,8 +34,52 @@ class Household extends Model
      */
     protected $casts = [
         'total_members' => 'integer',
-        // No date casts needed based on fillable fields
     ];
+
+    /**
+     * The "booted" method of the model.
+     *
+     * @return void
+     */
+    protected static function booted()
+    {
+        /**
+         * Listen for the "creating" event to automatically generate a household_number.
+         */
+        static::creating(function ($household) {
+            // Check if household_number is already set (e.g., during seeding)
+            if (empty($household->household_number)) {
+                $household->household_number = static::generateHouseholdNumber();
+            }
+        });
+    }
+
+    /**
+     * Helper function to generate the next available household number.
+     *
+     * @return string
+     */
+    public static function generateHouseholdNumber()
+    {
+        // Get the latest household by 'created_at' to find the last number
+        $latestHousehold = static::orderBy('created_at', 'desc')->first();
+
+        $nextNumber = 1; // Default for the very first household
+
+        if ($latestHousehold && $latestHousehold->household_number) {
+            // Extract the numeric part of the household_number
+            // e.g., "HH-001" -> "001"
+            $lastNumberStr = Str::after($latestHousehold->household_number, 'HH-');
+            
+            // Convert to integer, increment
+            $lastNumber = intval($lastNumberStr);
+            $nextNumber = $lastNumber + 1;
+        }
+
+        // Format the number back to "HH-001" format (pads with leading zeros)
+        return 'HH-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+    }
+
 
     /**
      * Get all residents belonging to this household (including inactive ones if needed).
@@ -57,8 +104,8 @@ class Household extends Model
     {
         // Assumes only one active head per household
         return $this->hasOne(Resident::class)
-                    ->where('household_status', 'Household Head')
-                    ->where('is_active', true); // Ensure the head is active
+            ->where('household_status', 'Household Head')
+            ->where('is_active', true); // Ensure the head is active
     }
 
     /**
@@ -77,7 +124,7 @@ class Household extends Model
         return $query->where('status', 'incomplete');
     }
 
-     /**
+    /**
      * Recalculate and update the total_members count based on active residents.
      * Useful to call after adding/removing/deactivating residents.
      */

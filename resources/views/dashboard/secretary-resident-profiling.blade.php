@@ -1,72 +1,42 @@
-{{-- resources/views/dashboards/captain-resident-profiling.blade.php --}}
-
 @extends('layouts.dashboard-layout')
 
 @section('title', 'Resident Profiling')
 
+{{-- THIS IS THE SECRETARY'S NAVIGATION --}}
 @section('nav-items')
     <li class="nav-item">
-        <a href="{{ route('dashboard.captain') }}" class="nav-link ">
+        <a href="{{ route('dashboard.secretary') }}" class="nav-link">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
     </li>
     <li class="nav-item">
-    <a href="{{ route('captain.resident-profiling') }}" class="nav-link active">
-        <i class="fas fa-users"></i>
-        <span>Resident Profiling</span>
-    </a>
-</li>
+        <a href="{{ route('secretary.resident-profiling') }}" class="nav-link active">
+            <i class="fas fa-users"></i>
+            <span>Resident Profiling</span>
+        </a>
+    </li>
     <li class="nav-item">
-        <a href="{{ route('captain.document-services') }}" class="nav-link">
-            <i class="far fa-file-alt"></i>
+        <a href="#" class="nav-link"> {{-- Add route later --}}
+            <i class="fas fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-dollar-sign"></i>
-            <span>Financial Management</span>
+        <a href="#" class="nav-link"> {{-- Add route later --}}
+            <i class="fas fa-search"></i>
+            <span>Search Residents</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.health-services') }}" class="nav-link ">
-            <i class="fas fa-heart"></i>
-            <span>Health & Social Services</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>Incident & Blotter</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-flag"></i>
-            <span>Project Monitoring</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-bell"></i>
-            <span>Announcements</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-check-circle"></i>
-            <span>SK Module</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
+        <a href="#" class="nav-link"> {{-- Add route later --}}
             <i class="fas fa-cog"></i>
             <span>Settings</span>
         </a>
     </li>
 @endsection
 
+{{-- THIS IS THE CAPTAIN'S CONTENT, ADAPTED FOR THE SECRETARY --}}
 @section('content')
 <style>
     .profiling-header {
@@ -436,17 +406,6 @@
         color: #4B5563;
     }
 
-    /* Added missing badges from Household view for consistency */
-    .badge-green {
-        background: #D1FAE5;
-        color: #065F46;
-    }
-    .badge-orange {
-        background: #FEF3C7;
-        color: #92400E;
-    }
-
-
     .contact-info {
         display: flex;
         align-items: center;
@@ -470,7 +429,6 @@
         transition: all 0.3s;
         border: none;
         background: transparent;
-        color: #6B7280; /* Default color for icons */
     }
 
     .action-icon.view {
@@ -532,13 +490,15 @@
         padding: 20px;
         background: white;
         border-radius: 0 0 12px 12px;
-        /* Removed box-shadow to prevent double shadow on pagination */
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.07);
     }
     
     .no-results-found { /* Generic for both empty tables */
         text-align: center;
         padding: 60px;
-        /* Removed background, radius, shadow - handled by table-container */
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
     }
     .no-results-found i {
         font-size: 3rem; 
@@ -755,11 +715,13 @@
 </div>
 
 <div class="action-buttons">
-    <a href="{{ route('captain.resident.create') }}" class="btn-action btn-add">
+    {{-- UPDATED: Route points to secretary --}}
+    <a href="{{ route('secretary.resident.create') }}" class="btn-action btn-add">
         <i class="fas fa-user-plus"></i>
         <span>Add Resident</span>
     </a>
-    <a href="{{ route('captain.household.create') }}" class="btn-action btn-add-household">
+    {{-- UPDATED: Route points to secretary --}}
+    <a href="{{ route('secretary.household.create') }}" class="btn-action btn-add-household">
         <i class="fas fa-home"></i>
         <span>Add Household</span>
     </a>
@@ -770,11 +732,13 @@
 </div>
 
 <div class="view-toggles">
-    <a href="{{ route('captain.resident-profiling', ['view' => 'residents']) }}" class="btn-toggle {{ $view === 'residents' ? 'active' : '' }}">
+    {{-- UPDATED: Route points to secretary --}}
+    <a href="{{ route('secretary.resident-profiling', ['view' => 'residents']) }}" class="btn-toggle {{ $view === 'residents' ? 'active' : '' }}">
         <i class="fas fa-users"></i>
         <span>Resident Directory</span>
     </a>
-    <a href="{{ route('captain.resident-profiling', ['view' => 'households']) }}" class="btn-toggle {{ $view === 'households' ? 'active' : '' }}">
+    {{-- UPDATED: Route points to secretary --}}
+    <a href="{{ route('secretary.resident-profiling', ['view' => 'households']) }}" class="btn-toggle {{ $view === 'households' ? 'active' : '' }}">
         <i class="fas fa-home"></i>
         <span>Household Directory</span>
     </a>
@@ -787,7 +751,8 @@
             <i class="fas fa-home"></i>
             <span>Household Directory ({{ $totalHouseholds }})</span>
         </div>
-        <form method="GET" action="{{ route('captain.resident-profiling') }}" class="filters-section">
+        {{-- UPDATED: Form action points to secretary --}}
+        <form method="GET" action="{{ route('secretary.resident-profiling') }}" class="filters-section">
             <input type="hidden" name="view" value="households">
             <input type="text" name="search" class="search-input" placeholder="🔍 Search by household or head name..." value="{{ request('search') }}">
             {{-- Optionally add household-specific filters here, e.g., by Purok or Status --}}
@@ -828,20 +793,19 @@
                     <td>{{ $household->purok ?? 'N/A' }}</td>
                     <td>{{ $household->total_members }}</td>
                     <td>
-                        <span class="badge {{ $household->status === 'complete' ? 'badge-green' : 'badge-orange' }}">
+                        {{-- This assumes your household model has 'status' (e.g., complete, incomplete) --}}
+                        <span class="badge {{ $household->status === 'complete' ? 'badge-success' : 'badge-warning' }}">
                             {{ ucfirst($household->status) }}
                         </span>
                     </td>
                     <td>
-                        {{-- UPDATED ACTION ICONS --}}
                         <div class="action-icons">
-                            <a href="{{ route('captain.household.show', $household->id) }}" class="action-icon view" title="View Household Details">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="{{ route('captain.household.edit', $household->id) }}" class="action-icon edit" title="Edit Household">
+                            {{-- UPDATED: Route points to secretary --}}
+                            <a href="{{ route('secretary.household.edit', $household->id) }}" class="action-icon edit" title="Edit Household">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <a href="{{ route('captain.resident.create', ['household_id' => $household->id]) }}" class="action-icon" style="color: #0d6efd;" title="Add Member">
+                            {{-- UPDATED: Route points to secretary --}}
+                            <a href="{{ route('secretary.resident.create', ['household_id' => $household->id]) }}" class="action-icon view" title="Add Member">
                                 <i class="fas fa-user-plus"></i>
                             </a>
                             <button class="action-icon delete" title="Delete Household" onclick="showDeleteHouseholdModal({{ $household->id }}, '{{ $household->household_name ?? 'Household ' . $household->id }}')">
@@ -862,12 +826,11 @@
                 @endforelse
             </tbody>
         </table>
-        
-        <div class="pagination-container">
-            {{ $households->withQueryString()->links() }}
-        </div>
     </div>
     
+    <div class="pagination-container">
+        {{ $households->withQueryString()->links() }}
+    </div>
 
 @else
 
@@ -876,7 +839,8 @@
             <i class="fas fa-users"></i>
             <span>Resident Directory ({{ $totalResidents }})</span>
         </div>
-        <form method="GET" action="{{ route('captain.resident-profiling') }}" class="filters-section">
+        {{-- UPDATED: Form action points to secretary --}}
+        <form method="GET" action="{{ route('secretary.resident-profiling') }}" class="filters-section">
             <input type="hidden" name="view" value="residents">
             <input type="text" name="search" class="search-input" placeholder="🔍 Search residents..." value="{{ request('search') }}">
             <select name="status" class="filter-select" onchange="this.form.submit()">
@@ -944,10 +908,12 @@
                     <td>{{ $resident->occupation ?? 'N/A' }}</td>
                     <td>
                         <div class="action-icons">
-                            <a href="{{ route('captain.resident.show', $resident->id) }}" class="action-icon view" title="View Details">
+                            {{-- UPDATED: Route points to secretary --}}
+                            <a href="{{ route('secretary.resident.show', $resident->id) }}" class="action-icon view" title="View Details">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{{ route('captain.resident.edit', $resident->id) }}" class="action-icon edit" title="Edit">
+                            {{-- UPDATED: Route points to secretary --}}
+                            <a href="{{ route('secretary.resident.edit', $resident->id) }}" class="action-icon edit" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
                             <button class="action-icon delete" title="Delete" onclick="showDeleteModal({{ $resident->id }}, '{{ $resident->first_name }} {{ $resident->last_name }}')">
@@ -968,12 +934,11 @@
                 @endforelse
             </tbody>
         </table>
-        
-        <div class="pagination-container">
-            {{ $residents->withQueryString()->links() }}
-        </div>
     </div>
     
+    <div class="pagination-container">
+        {{ $residents->withQueryString()->links() }}
+    </div>
 
 @endif
 
@@ -1024,12 +989,17 @@
     </div>
 </div>
 
+{{-- =================================== --}}
+{{-- == 
+  THIS SCRIPT BLOCK IS NOW FIXED
+ == --}}
+{{-- =================================== --}}
 <script>
     // --- Resident Delete Modal ---
     function showDeleteModal(residentId, residentName) {
         document.getElementById('residentName').textContent = residentName;
-        // Correct route: /captain/resident/{id}
-        document.getElementById('deleteForm').action = `/captain/resident/${residentId}`;
+        // UPDATED: Route points to secretary - Using ES5-compatible string concatenation
+        document.getElementById('deleteForm').action = '/secretary/resident/' + residentId;
         document.getElementById('deleteModal').classList.add('show');
     }
 
@@ -1040,8 +1010,8 @@
     // --- Household Delete Modal ---
     function showDeleteHouseholdModal(householdId, householdName) {
         document.getElementById('householdName').textContent = householdName;
-        // Correct route: /captain/household/{id}
-        document.getElementById('deleteHouseholdForm').action = `/captain/household/${householdId}`;
+        // UPDATED: Route points to secretary - Using ES5-compatible string concatenation
+        document.getElementById('deleteHouseholdForm').action = '/secretary/household/' + householdId;
         document.getElementById('deleteHouseholdModal').classList.add('show');
     }
 

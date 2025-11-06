@@ -316,7 +316,7 @@ class DashboardController extends Controller
             ];
         }
 
-        return view('dashboards.kagawad', compact('user', 'stats'));
+        return view('dashboard.kagawad', compact('user', 'stats'));
     }
 
     /**
@@ -393,6 +393,24 @@ class DashboardController extends Controller
         }
 
         return view('dashboards.tanod', compact('user', 'stats'));
+
+
+        
+    }
+
+    public function resident()
+    {
+        $user = Auth::user();
+
+        // You can fetch stats specific to this resident
+        // For example, if your user model has a relationship to a resident profile:
+        // $residentProfile = $user->residentProfile; 
+        // $myDocuments = Document::where('resident_id', $residentProfile->id)->count();
+        
+        // For now, we'll just pass the user
+        
+
+        return view('dashboard.resident', compact('user', 'stats'));
     }
 
     /**
@@ -426,19 +444,9 @@ class DashboardController extends Controller
             return redirect()->route('dashboard.tanod');
         }
 
-        // Optional: Redirect residents or other roles to a default page or logout
-         if (method_exists($user, 'isResident') && $user->isResident()) {
-             // Example: Redirect residents to a profile page or just log them out
-             Auth::logout();
-             request()->session()->invalidate();
-             request()->session()->regenerateToken();
-             return redirect()->route('login')->with('error', 'Residents do not have dashboard access.');
-         }
+        if (method_exists($user, 'isResident') && $user->isResident()) {
+            return redirect()->route('dashboard.resident');
+        }       
 
-        // Fallback if role is not recognized or method doesn't exist
-        Log::warning("User ID {$user->id} with role '{$user->role}' could not be redirected to a dashboard.");
-        Auth::logout(); // Log out unrecognized roles
-        return redirect()->route('login')->with('error', 'Your role does not have dashboard access.');
-        // Or: abort(403, 'Unauthorized access - user role not recognized or dashboard not configured.');
     }
 }

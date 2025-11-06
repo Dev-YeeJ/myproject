@@ -59,6 +59,9 @@ class LoginController extends Controller
         
         if (method_exists($user, 'isTanod') && $user->isTanod()) {
             return redirect()->route('dashboard.tanod')->with('success', $message);
+        } 
+        if (method_exists($user, 'isResident') && $user->isResident()) {
+            return redirect()->route('dashboard.resident')->with('success', $message);
         }
         
         return redirect()->route('dashboard')->with('success', $message);

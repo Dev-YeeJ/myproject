@@ -1,9 +1,8 @@
 <?php
-// database/migrations/2024_01_01_000002_create_residents_table.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Schema; // <-- FIXED: Removed extra semicolon
 
 return new class extends Migration
 {
@@ -20,10 +19,13 @@ return new class extends Migration
             $table->enum('gender', ['Male', 'Female']);
             $table->enum('civil_status', ['Single', 'Married', 'Widowed', 'Separated', 'Divorced'])->default('Single');
             
-            // Fixed: Use unsignedBigInteger for nullable foreign key with SET NULL
             $table->unsignedBigInteger('household_id')->nullable();
             
-            $table->enum('household_status', ['Household Head', 'Member'])->default('Member');
+            // ==========================================================
+            // THIS IS THE FIXED LINE
+            // ==========================================================
+            $table->enum('household_status', ['Household Head', 'Spouse', 'Child', 'Member'])->default('Member');
+            
             $table->string('address');
             $table->string('contact_number')->nullable();
             $table->string('email')->nullable();
