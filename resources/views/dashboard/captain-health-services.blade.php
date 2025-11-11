@@ -1,13 +1,11 @@
-{{-- resources/views/dashboard/captain-health-services.blade.php --}}
-
 @extends('layouts.dashboard-layout')
 
-@section('title', 'Health & Social Services')
+@section('title', 'Health & Social Services (View-Only)')
 
 @section('nav-items')
-    {{-- Navigation items for Captain Dashboard --}}
+    {{-- Active class on Dashboard link --}}
     <li class="nav-item">
-        <a href="{{ route('dashboard.captain') }}" class="nav-link">
+        <a href="{{ route('dashboard.captain') }}" class="nav-link ">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
@@ -19,7 +17,8 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.document-services') }}" class="nav-link"> {{-- Add route later --}}
+        {{-- UPDATED: Link to the new document services route --}}
+        <a href="{{ route('captain.document-services') }}" class="nav-link">
             <i class="far fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
@@ -31,11 +30,10 @@
         </a>
     </li>
     <li class="nav-item">
-        {{-- Active link for Health & Social Services --}}
+        {{-- UPDATED: Link to the new health services route --}}
         <a href="{{ route('captain.health-services') }}" class="nav-link active">
             <i class="fas fa-heart"></i>
-            {{-- Added inline style to prevent text wrapping --}}
-            <span style="white-space: nowrap;">Health & Social Services</span>
+            <span>Health & Social Services</span>
         </a>
     </li>
     <li class="nav-item">
@@ -71,125 +69,69 @@
 @endsection
 
 @section('content')
+{{-- STYLES (Copied from your BHW view for consistency) --}}
 <style>
-    /* === BASE STYLES (Copied from captain.blade.php for consistency) === */
+    /* Header styles */
     .header-section {
         background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
         color: white;
         border-radius: 16px;
         margin-bottom: 30px;
         position: relative;
-        padding: 40px; /* Base padding */
+        padding: 40px;
     }
     .header-title {
-        font-size: 2rem; /* Match profiling-title */
+        font-size: 2rem;
         font-weight: 700;
         margin-bottom: 8px;
     }
     .header-subtitle {
         opacity: 0.95;
         font-size: 1rem;
-        margin-bottom: 15px; /* Space before barangay info if it exists */
-    }
-    .barangay-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        background: rgba(255, 165, 0, 0.2);
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-weight: 600;
     }
 
-    .barangay-badge .badge-icon {
-        background: #FFA500;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        color: white;
-        font-size: 0.9rem; /* Match ph-icon */
-    }
-    
-    .header-date-block {
-        position: absolute;
-        top: 40px;
-        right: 40px;
-        text-align: right;
-    }
-
-    .header-date-label {
-        font-size: 0.9rem;
-        opacity: 0.9;
-        margin-bottom: 4px;
-    }
-
-    .header-date-value {
-        font-size: 2.5rem; /* Sized to match profiling 'total-registered-count' */
-        font-weight: 700;
-    }
-
-    /* === STATS GRID (MODIFIED for 4 columns) === */
+    /* Stats Grid styles */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr); /* MODIFIED: 4 columns for this page */
-        gap: 20px; /* Match profiling stats-row */
-        margin-bottom: 30px; /* Match profiling */
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 30px;
     }
     .stat-card {
         background: white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Match stat-box shadow */
-        border-radius: 12px; /* Match stat-box */
-        padding: 24px; /* Match stat-box */
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        padding: 24px;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
     .stat-info h3 {
-        font-size: 2.5rem; /* Match stat-content h3 */
-        font-weight: 700; /* Match stat-content h3 */
-        margin: 0 0 8px 0; /* Match stat-content h3 */
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0 0 8px 0;
     }
     .stat-info p {
-        color: #666; /* Match stat-content p */
-        margin: 0 0 8px 0; /* Match stat-content p */
-        font-size: 0.95rem; /* Match stat-content p */
-    }
-    .stat-trend {
-        font-size: 0.85rem; /* Match stat-badge */
-        display: flex;
-        align-items: center;
-        gap: 6px; /* Match stat-badge */
         color: #666;
+        margin: 0 0 8px 0;
+        font-size: 0.95rem;
     }
-    .stat-trend.text-success { color: #10B981; }
-    .stat-trend.text-primary { color: #2B5CE6; }
-    .stat-trend.text-danger { color: #EF4444; }
-
     .stat-icon {
-        width: 70px; /* Match stat-box-icon */
-        height: 70px; /* Match stat-box-icon */
-        border-radius: 12px; /* Match stat-box-icon */
+        width: 70px;
+        height: 70px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem; /* Match stat-box-icon */
+        font-size: 2rem;
         color: white;
     }
-    /* Merged Icon colors */
     .icon-blue { background: #2B5CE6; }
-    .icon-orange { background: #FFA500; }
-    .icon-green { background: #10B981; }
+    .icon-yellow { background: #F59E0B; }
+    .icon-red { background: #EF4444; }
     .icon-purple { background: #A855F7; }
-    .icon-pink { background: #EC4899; }
-    .icon-red { background: #EF4444; }    /* Added from health services */
-    .icon-yellow { background: #F59E0B; } /* Added from health services */
 
-
-    /* === TABLE STYLES (Specific to this page) === */
+    /* Table Container styles */
     .table-container {
         background: white;
         border-radius: 12px;
@@ -201,14 +143,19 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
     }
     .table-title {
         font-size: 1.25rem;
         font-weight: 600;
+        flex-shrink: 0;
     }
     .table-search {
         width: 300px;
     }
+
+    /* Table styles */
     .table-wrapper {
         overflow-x: auto;
     }
@@ -232,53 +179,16 @@
     .table tbody tr:hover {
         background: #F9FAFB;
     }
-    .action-btn {
-        background: none;
-        border: none;
-        padding: 6px 10px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        transition: all 0.2s;
-        margin-right: 5px;
-    }
-    .action-btn.view { color: #2B5CE6; }
-    .action-btn.view:hover { background: #DBEAFE; }
-    .action-btn.edit { color: #F59E0B; }
-    .action-btn.edit:hover { background: #FEF3C7; }
-    .action-btn.delete { color: #EF4444; }
-    .action-btn.delete:hover { background: #FEE2E2; }
 
-
-    /* Responsive Adjustments (Merged & Cleaned) */
+    /* Responsive adjustments */
     @media (max-width: 1200px) {
         .stats-grid {
             grid-template-columns: repeat(2, 1fr);
         }
     }
-    
-    /* @media (max-width: 991px) styles removed as they only applied to activities-grid */
-
     @media (max-width: 768px) {
-        .header-section {
-            padding: 30px; /* Adjust header padding for smaller screens */
-        }
-        .header-date-block {
-            position: static;
-            margin-top: 20px;
-            text-align: left;
-        }
-        .header-date-value {
-            font-size: 1.25rem;
-        }
         .stats-grid {
             grid-template-columns: 1fr;
-        }
-        /* Table-specific responsive styles */
-        .table-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 15px;
         }
         .table-search {
             width: 100%;
@@ -286,10 +196,11 @@
     }
 </style>
 
+{{-- CONTENT: Medicine Inventory (View-Only) --}}
+
 <div class="header-section">
     <div class="header-title">Health & Social Services</div>
-    <div class="header-subtitle">Manage medicine inventory and resident assistance requests.</div>
-    {{-- Removed barangay-badge and date-block from here, as they are on the main dashboard --}}
+    <div class="header-subtitle">View medicine inventory and resident assistance requests.</div>
 </div>
 
 <div class="stats-grid">
@@ -319,56 +230,64 @@
         </div>
         <div class="stat-icon icon-red"><i class="fas fa-calendar-times"></i></div>
     </div>
-
-    {{-- 4. Pending Requests --}}
+    
+    {{-- 4. Pending Requests (Placeholder) --}}
     <div class="stat-card">
         <div class="stat-info">
             <h3>{{ number_format($stats['pending_requests'] ?? 0) }}</h3>
             <p>Pending Requests</p>
         </div>
-        <div class="stat-icon icon-purple"><i class="fas fa-folder-open"></i></div>
+        <div class="stat-icon icon-purple"><i class="fas fa-tasks"></i></div>
     </div>
 </div>
 
 <div class="table-container">
     <div class="table-header">
         <div class="table-title">Medicine Inventory</div>
-        <div class="d-flex gap-2">
-            <input type="text" class="form-control table-search" placeholder="Search medicine...">
-            
-            {{-- MODIFIED: Updated Link --}}
-            <a href="{{ route('captain.medicine.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Medicine
-            </a>
-            <a href="#" class="btn btn-outline-secondary">
-                <i class="fas fa-tasks"></i> Manage Requests
-            </a>
-        </div>
+
+        {{-- 
+            MODIFICATION: 
+            The "Add Medicine" and "Manage Requests" buttons have been removed 
+            to make this page view-only for the Captain.
+        --}}
     </div>
+
+    {{-- Alert for Success/Error Messages (from other pages) --}}
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
     <div class="table-wrapper">
         <table class="table">
             <thead>
                 <tr>
-                    {{-- MODIFIED: Columns updated to match migration --}}
                     <th>Medicine Name</th>
                     <th>Brand</th>
+                    {{-- <th>Category</th>  --}} {{-- Category was missing from your captain store/create logic --}}
                     <th>Dosage</th>
                     <th>Quantity</th>
                     <th>Expiration Date</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    {{-- MODIFICATION: Removed "Actions" column --}}
                 </tr>
             </thead>
             <tbody>
                 @forelse ($medicines as $medicine)
                     <tr>
-                        {{-- MODIFIED: Columns updated to match migration --}}
                         <td><strong>{{ $medicine->item_name }}</strong></td>
                         <td>{{ $medicine->brand_name ?? 'N/A' }}</td>
+                        {{-- <td>{{ $medicine->category ?? 'N/A' }}</td> --}}
                         <td>{{ $medicine->dosage }}</td>
                         <td>
-                            {{-- Use the 'status' from accessor to style --}}
                             <span class="{{ $medicine->status === 'Low Stock' || $medicine->status === 'Out of Stock' ? 'text-danger fw-bold' : '' }}">
                                 {{ $medicine->quantity }}
                             </span>
@@ -379,7 +298,6 @@
                             </span>
                         </td>
                         <td>
-                            {{-- The $medicine->status attribute comes from the Accessor in the Model --}}
                             @if ($medicine->status === 'In Stock')
                                 <span class="badge bg-success">{{ $medicine->status }}</span>
                             @elseif ($medicine->status === 'Low Stock')
@@ -390,24 +308,18 @@
                                 <span class="badge bg-danger">{{ $medicine->status }}</span>
                             @endif
                         </td>
-                        <td>
-                            <button class="action-btn view" title="View"><i class="fas fa-eye"></i></button>
-                            <button class="action-btn edit" title="Edit"><i class="fas fa-pen"></i></button>
-                            <button class="action-btn delete" title="Delete"><i class="fas fa-trash"></i></button>
-                        </td>
+                        {{-- MODIFICATION: Removed "Actions" column --}}
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center">No medicines found in the inventory.</td>
+                        <td colspan="6" class="text-center">
+                            No medicines found in the inventory.
+                        </td>
                     </tr>
-                @endforelse
+                @endempty
             </tbody>
         </table>
     </div>
 </div>
 
-@endsection
-
-@section('scripts')
-    {{-- Add any specific JS for this page if needed --}}
 @endsection

@@ -1,67 +1,38 @@
-{{-- resources/views/dashboards/captain-household-view.blade.php --}}
+{{-- resources/views/dashboards/secretary-household-view.blade.php --}}
 
 @extends('layouts.dashboard-layout')
 
 @section('title', 'Household Details - ' . $household->household_name)
 
 @section('nav-items')
-    {{-- (Nav items remain unchanged) --}}
+    {{-- THIS IS THE SECRETARY'S NAVIGATION --}}
     <li class="nav-item">
-        <a href="{{ route('dashboard.captain') }}" class="nav-link">
+        <a href="{{ route('dashboard.secretary') }}" class="nav-link">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.resident-profiling') }}" class="nav-link active">
+        {{-- Set as active because this is part of Resident Profiling --}}
+        <a href="{{ route('secretary.resident-profiling') }}" class="nav-link active">
             <i class="fas fa-users"></i>
             <span>Resident Profiling</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.document-services') }}" class="nav-link">
-            <i class="far fa-file-alt"></i>
+        <a href="#" class="nav-link"> {{-- Add route later --}}
+            <i class="fas fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-dollar-sign"></i>
-            <span>Financial Management</span>
+        <a href="#" class="nav-link"> {{-- Add route later --}}
+            <i class="fas fa-search"></i>
+            <span>Search Residents</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.health-services') }}" class="nav-link">
-            <i class="fas fa-heart"></i>
-            <span>Health & Social Services</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>Incident & Blotter</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-flag"></i>
-            <span>Project Monitoring</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-bell"></i>
-            <span>Announcements</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-check-circle"></i>
-            <span>SK Module</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
+        <a href="#" class="nav-link"> {{-- Add route later --}}
             <i class="fas fa-cog"></i>
             <span>Settings</span>
         </a>
@@ -372,7 +343,7 @@
 </style>
 
 <div class="details-container">
-    <a href="{{ route('captain.resident-profiling', ['view' => 'households']) }}" class="back-link">
+    <a href="{{ route('secretary.resident-profiling', ['view' => 'households']) }}" class="back-link">
         <i class="fas fa-arrow-left"></i>
         <span>Back to Household Directory</span>
     </a>
@@ -392,11 +363,11 @@
             </div>
         </div>
         <div class="header-actions">
-            <a href="{{ route('captain.household.edit', $household->id) }}" class="btn-header">
+            <a href="{{ route('secretary.household.edit', $household->id) }}" class="btn-header">
                 <i class="fas fa-edit"></i>
                 <span>Edit Household</span>
             </a>
-            <a href="{{ route('captain.resident.create', ['household_id' => $household->id]) }}" class="btn-header" style="background: white; color: #2B5CE6;">
+            <a href="{{ route('secretary.resident.create', ['household_id' => $household->id]) }}" class="btn-header" style="background: white; color: #2B5CE6;">
                 <i class="fas fa-user-plus"></i>
                 <span>Add Member</span>
             </a>

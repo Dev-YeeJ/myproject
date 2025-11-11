@@ -5,6 +5,7 @@
 @section('title', 'Resident Details')
 
 @section('nav-items')
+    {{-- (Nav items remain unchanged) --}}
     <li class="nav-item">
         <a href="{{ route('dashboard.captain') }}" class="nav-link">
             <i class="fas fa-home"></i>
@@ -69,6 +70,7 @@
 
 @section('content')
 <style>
+    /* (Most styles remain unchanged) */
     .details-container {
         max-width: 1000px;
         margin: 0 auto;
@@ -149,7 +151,8 @@
 
     .details-grid {
         display: grid;
-        grid-template-columns: 2fr 1fr;
+        /* {{-- CHANGED: Switched to two equal columns for balance --}} */
+        grid-template-columns: 1fr 1fr;
         gap: 25px;
         margin-bottom: 25px;
     }
@@ -312,6 +315,7 @@
         align-items: center;
         justify-content: center;
         font-size: 0.75rem;
+        flex-shrink: 0;
     }
 
     .checkbox-icon.checked {
@@ -330,6 +334,14 @@
         font-size: 0.9rem;
     }
 
+    .checkbox-sub-label {
+        font-weight: 500;
+        color: #6B7280;
+        font-size: 0.85rem;
+        display: block;
+        margin-top: 2px;
+    }
+
     .back-link {
         display: inline-flex;
         align-items: center;
@@ -346,7 +358,8 @@
         color: #1E3A8A;
     }
 
-    @media (max-width: 768px) {
+    /* {{-- CHANGED: Updated breakpoint for stacking --}} */
+    @media (max-width: 992px) {
         .details-grid {
             grid-template-columns: 1fr;
         }
@@ -406,7 +419,10 @@
         </div>
     </div>
 
+   
     <div class="details-grid">
+        
+      
         <div>
             <div class="details-card" style="margin-bottom: 25px;">
                 <div class="card-title">
@@ -432,7 +448,7 @@
                     </div>
                     <div class="info-item">
                         <div class="info-label">Age</div>
-                        <div class="info-value highlight">{{ $resident->age }} years old</div>
+                        <div class="info-value">{{ $resident->age }} years old</div>
                     </div>
                 </div>
 
@@ -464,8 +480,8 @@
 
                 <div class="info-row">
                     <div class="info-item">
-                        <div class="info-label">Household Number</div>
-                        <div class="info-value">{{ $resident->household ? $resident->household->household_number : 'Not Assigned' }}</div>
+                        <div class="info-label">Household</div>
+                        <div class="info-value">{{ $resident->household ? $resident->household->household_name : 'Not Assigned' }}</div>
                     </div>
                     <div class="info-item">
                         <div class="info-label">Household Status</div>
@@ -497,8 +513,11 @@
                 </div>
                 @endif
             </div>
+        </div>
 
-            <div class="details-card">
+        <div>
+          
+            <div class="details-card" style="margin-bottom: 25px;">
                 <div class="card-title">
                     <i class="fas fa-briefcase"></i>
                     <span>Contact & Employment</span>
@@ -526,43 +545,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div>
-            <div class="details-card" style="margin-bottom: 25px;">
-                <div class="card-title">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Quick Stats</span>
-                </div>
-
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-label">
-                            <i class="fas fa-calendar"></i>
-                            <span>Age</span>
-                        </div>
-                        <div class="stat-value">{{ $resident->age }}</div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-label">
-                            <i class="fas fa-users"></i>
-                            <span>Status</span>
-                        </div>
-                        <div class="stat-value" style="font-size: 0.85rem;">{{ $resident->household_status }}</div>
-                    </div>
-
-                    @if($resident->monthly_income)
-                    <div class="stat-item">
-                        <div class="stat-label">
-                            <i class="fas fa-money-bill"></i>
-                            <span>Income</span>
-                        </div>
-                        <div class="stat-value" style="font-size: 0.9rem;">₱{{ number_format($resident->monthly_income, 0) }}</div>
-                    </div>
-                    @endif
-                </div>
-            </div>
 
             <div class="details-card">
                 <div class="card-title">
@@ -575,21 +557,35 @@
                         <div class="checkbox-icon {{ $resident->is_registered_voter ? 'checked' : 'unchecked' }}">
                             <i class="fas {{ $resident->is_registered_voter ? 'fa-check' : 'fa-times' }}"></i>
                         </div>
-                        <div class="checkbox-label">Registered Voter</div>
-                    </div>
-
-                    <div class="checkbox-indicator">
-                        <div class="checkbox-icon {{ $resident->is_senior_citizen ? 'checked' : 'unchecked' }}">
-                            <i class="fas {{ $resident->is_senior_citizen ? 'fa-check' : 'fa-times' }}"></i>
+                        <div class="checkbox-label">
+                            Registered Voter
+                            @if($resident->is_registered_voter && $resident->precinct_number)
+                                <span class="checkbox-sub-label">
+                                    Precinct: {{ $resident->precinct_number }}
+                                </span>
+                            @endif
                         </div>
-                        <div class="checkbox-label">Senior Citizen</div>
                     </div>
 
                     <div class="checkbox-indicator">
                         <div class="checkbox-icon {{ $resident->is_pwd ? 'checked' : 'unchecked' }}">
                             <i class="fas {{ $resident->is_pwd ? 'fa-check' : 'fa-times' }}"></i>
                         </div>
-                        <div class="checkbox-label">Person with Disability</div>
+                        <div class="checkbox-label">
+                            Person with Disability
+                            @if($resident->is_pwd)
+                                @if($resident->pwd_id_number)
+                                <span class="checkbox-sub-label">
+                                    ID: {{ $resident->pwd_id_number }}
+                                </span>
+                                @endif
+                                @if($resident->disability_type)
+                                <span class="checkbox-sub-label">
+                                    Type: {{ $resident->disability_type }}
+                                </span>
+                                @endif
+                            @endif
+                        </div>
                     </div>
 
                     <div class="checkbox-indicator">
@@ -603,14 +599,7 @@
                         <div class="checkbox-icon {{ $resident->is_4ps ? 'checked' : 'unchecked' }}">
                             <i class="fas {{ $resident->is_4ps ? 'fa-check' : 'fa-times' }}"></i>
                         </div>
-                        <div class="checkbox-label">4Ps Beneficiary (Pantawid Pamilya)</div>
-                    </div>
-
-                    <div class="checkbox-indicator">
-                        <div class="checkbox-icon {{ $resident->age < 18 ? 'checked' : 'unchecked' }}">
-                            <i class="fas {{ $resident->age < 18 ? 'fa-check' : 'fa-times' }}"></i>
-                        </div>
-                        <div class="checkbox-label">Minor (Under 18)</div>
+                        <div class="checkbox-label">4Ps Beneficiary</div>
                     </div>
                 </div>
             </div>

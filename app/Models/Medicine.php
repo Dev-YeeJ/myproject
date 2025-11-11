@@ -12,15 +12,12 @@ class Medicine extends Model
 
     /**
      * The attributes that are mass assignable.
-     *
-     * !! THIS IS THE FIX !!
-     * This array tells Laravel that it's safe to save
-     * these fields from your form.
      */
     protected $fillable = [
         'item_name',
         'brand_name',
         'dosage',
+        'category', // <-- Added
         'quantity',
         'low_stock_threshold',
         'expiration_date',

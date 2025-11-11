@@ -1,6 +1,3 @@
-{{-- resources/views/dashboard/health-health-services.blade.php --}}
-{{-- This is the Health Services page for the BHW (Health) role --}}
-
 @extends('layouts.dashboard-layout')
 
 @section('title', 'Health & Social Services')
@@ -10,7 +7,7 @@
     <li class="nav-item">
         <a href="{{ route('dashboard.health') }}" class="nav-link"> {{-- Link back to BHW Dashboard --}}
             <i class="fas fa-home"></i>
-            <span>Dashboard</span>   
+            <span>Dashboard</span>    
         </a>
     </li>
     <li class="nav-item">
@@ -23,7 +20,7 @@
 @endsection
 
 @section('content')
-{{-- STYLES: Copied from captain-health-services.blade.php --}}
+{{-- STYLES --}}
 <style>
     /* Header styles */
     .header-section {
@@ -84,6 +81,7 @@
     .icon-yellow { background: #F59E0B; }
     .icon-red { background: #EF4444; }
     .icon-purple { background: #A855F7; }
+    .icon-green { background: #10B981; } /* For Category */
 
     /* Table Container styles */
     .table-container {
@@ -97,10 +95,13 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
+        flex-wrap: wrap; /* Added for responsiveness */
+        gap: 15px; /* Added for spacing */
     }
     .table-title {
         font-size: 1.25rem;
         font-weight: 600;
+        flex-shrink: 0; /* Prevents title from shrinking */
     }
     .table-search {
         width: 300px;
@@ -159,11 +160,6 @@
         .stats-grid {
             grid-template-columns: 1fr;
         }
-        .table-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 15px;
-        }
         .table-search {
             width: 100%;
         }
@@ -205,31 +201,90 @@
         <div class="stat-icon icon-red"><i class="fas fa-calendar-times"></i></div>
     </div>
 
-    {{-- 4. Pending Requests --}}
+    {{-- 4. Total Categories --}}
     <div class="stat-card">
         <div class="stat-info">
-            <h3>{{ number_format($stats['pending_requests'] ?? 0) }}</h3>
-            <p>Pending Requests</p>
+            <h3>{{ number_format($stats['total_categories'] ?? 0) }}</h3>
+            <p>Total Categories</p>
         </div>
-        <div class="stat-icon icon-purple"><i class="fas fa-folder-open"></i></div>
+        <div class="stat-icon icon-green"><i class="fas fa-tags"></i></div>
     </div>
 </div>
 
 <div class="table-container">
     <div class="table-header">
         <div class="table-title">Medicine Inventory</div>
-        <div class="d-flex gap-2">
-            <input type="text" class="form-control table-search" placeholder="Search medicine...">
-            
-            {{-- BHW-specific routes --}}
-            <a href="{{ route('health.medicine.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Medicine
+
+        <div class="d-flex gap-2 flex-grow-1 justify-content-end align-items-center flex-wrap">
+
+            <form action="{{ route('health.health-services') }}" method="GET" class="m-0">
+                @if($searchQuery)
+                    <input type="hidden" name="search" value="{{ $searchQuery }}">
+                @endif
+                
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="categoryDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="min-width: 180px; text-align: left;">
+                        {{ $selectedCategory ?? 'All Categories' }}
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="categoryDropdown">
+                        <li>
+                            <button type="submit" name="category" value="" class="dropdown-item {{ !$selectedCategory ? 'active' : '' }}">
+                                All Categories
+                            </button>
+                        </li>
+                        
+                        @foreach ($categories as $category)
+                            <li>
+                                <button type="submit" name="category" value="{{ $category }}" class="dropdown-item {{ $selectedCategory == $category ? 'active' : '' }}">
+                                    {{ $category }}
+                                </button>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </form>
+
+            <form action="{{ route('health.health-services') }}" method="GET" class="d-flex gap-2 m-0">
+                @if($selectedCategory)
+                    <input type="hidden" name="category" value="{{ $selectedCategory }}">
+                @endif
+
+                <input type="text" name="search" class="form-control" style="width: 250px;" placeholder="Search medicine..." value="{{ $searchQuery ?? '' }}">
+                
+                <button type="submit" class="btn btn-info text-white" title="Search">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+
+            <a href="{{ route('health.health-services') }}" class="btn btn-outline-secondary" title="Clear Filters">
+                <i class="fas fa-times"></i>
             </a>
-            <a href="{{ route('health.medicine.requests') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-tasks"></i> Manage Requests
-            </a>
+
+            <div class="ms-md-2 border-start-md ps-md-3">
+                <a href="{{ route('health.medicine.create') }}" class="btn btn-primary" title="Add Medicine">
+                    <i class="fas fa-plus"></i> Add
+                </a>
+                <a href="{{ route('health.medicine.requests') }}" class="btn btn-outline-secondary" title="Manage Requests">
+                    <i class="fas fa-tasks"></i> Requests
+                </a>
+            </div>
         </div>
     </div>
+
+    {{-- Alert for Success/Error Messages --}}
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
 
     <div class="table-wrapper">
         <table class="table">
@@ -237,6 +292,7 @@
                 <tr>
                     <th>Medicine Name</th>
                     <th>Brand</th>
+                    <th>Category</th> 
                     <th>Dosage</th>
                     <th>Quantity</th>
                     <th>Expiration Date</th>
@@ -249,21 +305,19 @@
                     <tr>
                         <td><strong>{{ $medicine->item_name }}</strong></td>
                         <td>{{ $medicine->brand_name ?? 'N/A' }}</td>
+                        <td>{{ $medicine->category ?? 'N/A' }}</td> 
                         <td>{{ $medicine->dosage }}</td>
                         <td>
-                            {{-- Style if low stock --}}
                             <span class="{{ $medicine->status === 'Low Stock' || $medicine->status === 'Out of Stock' ? 'text-danger fw-bold' : '' }}">
                                 {{ $medicine->quantity }}
                             </span>
                         </td>
                         <td>
-                            {{-- Style if expired --}}
                             <span class="{{ $medicine->status === 'Expired' ? 'text-danger fw-bold' : '' }}">
                                 {{ $medicine->expiration_date ? \Carbon\Carbon::parse($medicine->expiration_date)->format('M d, Y') : 'N/A' }}
                             </span>
                         </td>
                         <td>
-                            {{-- Status Badge --}}
                             @if ($medicine->status === 'In Stock')
                                 <span class="badge bg-success">{{ $medicine->status }}</span>
                             @elseif ($medicine->status === 'Low Stock')
@@ -275,24 +329,49 @@
                             @endif
                         </td>
                         <td>
-                            {{-- Placeholder buttons --}}
-                            <button class="action-btn view" title="View"><i class="fas fa-eye"></i></button>
-                            <button class="action-btn edit" title="Edit"><i class="fas fa-pen"></i></button>
-                            <button class="action-btn delete" title="Delete"><i class="fas fa-trash"></i></button>
+                            {{-- UPDATED ACTIONS --}}
+                            <a href="{{ route('health.medicine.show', $medicine) }}" class="action-btn view" title="View">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{{ route('health.medicine.edit', $medicine) }}" class="action-btn edit" title="Edit">
+                                <i class="fas fa-pen"></i>
+                            </a>
+                            
+                            {{-- Delete button must be a form --}}
+                            <form action="{{ route('health.medicine.destroy', $medicine) }}" method="POST" class="d-inline" 
+                                  onsubmit="return confirm('Are you sure you want to delete \'{{ $medicine->item_name }}\'? This action cannot be undone.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="action-btn delete" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center">No medicines found in the inventory.</td>
+                        <td colspan="8" class="text-center">
+                            @if ($searchQuery || $selectedCategory)
+                                No medicines found matching your filters.
+                            @else
+                                No medicines found in the inventory.
+                            @endif
+                        </td>
                     </tr>
-                @endforelse
+                @endempty
             </tbody>
         </table>
+    </div>
+
+    {{-- Pagination Links --}}
+    <div class="mt-3">
+        {{ $medicines->appends(request()->query())->links() }}
     </div>
 </div>
 
 @endsection
 
 @section('scripts')
-    {{-- You can add specific JS here if needed --}}
+    {{-- This page needs Bootstrap's JS for the dropdown to work. --}}
+    {{-- Ensure your dashboard-layout.blade.php includes it. --}}
 @endsection

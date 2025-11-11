@@ -19,12 +19,12 @@ class Household extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'household_name', // A descriptive name for the household (e.g., "Dela Cruz Family")
-        // 'household_number', // <-- REMOVED from fillable, will be auto-generated
-        'address', // Specific address like Block/Lot/Street
-        'purok', // Zone or Purok designation
-        'total_members', // Cached count of active members
-        'status', // e.g., 'complete', 'incomplete' - indicates data completeness
+        'household_name', 
+        // 'household_number', // Removed from fillable, auto-generated
+        'address', 
+        'purok', 
+        'total_members', 
+        'status', // e.g., 'complete', 'incomplete'
     ];
 
     /**
@@ -131,6 +131,25 @@ class Household extends Model
     public function updateTotalMembers()
     {
         $this->total_members = $this->activeResidents()->count();
+        $this->save();
+    }
+
+    /**
+     * ==========================================================
+     * NEW LOGIC: Update household status based on head
+     * ==========================================================
+     *
+     * Checks if an active 'Household Head' exists and updates
+     * the household's status to 'complete' or 'incomplete'.
+     */
+    public function updateHouseholdStatus()
+    {
+        // Check if there is at least one active resident with the status 'Household Head'
+        $hasActiveHead = $this->activeResidents()
+                              ->where('household_status', 'Household Head')
+                              ->exists();
+        
+        $this->status = $hasActiveHead ? 'complete' : 'incomplete';
         $this->save();
     }
 }

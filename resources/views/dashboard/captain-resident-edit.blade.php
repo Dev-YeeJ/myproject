@@ -5,6 +5,7 @@
 @section('title', 'Edit Resident - ' . $resident->first_name . ' ' . $resident->last_name)
 
 @section('nav-items')
+    {{-- (Nav items remain unchanged) --}}
     <li class="nav-item">
         <a href="{{ route('dashboard.captain') }}" class="nav-link">
             <i class="fas fa-home"></i>
@@ -69,7 +70,7 @@
 
 @section('content')
 <style>
-    /* Copied Styles from View Page */
+    /* (Styles remain unchanged, but theme color is green) */
     .details-container {
         max-width: 1000px;
         margin: 0 auto;
@@ -167,9 +168,9 @@
     .details-card {
         background: white;
         border-radius: 12px;
-        padding: 0; /* <<< MODIFICATION: Removed padding */
+        padding: 0; 
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        overflow: hidden; /* <<< MODIFICATION: Added overflow hidden */
+        overflow: hidden; 
     }
 
     .card-title {
@@ -182,8 +183,8 @@
         gap: 12px;
         padding-bottom: 15px;
         border-bottom: 2px solid #E5E7EB;
-        padding: 30px 30px 15px 30px; /* <<< MODIFICATION: Added padding back here */
-        margin-bottom: 0; /* <<< MODIFICATION: Removed margin */
+        padding: 30px 30px 15px 30px; 
+        margin-bottom: 0; 
     }
 
     .card-title i {
@@ -191,7 +192,6 @@
         font-size: 1.5rem;
     }
 
-    /* <<< MODIFICATION: Added card-content wrapper style */
     .card-content {
         padding: 30px;
     }
@@ -213,7 +213,6 @@
         color: #1E3A8A;
     }
 
-    /* Form Styles from Original Edit Page */
     .form-row {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -257,16 +256,39 @@
         border-radius: 8px;
         font-size: 0.95rem;
         transition: all 0.3s;
+        background: #F9FAFB;
+    }
+
+    /* {{-- NEW: Disabled state --}} */
+    .form-control:disabled {
+        background: #F3F4F6;
+        color: #9CA3AF;
+        cursor: not-allowed;
+    }
+
+    select.form-control {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1em;
+        padding-right: 2.5rem; 
     }
 
     .form-control:focus {
         outline: none;
         border-color: #10B981;
         box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        background: white;
     }
 
     .form-control.error {
         border-color: #EF4444;
+    }
+    .form-control.error:focus {
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
     }
 
     .error-message {
@@ -275,12 +297,12 @@
         margin-top: 5px;
     }
     
-    /* Special Checkbox styling for this layout */
     .checkbox-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
+        display: flex; 
+        flex-direction: column; 
+        gap: 15px; 
     }
+    
 
     .checkbox-group {
         display: flex;
@@ -295,7 +317,7 @@
         width: 18px;
         height: 18px;
         cursor: pointer;
-        accent-color: #10B981;
+        accent-color: #10B981; /* Green theme */
     }
 
     .checkbox-group label {
@@ -303,6 +325,16 @@
         cursor: pointer;
         font-weight: 500;
         color: #374151;
+    }
+    
+    /* {{-- NEW: Styling for conditional fields --}} */
+    .conditional-fields {
+        padding-left: 10px;
+        border-left: 3px solid #E5E7EB;
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
     }
     
 
@@ -376,7 +408,6 @@
                         <span>Personal Information</span>
                     </div>
 
-                    {{-- <<< MODIFICATION: Added card-content wrapper --}}
                     <div class="card-content">
                         <div class="form-row triple">
                             <div class="form-group">
@@ -458,7 +489,6 @@
                         <span>Household & Contact</span>
                     </div>
 
-                    {{-- <<< MODIFICATION: Added card-content wrapper --}}
                     <div class="card-content">
                         <div class="form-row">
                             <div class="form-group">
@@ -467,7 +497,7 @@
                                     <option value="">Select Household (Optional)</option>
                                     @foreach($households as $household)
                                         <option value="{{ $household->id }}" {{ old('household_id', $resident->household_id) == $household->id ? 'selected' : '' }}>
-                                            {{ $household->household_number }} - {{ $household->household_name }}
+                                            {{ $household->household_name }} ({{ $household->household_number }})
                                         </option>
                                     @endforeach
                                 </select>
@@ -519,18 +549,28 @@
             {{-- Right Column --}}
             <div>
                 <div class="details-card">
-                     <div class="card-title">
+                    <div class="card-title">
                         <i class="fas fa-briefcase"></i>
                         <span>Employment & Categories</span>
                     </div>
                     
-                    {{-- <<< MODIFICATION: Added card-content wrapper --}}
                     <div class="card-content">
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="occupation">Occupation</label>
                                 <input type="text" id="occupation" name="occupation" class="form-control" 
-                                       value="{{ old('occupation', $resident->occupation) }}" placeholder="e.g., Teacher, Nurse, Farmer">
+                                       value="{{ old('occupation', $resident->occupation) }}" placeholder="e.g., Teacher, Student, Farmer" list="occupation_list">
+                                <datalist id="occupation_list">
+                                    <option value="Student"></option>
+                                    <option value="Teacher"></option>
+                                    <option value="Nurse"></option>
+                                    <option value="Farmer"></option>
+                                    <option value="Engineer"></option>
+                                    <option value="Driver"></option>
+                                    <option value="Retired"></option>
+                                    <option value="Unemployed"></option>
+                                    <option value="Housewife"></option>
+                                </datalist>
                             </div>
 
                             <div class="form-group">
@@ -542,11 +582,23 @@
                         
                         <hr style="border: 0; border-top: 2px solid #E5E7EB; margin: 25px 0;">
                         
-                        <div class="checkbox-grid"> {{-- <<< MODIFICATION: Fixed typo from 'classs' --}}
+                        <div class="checkbox-grid">
                             <div class="checkbox-group">
                                 <input type="checkbox" id="is_registered_voter" name="is_registered_voter" value="1" 
                                        {{ old('is_registered_voter', $resident->is_registered_voter) ? 'checked' : '' }}>
                                 <label for="is_registered_voter">Registered Voter</label>
+                            </div>
+
+                            {{-- {{-- MODIFIED: Conditional Voter Fields --}} --}}
+                            <div id="voter_fields_wrapper" class="conditional-fields" style="display: {{ old('is_registered_voter', $resident->is_registered_voter) ? 'block' : 'none' }};">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="precinct_number" class="required">Precinct Number</label>
+                                    <input type="text" id="precinct_number" name="precinct_number" class="form-control @error('precinct_number') error @enderror" 
+                                           value="{{ old('precinct_number', $resident->precinct_number) }}" placeholder="e.g., 0021A">
+                                    @error('precinct_number')
+                                        <span class="error-message">{{ $message }}</span>
+                                    @enderror
+                                </div>
                             </div>
 
                             <div class="checkbox-group">
@@ -559,6 +611,26 @@
                                 <input type="checkbox" id="is_pwd" name="is_pwd" value="1" 
                                        {{ old('is_pwd', $resident->is_pwd) ? 'checked' : '' }}>
                                 <label for="is_pwd">PWD</label>
+                            </div>
+
+                            {{-- {{-- MODIFIED: Conditional PWD Fields --}} --}}
+                            <div id="pwd_fields_wrapper" class="conditional-fields" style="display: {{ old('is_pwd', $resident->is_pwd) ? 'block' : 'none' }};">
+                                <div class="form-group">
+                                    <label for="pwd_id_number" class="required">PWD ID Number</label>
+                                    <input type="text" id="pwd_id_number" name="pwd_id_number" class="form-control @error('pwd_id_number') error @enderror" 
+                                           value="{{ old('pwd_id_number', $resident->pwd_id_number) }}" placeholder="e.g., PWD-12345">
+                                    @error('pwd_id_number')
+                                        <span class="error-message">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="disability_type" class="required">Type of Disability</label>
+                                    <input type="text" id="disability_type" name="disability_type" class="form-control @error('disability_type') error @enderror" 
+                                           value="{{ old('disability_type', $resident->disability_type) }}" placeholder="e.g., Physical, Visual, Hearing">
+                                    @error('disability_type')
+                                        <span class="error-message">{{ $message }}</span>
+                                    @enderror
+                                </div>
                             </div>
 
                             <div class="checkbox-group">
@@ -574,5 +646,63 @@
         </div>
     </form>
 </div>
+
+{{-- {{-- NEW: JavaScript for conditional logic --}} --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Occupation Logic ---
+        const occupationInput = document.getElementById('occupation');
+        const incomeInput = document.getElementById('monthly_income');
+
+        function checkOccupation() {
+            if (occupationInput.value.trim().toLowerCase() === 'student') {
+                incomeInput.value = '';
+                incomeInput.disabled = true;
+                incomeInput.placeholder = 'N/A for Students';
+            } else {
+                incomeInput.disabled = false;
+                incomeInput.placeholder = '0.00';
+            }
+        }
+
+        // --- Voter Logic ---
+        const voterCheckbox = document.getElementById('is_registered_voter');
+        const voterWrapper = document.getElementById('voter_fields_wrapper');
+        const precinctInput = document.getElementById('precinct_number');
+
+        function checkVoter() {
+            if (voterCheckbox.checked) {
+                voterWrapper.style.display = 'block';
+            } else {
+                voterWrapper.style.display = 'none';
+                // Do not clear the value on edit, in case of misclick
+            }
+        }
+
+        // --- PWD Logic ---
+        const pwdCheckbox = document.getElementById('is_pwd');
+        const pwdWrapper = document.getElementById('pwd_fields_wrapper');
+        const pwdIdInput = document.getElementById('pwd_id_number');
+        const pwdTypeInput = document.getElementById('disability_type');
+
+        function checkPwd() {
+            if (pwdCheckbox.checked) {
+                pwdWrapper.style.display = 'block';
+            } else {
+                pwdWrapper.style.display = 'none';
+            }
+        }
+
+        // --- Event Listeners ---
+        occupationInput.addEventListener('input', checkOccupation);
+        voterCheckbox.addEventListener('change', checkVoter);
+        pwdCheckbox.addEventListener('change', checkPwd);
+
+        // --- Run on page load ---
+        checkOccupation();
+        // Note: The initial display for voter/pwd is set by inline style
+        // to handle validation errors and existing data
+    });
+</script>
 
 @endsection

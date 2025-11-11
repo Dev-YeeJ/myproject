@@ -5,6 +5,7 @@
 @section('title', 'Edit Household - ' . $household->household_name)
 
 @section('nav-items')
+    {{-- (Nav items remain unchanged) --}}
     <li class="nav-item">
         <a href="{{ route('dashboard.captain') }}" class="nav-link">
             <i class="fas fa-home"></i>
@@ -69,14 +70,14 @@
 
 @section('content')
 <style>
+    /* (Using the same green-themed styles from captain-household-create) */
     .details-container {
         max-width: 1000px;
         margin: 0 auto;
     }
 
     .details-header {
-        /* Green theme for 'Edit Household' */
-        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%); /* Green theme */
         color: white;
         padding: 30px 40px;
         border-radius: 12px;
@@ -155,7 +156,6 @@
         background: rgba(255,255,255,0.1);
     }
 
-
     .details-grid {
         display: grid;
         grid-template-columns: 2fr 1fr;
@@ -166,9 +166,9 @@
     .details-card {
         background: white;
         border-radius: 12px;
-        padding: 0; /* No padding on card */
+        padding: 0;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        overflow: hidden; /* Important for border-radius */
+        overflow: hidden;
     }
 
     .card-title {
@@ -178,7 +178,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 30px 30px 15px 30px; /* Padding only here */
+        padding: 30px 30px 15px 30px;
         border-bottom: 2px solid #E5E7EB;
         margin-bottom: 0; 
     }
@@ -189,9 +189,8 @@
     }
 
     .card-content {
-        padding: 30px; /* Padding for form content */
+        padding: 30px;
     }
-
 
     .back-link {
         display: inline-flex;
@@ -220,10 +219,6 @@
         grid-template-columns: 1fr;
     }
 
-    .form-row.triple {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    
     .form-row:last-child {
         margin-bottom: 0;
     }
@@ -258,7 +253,7 @@
         border-radius: 8px;
         font-size: 0.95rem;
         transition: all 0.3s;
-        background: #F9FAFB; /* Light bg */
+        background: #F9FAFB;
     }
     
     .form-control:disabled {
@@ -267,7 +262,6 @@
         cursor: not-allowed;
     }
     
-    /* Custom select arrow */
     select.form-control {
         -webkit-appearance: none;
         -moz-appearance: none;
@@ -289,9 +283,6 @@
     .form-control.error {
         border-color: #EF4444;
     }
-    .form-control.error:focus {
-        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-    }
 
     .error-message {
         color: #EF4444;
@@ -300,29 +291,21 @@
     }
 
     @media (max-width: 768px) {
-        .details-grid {
+        .details-grid, .form-row {
             grid-template-columns: 1fr;
         }
-
         .details-header {
             flex-direction: column;
             align-items: flex-start;
             gap: 20px;
         }
-
         .header-actions {
             width: 100%;
             flex-direction: column-reverse;
         }
-
         .btn-header {
             flex: 1;
             justify-content: center;
-        }
-
-        .form-row,
-        .form-row.triple {
-            grid-template-columns: 1fr;
         }
     }
 </style>
@@ -344,7 +327,7 @@
                 </div>
                 <div class="header-info">
                     <h1>Edit Household</h1>
-                    <p>Updating information for {{ $household->household_name }}</p>
+                    <p>Updating {{ $household->household_name }}</p>
                 </div>
             </div>
             <div class="header-actions">
@@ -373,17 +356,17 @@
                             <div class="form-group">
                                 <label for="household_name" class="required">Household Name</label>
                                 <input type="text" id="household_name" name="household_name" class="form-control @error('household_name') error @enderror" 
-                                       value="{{ old('household_name', $household->household_name) }}" required>
+                                       value="{{ old('household_name', $household->household_name) }}" placeholder="e.g., Dela Cruz Family" required>
                                 @error('household_name')
                                     <span class="error-message">{{ $message }}</span>
                                 @enderror
                             </div>
 
                             <div class="form-group">
-                                <label for="household_number">Generated Household Number</label>
+                                <label for="household_number">Household Number</label>
                                 <input type="text" id="household_number" class="form-control" 
                                        value="{{ $household->household_number }}" disabled>
-                                <small>This field is system-generated and cannot be edited.</small>
+                                <small>Household number cannot be changed.</small>
                             </div>
                         </div>
 
@@ -404,7 +387,7 @@
             {{-- Right Column --}}
             <div>
                 <div class="details-card">
-                     <div class="card-title">
+                    <div class="card-title">
                         <i class="fas fa-map-marker-alt"></i>
                         <span>Location & Status</span>
                     </div>
@@ -413,17 +396,15 @@
                         <div class="form-row single">
                             <div class="form-group">
                                 <label for="purok">Purok</label>
-                                {{-- === MODIFICATION: Purok Dropdown === --}}
                                 <select id="purok" name="purok" class="form-control @error('purok') error @enderror">
                                     <option value="">Select Purok (Optional)</option>
-                                    {{-- You should update this list to match your Barangay's puroks --}}
-                                    <option value="Purok 1" {{ (old('purok', $household->purok) == 'Purok 1') ? 'selected' : '' }}>Purok 1</option>
-                                    <option value="Purok 2" {{ (old('purok', $household->purok) == 'Purok 2') ? 'selected' : '' }}>Purok 2</option>
-                                    <option value="Purok 3" {{ (old('purok', $household->purok) == 'Purok 3') ? 'selected' : '' }}>Purok 3</option>
-                                    <option value="Purok 4" {{ (old('purok', $household->purok) == 'Purok 4') ? 'selected' : '' }}>Purok 4</option>
-                                    <option value="Purok 5" {{ (old('purok', $household->purok) == 'Purok 5') ? 'selected' : '' }}>Purok 5</option>
-                                    <option value="Purok 6" {{ (old('purok', $household->purok) == 'Purok 6') ? 'selected' : '' }}>Purok 6</option>
-                                    <option value="Purok 7" {{ (old('purok', $household->purok) == 'Purok 7') ? 'selected' : '' }}>Purok 7</option>
+                                    <option value="Purok 1" {{ old('purok', $household->purok) == 'Purok 1' ? 'selected' : '' }}>Purok 1</option>
+                                    <option value="Purok 2" {{ old('purok', $household->purok) == 'Purok 2' ? 'selected' : '' }}>Purok 2</option>
+                                    <option value="Purok 3" {{ old('purok', $household->purok) == 'Purok 3' ? 'selected' : '' }}>Purok 3</option>
+                                    <option value="Purok 4" {{ old('purok', $household->purok) == 'Purok 4' ? 'selected' : '' }}>Purok 4</option>
+                                    <option value="Purok 5" {{ old('purok', $household->purok) == 'Purok 5' ? 'selected' : '' }}>Purok 5</option>
+                                    <option value="Purok 6" {{ old('purok', $household->purok) == 'Purok 6' ? 'selected' : '' }}>Purok 6</option>
+                                    <option value="Purok 7" {{ old('purok', $household->purok) == 'Purok 7' ? 'selected' : '' }}>Purok 7</option>
                                 </select>
                                 @error('purok')
                                     <span class="error-message">{{ $message }}</span>
@@ -431,20 +412,16 @@
                             </div>
                         </div>
                         
+                        {{-- {{-- MODIFIED: Removed the "Data Status" field --}} --}}
                         <div class="form-row single">
                              <div class="form-group">
-                                <label for="status" class="required">Data Status</label>
-                                <select id="status" name="status" class="form-control @error('status') error @enderror" required>
-                                    <option value="">Select Status</option>
-                                    <option value="complete" {{ old('status', $household->status) == 'complete' ? 'selected' : '' }}>Complete</option>
-                                    <option value="incomplete" {{ old('status', $household->status) == 'incomplete' ? 'selected' : '' }}>Incomplete</option>
-                                </select>
-                                <small>Is the household's data complete or incomplete?</small>
-                                @error('status')
-                                    <span class="error-message">{{ $message }}</span>
-                                @enderror
+                                <label for="status">Data Status</label>
+                                <input type="text" id="status" class="form-control" 
+                                       value="{{ ucfirst($household->status) }}" disabled>
+                                <small>This status is automatically set to 'Complete' when a 'Household Head' is assigned.</small>
                             </div>
                         </div>
+                        
                     </div>
                 </div>
             </div>

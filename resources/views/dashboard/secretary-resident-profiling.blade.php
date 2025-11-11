@@ -406,6 +406,17 @@
         color: #4B5563;
     }
 
+    /* Added missing badges from Household view for consistency */
+    .badge-green {
+        background: #D1FAE5;
+        color: #065F46;
+    }
+    .badge-orange {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+
+
     .contact-info {
         display: flex;
         align-items: center;
@@ -429,6 +440,7 @@
         transition: all 0.3s;
         border: none;
         background: transparent;
+        color: #6B7280; /* Default color for icons */
     }
 
     .action-icon.view {
@@ -490,15 +502,13 @@
         padding: 20px;
         background: white;
         border-radius: 0 0 12px 12px;
-        box-shadow: 0 -2px 8px rgba(0,0,0,0.07);
+        /* Removed box-shadow to prevent double shadow on pagination */
     }
     
     .no-results-found { /* Generic for both empty tables */
         text-align: center;
         padding: 60px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        /* Removed background, radius, shadow - handled by table-container */
     }
     .no-results-found i {
         font-size: 3rem; 
@@ -521,19 +531,16 @@
         .stats-row {
             grid-template-columns: 1fr;
         }
-
         .total-registered {
             position: static;
             margin-top: 20px;
             text-align: left;
         }
-
         .directory-header, .filters-section {
             flex-direction: column;
             align-items: flex-start;
             gap: 15px;
         }
-
         .search-input,
         .filter-select {
             width: 100%;
@@ -551,13 +558,11 @@
         height: 100%;
         background: rgba(0, 0, 0, 0.5);
     }
-
     .modal.show {
         display: flex;
         align-items: center;
         justify-content: center;
     }
-
     .modal-content {
         background: white;
         padding: 30px;
@@ -565,14 +570,12 @@
         max-width: 400px;
         width: 90%;
     }
-
     .modal-header {
         display: flex;
         align-items: center;
         gap: 12px;
         margin-bottom: 20px;
     }
-
     .modal-icon {
         width: 48px;
         height: 48px;
@@ -584,25 +587,21 @@
         justify-content: center;
         font-size: 1.5rem;
     }
-
     .modal-title {
         font-size: 1.3rem;
         font-weight: 700;
         color: #1F2937;
     }
-
     .modal-body {
         margin-bottom: 25px;
         color: #6B7280;
         line-height: 1.6;
     }
-
     .modal-actions {
         display: flex;
         gap: 12px;
         justify-content: flex-end;
     }
-
     .btn-cancel {
         padding: 10px 20px;
         background: #F3F4F6;
@@ -612,11 +611,9 @@
         font-weight: 600;
         cursor: pointer;
     }
-
     .btn-cancel:hover {
         background: #E5E7EB;
     }
-
     .btn-confirm-delete {
         padding: 10px 20px;
         background: #EF4444;
@@ -626,7 +623,6 @@
         font-weight: 600;
         cursor: pointer;
     }
-
     .btn-confirm-delete:hover {
         background: #DC2626;
     }
@@ -793,19 +789,22 @@
                     <td>{{ $household->purok ?? 'N/A' }}</td>
                     <td>{{ $household->total_members }}</td>
                     <td>
-                        {{-- This assumes your household model has 'status' (e.g., complete, incomplete) --}}
-                        <span class="badge {{ $household->status === 'complete' ? 'badge-success' : 'badge-warning' }}">
+                        <span class="badge {{ $household->status === 'complete' ? 'badge-green' : 'badge-orange' }}">
                             {{ ucfirst($household->status) }}
                         </span>
                     </td>
                     <td>
                         <div class="action-icons">
                             {{-- UPDATED: Route points to secretary --}}
+                            <a href="{{ route('secretary.household.show', $household->id) }}" class="action-icon view" title="View Household Details">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {{-- UPDATED: Route points to secretary --}}
                             <a href="{{ route('secretary.household.edit', $household->id) }}" class="action-icon edit" title="Edit Household">
                                 <i class="fas fa-edit"></i>
                             </a>
                             {{-- UPDATED: Route points to secretary --}}
-                            <a href="{{ route('secretary.resident.create', ['household_id' => $household->id]) }}" class="action-icon view" title="Add Member">
+                            <a href="{{ route('secretary.resident.create', ['household_id' => $household->id]) }}" class="action-icon" style="color: #0d6efd;" title="Add Member">
                                 <i class="fas fa-user-plus"></i>
                             </a>
                             <button class="action-icon delete" title="Delete Household" onclick="showDeleteHouseholdModal({{ $household->id }}, '{{ $household->household_name ?? 'Household ' . $household->id }}')">
@@ -826,11 +825,12 @@
                 @endforelse
             </tbody>
         </table>
+        
+        <div class="pagination-container">
+            {{ $households->withQueryString()->links() }}
+        </div>
     </div>
     
-    <div class="pagination-container">
-        {{ $households->withQueryString()->links() }}
-    </div>
 
 @else
 
@@ -934,11 +934,12 @@
                 @endforelse
             </tbody>
         </table>
+        
+        <div class="pagination-container">
+            {{ $residents->withQueryString()->links() }}
+        </div>
     </div>
     
-    <div class="pagination-container">
-        {{ $residents->withQueryString()->links() }}
-    </div>
 
 @endif
 
@@ -998,8 +999,8 @@
     // --- Resident Delete Modal ---
     function showDeleteModal(residentId, residentName) {
         document.getElementById('residentName').textContent = residentName;
-        // UPDATED: Route points to secretary - Using ES5-compatible string concatenation
-        document.getElementById('deleteForm').action = '/secretary/resident/' + residentId;
+        // UPDATED: Route points to secretary
+        document.getElementById('deleteForm').action = `/secretary/resident/${residentId}`;
         document.getElementById('deleteModal').classList.add('show');
     }
 
@@ -1010,8 +1011,8 @@
     // --- Household Delete Modal ---
     function showDeleteHouseholdModal(householdId, householdName) {
         document.getElementById('householdName').textContent = householdName;
-        // UPDATED: Route points to secretary - Using ES5-compatible string concatenation
-        document.getElementById('deleteHouseholdForm').action = '/secretary/household/' + householdId;
+        // UPDATED: Route points to secretary
+        document.getElementById('deleteHouseholdForm').action = `/secretary/household/${householdId}`;
         document.getElementById('deleteHouseholdModal').classList.add('show');
     }
 

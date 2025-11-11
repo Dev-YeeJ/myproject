@@ -10,6 +10,7 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\DocumentTypeController;
 use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\SecretaryController;
+use App\Http\Controllers\ResidentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -170,7 +171,12 @@ Route::middleware('auth')->group(function () {
 
          Route::post('/secretary/household', [SecretaryController::class, 'storeHousehold'])
             ->name('secretary.household.store');
-            
+
+        Route::delete('/secretary/household/{id}', [SecretaryController::class, 'destroyHousehold'])
+            ->name('secretary.household.destroy')->where('id', '[0-9]+');
+
+        Route::get('/secretary/household/{id}/show', [SecretaryController::class, 'showHousehold'])
+            ->name('secretary.household.show');
 
 
         // Add other secretary routes here (e.g., documents, settings)
@@ -197,6 +203,16 @@ Route::middleware('auth')->group(function () {
         // "Manage Requests" button
         Route::get('/medicine/requests', [HealthController::class, 'showMedicineRequests'])
              ->name('health.medicine.requests');
+        
+        // READ (Single Item)
+    Route::get('/medicine/{medicine}', [HealthController::class, 'showMedicine'])->name('health.medicine.show');
+
+    // UPDATE
+    Route::get('/medicine/{medicine}/edit', [HealthController::class, 'editMedicine'])->name('health.medicine.edit');
+    Route::put('/medicine/{medicine}', [HealthController::class, 'updateMedicine'])->name('health.medicine.update');
+
+    // DELETE
+    Route::delete('/medicine/{medicine}', [HealthController::class, 'destroyMedicine'])->name('health.medicine.destroy');     
 
         // You will also need routes for edit, update, delete
         // Route::get('/medicine/{id}/edit', [HealthController::class, 'editMedicine'])->name('bhw.medicine.edit');
@@ -232,6 +248,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/resident', [DashboardController::class, 'resident'])
         ->name('dashboard.resident')
         ->middleware(CheckRole::class . ':resident');
+    // Resident Document Services Route
+    Route::get('/resident/document-services', [ResidentController::class, 'showDocumentServices'])
+        ->name('resident.document-services');
+    Route::get('/resident/document/create', [ResidentController::class, 'createDocumentRequest'])
+     ->name('resident.document.create');
+
+Route::post('/resident/document/store', [ResidentController::class, 'storeDocumentRequest'])
+     ->name('resident.document.store');
+
+Route::delete('/resident/document-request/{id}/cancel', [ResidentController::class, 'cancelDocumentRequest'])
+     ->name('resident.document.cancel');
 
     // --- SK Official Routes --- (Uncomment and adjust if needed)
     // Route::get('/dashboard/sk', [DashboardController::class, 'sk_official']) // Create sk_official method if needed

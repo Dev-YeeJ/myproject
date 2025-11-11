@@ -1,48 +1,50 @@
-{{-- resources/views/dashboard/health.blade.php --}}
-{{-- This is the MAIN dashboard for the BHW user role --}}
+{{-- resources/views/dashboards/health.blade.php --}}
 
 @extends('layouts.dashboard-layout')
 
-@section('title', 'BHW Dashboard')
+@section('title', 'Health Dashboard')
 
 @section('nav-items')
-    {{-- MODIFIED: Updated the link for Health & Social Services --}}
+    {{-- Active class on Dashboard link --}}
     <li class="nav-item">
-        <a href="{{ route('dashboard.health') }}" class="nav-link active"> {{-- Dashboard is active --}}
+        <a href="{{ route('dashboard.health') }}" class="nav-link active">
             <i class="fas fa-home"></i>
-            <span>Dashboard</span>   
+            <span>Dashboard</span>
         </a>
     </li>
+    
     <li class="nav-item">
-        {{-- MODIFIED: Points to the new health services page --}}
-        <a href="{{ route('health.health-services') }}" class="nav-link"> 
+        {{-- UPDATED: Link to the new health services route --}}
+        <a href="{{ route('health.health-services') }}" class="nav-link">
             <i class="fas fa-heart"></i>
             <span>Health & Social Services</span>
         </a>
     </li>
+    
+    
 @endsection
 
 @section('content')
-{{-- STYLES: Copied from captain.blade.php for reference --}}
+{{-- Add specific CSS for sizing based on captain-resident-profiling.blade.php and image reference --}}
 <style>
-    /* Header Sizing - Copied from captain.blade.php */
+    /* Header Sizing - Adjusted to match Resident Profiling & Household Mapping, and Dashboard headers */
     .header-section {
         background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
         color: white;
         border-radius: 16px;
         margin-bottom: 30px;
         position: relative;
-        padding: 40px; 
+        padding: 40px; /* Base padding */
     }
     .header-title {
-        font-size: 2rem; 
+        font-size: 2rem; /* Match profiling-title */
         font-weight: 700;
         margin-bottom: 8px;
     }
     .header-subtitle {
         opacity: 0.95;
         font-size: 1rem;
-        margin-bottom: 15px; 
+        margin-bottom: 15px; /* Space before barangay info if it exists */
     }
     .barangay-badge {
         display: inline-flex;
@@ -52,7 +54,9 @@
         padding: 8px 16px;
         border-radius: 8px;
         font-weight: 600;
+        /* margin-top: 15px; */ /* Removed redundant margin */
     }
+
     .barangay-badge .badge-icon {
         background: #FFA500;
         width: 32px;
@@ -63,55 +67,58 @@
         justify-content: center;
         font-weight: 700;
         color: white;
-        font-size: 0.9rem; 
+        font-size: 0.9rem; /* Match ph-icon */
     }
+    
     .header-date-block {
         position: absolute;
         top: 40px;
         right: 40px;
         text-align: right;
     }
+
     .header-date-label {
         font-size: 0.9rem;
         opacity: 0.9;
         margin-bottom: 4px;
     }
+
     .header-date-value {
-        font-size: 2.5rem; 
+        font-size: 2.5rem; /* Sized to match profiling 'total-registered-count' */
         font-weight: 700;
     }
 
-    /* Stats Grid Sizing - MODIFIED to 4 columns for BHW content */
+    /* Stats Grid Sizing - MODIFIED to 3 columns to match dashboard image */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr); /* BHW has 4 stats */
-        gap: 20px; 
-        margin-bottom: 30px; 
+        grid-template-columns: repeat(3, 1fr); /* Match dashboard image (3 columns) */
+        gap: 20px; /* Match profiling stats-row */
+        margin-bottom: 30px; /* Match profiling */
     }
     .stat-card {
         background: white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
-        border-radius: 12px; 
-        padding: 24px; 
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Match stat-box shadow */
+        border-radius: 12px; /* Match stat-box */
+        padding: 24px; /* Match stat-box */
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
     .stat-info h3 {
-        font-size: 2.5rem; 
-        font-weight: 700; 
-        margin: 0 0 8px 0; 
+        font-size: 2.5rem; /* Match stat-content h3 */
+        font-weight: 700; /* Match stat-content h3 */
+        margin: 0 0 8px 0; /* Match stat-content h3 */
     }
     .stat-info p {
-        color: #666; 
-        margin: 0 0 8px 0; 
-        font-size: 0.95rem; 
+        color: #666; /* Match stat-content p */
+        margin: 0 0 8px 0; /* Match stat-content p */
+        font-size: 0.95rem; /* Match stat-content p */
     }
     .stat-trend {
-        font-size: 0.85rem; 
+        font-size: 0.85rem; /* Match stat-badge */
         display: flex;
         align-items: center;
-        gap: 6px; 
+        gap: 6px; /* Match stat-badge */
         color: #666;
     }
     .stat-trend.text-success { color: #10B981; }
@@ -119,40 +126,51 @@
     .stat-trend.text-danger { color: #EF4444; }
 
     .stat-icon {
-        width: 70px; 
-        height: 70px; 
-        border-radius: 12px; 
+        width: 70px; /* Match stat-box-icon */
+        height: 70px; /* Match stat-box-icon */
+        border-radius: 12px; /* Match stat-box-icon */
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem; 
+        font-size: 2rem; /* Match stat-box-icon */
         color: white;
     }
+    /* Keep original icon colors */
     .icon-blue { background: #2B5CE6; }
     .icon-orange { background: #FFA500; }
     .icon-green { background: #10B981; }
     .icon-purple { background: #A855F7; }
     .icon-pink { background: #EC4899; }
 
-    /* --- Activities & Events (Copied from captain.blade.php) --- */
+    /* --- Recent Activities & Upcoming Events (Matching NEW screenshot) --- */
     .activities-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr); 
+        grid-template-columns: repeat(2, 1fr); /* Keep 2 columns */
         gap: 20px;
     }
-    /* This style applies to the <div> wrapper now, not .activity-card */
+    /* Removed background, shadow, border, overflow from activity-card */
+    .activity-card {
+        border-radius: 12px; /* Keep radius for header */
+        /* background: white; */ /* REMOVED */
+        /* box-shadow: 0 4px 12px rgba(0,0,0,0.05); */ /* REMOVED */
+        /* border: 1px solid #E5E7EB; */ /* REMOVED */
+        /* overflow: hidden; */ /* REMOVED */
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
     .activity-header {
-        padding: 20px 24px; 
+        padding: 20px 24px; /* More padding */
         display: flex;
         align-items: center;
-        gap: 12px; 
+        gap: 12px; /* Adjusted gap */
         color: white;
-        font-size: 1.1rem; 
+        font-size: 1.1rem; /* Adjusted font size */
         font-weight: 600;
         background: #2B5CE6; /* Solid Blue */
-        border-top-left-radius: 12px; 
-        border-top-right-radius: 12px; 
-        margin-bottom: 20px; 
+        border-top-left-radius: 12px; /* Apply radius to header top corners */
+        border-top-right-radius: 12px; /* Apply radius to header top corners */
+        margin-bottom: 20px; /* Add space below header */
     }
     .activity-header h3 {
         font-size: inherit;
@@ -160,35 +178,34 @@
         margin: 0;
     }
     .activity-header.orange {
-        background: linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%);
-    }
-    .activity-header.blue {
-        /* This selector from BHW HTML now matches the default blue */
-        background: #2B5CE6; 
+        background: linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%); /* Adjusted to lighter gold gradient */
     }
 
     .activity-content-wrapper {
+        /* flex-grow: 1; */ /* REMOVED */
         padding: 0 24px; /* Only horizontal padding */
     }
 
-    /* Activity Item (from BHW content) */
+    /* Recent Activity Item */
     .activity-item {
         display: flex;
-        align-items: flex-start; 
-        gap: 16px; 
-        padding: 12px 0; 
+        align-items: flex-start; /* Align items to the top */
+        gap: 16px; /* More gap */
+        padding: 12px 0; /* Reduced vertical padding */
         border-bottom: 1px solid #F3F4F6;
     }
+    /* Adjusted last/first item selectors for direct children of wrapper */
     .activity-content-wrapper > .activity-item:last-of-type {
-        border-bottom: none; 
+        border-bottom: none; /* No border for the last item */
         padding-bottom: 0;
     }
-     .activity-content-wrapper > .activity-item:first-of-type {
+    .activity-content-wrapper > .activity-item:first-of-type {
         padding-top: 0;
     }
+
     .activity-icon {
-        width: 10px; 
-        height: 10px; 
+        width: 10px; /* Match image */
+        height: 10px; /* Match image */
         border-radius: 50%;
         background: #FBBF24; /* Amber-400 */
         margin-top: 7px; /* Align with text */
@@ -197,49 +214,44 @@
     .activity-content .activity-title {
         font-weight: 600;
         color: #1F2937;
-        margin-bottom: 4px; 
-        font-size: 0.95rem; 
+        margin-bottom: 4px; /* Adjusted margin */
+        font-size: 0.95rem; /* Adjusted font size */
     }
     .activity-content .activity-meta {
         color: #6B7280;
-        font-size: 0.85rem; 
+        font-size: 0.85rem; /* Adjusted font size */
     }
 
-    /* Event Item (from BHW content) */
+    /* Upcoming Event Item */
     .event-item {
         display: flex;
         align-items: flex-start;
         gap: 16px;
-        padding: 12px 0; 
+        padding: 12px 0; /* Reduced vertical padding */
         border-bottom: 1px solid #F3F4F6;
     }
+    /* Adjusted last/first item selectors for direct children of wrapper */
     .activity-content-wrapper > .event-item:last-of-type {
-        border-bottom: none; 
+        border-bottom: none; /* No border for the last item */
         padding-bottom: 0;
     }
     .activity-content-wrapper > .event-item:first-of-type {
         padding-top: 0;
     }
-    /* Styling for the date block from BHW HTML */
-    .event-date {
-        width: 50px; /* Custom size for this date block */
-        flex-shrink: 0;
-        text-align: center;
-        background: #EFF6FF;
+    
+    .event-icon {
+        width: 40px;
+        height: 40px;
+        background: #EFF6FF; /* Light blue background */
+        color: #2B5CE6; /* Blue icon */
         border-radius: 8px;
-        padding: 6px 0;
-        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
     }
-    .event-day {
-        font-size: 1.25rem;
-        color: #2B5CE6;
-        line-height: 1;
-    }
-    .event-month {
-        font-size: 0.75rem;
-        color: #6B7280;
-        text-transform: uppercase;
-    }
+
     .event-details .event-title {
         font-weight: 600;
         color: #1F2937;
@@ -251,66 +263,66 @@
         font-size: 0.85rem;
     }
 
+    /* REMOVED .view-all-button-container */
 
-    /* Responsive Adjustments (Matching captain.blade.php) */
+
+    /* Responsive Adjustments (Matching profiling) */
     @media (max-width: 1200px) {
         .stats-grid {
             grid-template-columns: repeat(2, 1fr);
         }
     }
-     @media (max-width: 991px) { 
+    @media (max-width: 991px) { /* Adjusted breakpoint for better fit */
         .activities-grid {
-            grid-template-columns: 1fr; 
+            grid-template-columns: 1fr; /* Stack activities on medium screens */
         }
-        /* Add margin to the wrapper div when stacked */
-        .activities-grid > div { 
-             margin-bottom: 20px;
+        .activity-card {
+            margin-bottom: 20px; /* Add space between stacked cards */
         }
-         .activities-grid > div:last-of-type {
-             margin-bottom: 0;
-         }
+        .activities-grid > .activity-card:last-of-type {
+            margin-bottom: 0;
+        }
     }
 
     @media (max-width: 768px) {
         .header-section {
-            padding: 30px; 
+            padding: 30px; /* Adjust header padding for smaller screens */
         }
         .header-date-block {
-             position: static;
-             margin-top: 20px;
-             text-align: left;
+            position: static;
+            margin-top: 20px;
+            text-align: left;
         }
         .header-date-value {
-             font-size: 2rem; /* Adjusted size */
-        }
-        .header-date-label {
-            font-size: 0.85rem;
+            font-size: 1.25rem;
         }
         .stats-grid {
             grid-template-columns: 1fr;
         }
     }
+
 </style>
 
-{{-- CONTENT: HTML from BHW dashboard, with structure modified to match styles --}}
-<main class="main-content">
     <div class="header-section">
-        <div class="header-title">Health & Wellness</div>
-        <div class="header-subtitle">Health Programs & Community Services</div>
-        
-        {{-- REPLACED: .date-badge with .header-date-block for styling --}}
+        <div class="header-title">Captain Dashboard</div>
+        <div class="header-subtitle">Welcome to the Integrated Barangay Management Information System</div>
+        <div class="barangay-badge">
+            <span class="badge-icon">PH</span>
+            <span>Barangay Calbueg, Malasiqui, Pangasinan</span>
+        </div>
         <div class="header-date-block">
             <div class="header-date-label">Current Date</div>
             <div class="header-date-value">{{ now()->format('m/d/Y') }}</div>
         </div>
     </div>
 
+    {{-- Stats Grid (3 Columns) --}}
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-info">
                 <h3>{{ number_format($stats['health_programs']) }}</h3>
                 <p>Health Programs</p>
-                <div class="stat-trend text-primary"> {{-- Added text-primary --}}
+                <div class="stat-trend text-primary">
                     <i class="fas fa-heartbeat"></i>
                     <span>{{ $stats['ongoing_programs'] }} ongoing</span>
                 </div>
@@ -320,11 +332,13 @@
             </div>
         </div>
 
-        <div class="stat-card">
+
+        {{-- 2. Monthly Budget --}}
+         <div class="stat-card">
             <div class="stat-info">
                 <h3>{{ number_format($stats['registered_residents']) }}</h3>
                 <p>Total Residents</p>
-                 <div class="stat-trend"> {{-- Added trend line for consistency --}}
+                 <div class="stat-trend">
                     <i class="fas fa-users"></i>
                     <span>In record</span>
                 </div>
@@ -334,11 +348,13 @@
             </div>
         </div>
 
-        <div class="stat-card">
+
+        {{-- 3. Pending Documents --}}
+         <div class="stat-card">
             <div class="stat-info">
-                <h3>{{ $stats['beneficiaries_served'] ?? 245 }}</h3> {{-- Added variable --}}
+                <h3>{{ number_format($stats['beneficiaries_served']) }}</h3>
                 <p>Beneficiaries Served</p>
-                <div class="stat-trend text-success"> {{-- Added text-success --}}
+                <div class="stat-trend text-success">
                     <i class="fas fa-arrow-up"></i>
                     <span>This month</span>
                 </div>
@@ -348,11 +364,12 @@
             </div>
         </div>
 
-        <div class="stat-card">
+        {{-- 4. Active Projects --}}
+       <div class="stat-card">
             <div class="stat-info">
-                <h3>{{ $stats['scheduled_activities'] ?? 12 }}</h3> {{-- Added variable --}}
+                <h3>{{ number_format($stats['scheduled_activities']) }}</h3>
                 <p>Scheduled Activities</p>
-                <div class="stat-trend"> {{-- Added trend line for consistency --}}
+                <div class="stat-trend">
                     <i class="fas fa-calendar-alt"></i>
                     <span>Upcoming</span>
                 </div>
@@ -361,80 +378,133 @@
                 <i class="fas fa-calendar-alt"></i>
             </div>
         </div>
+
+        {{-- 5. Recent Incidents --}}
+        <div class="stat-card">
+            <div class="stat-info">
+                <h3>{{ number_format($stats['active_households']) }}</h3>
+                <p>Total Households</p>
+                 <div class="stat-trend">
+                    <i class="fas fa-house-user"></i>
+                    <span>In record</span>
+                </div>
+            </div>
+            <div class="stat-icon icon-purple">
+                <i class="fas fa-house-user"></i>
+            </div>
+        </div>
+
+
+        {{-- 6. Health Programs --}}
+        <div class="stat-card">
+            <div class="stat-info">
+                <h3>{{ number_format($stats['completed_programs']) }}</h3>
+                <p>Completed Programs</p>
+                 <div class="stat-trend text-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Finished</span>
+                </div>
+            </div>
+            <div class="stat-icon icon-green">
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
     </div>
 
-    <div class="activities-grid"> {{-- Corrected class from 'classs' --}}
-        
-        {{-- MODIFIED: Added <div> wrapper and .activity-content-wrapper --}}
+
+    {{-- UPDATED ACTIVITIES/EVENTS GRID --}}
+    <div class="activities-grid">
+        {{-- Removed outer card div, applying styles to header/content separately --}}
         <div>
-            <div class="activity-header blue">
-                <i class="fas fa-clinic-medical"></i>
-                <h3>Ongoing Programs</h3>
+            <div class="activity-header"> {{-- Blue header --}}
+                <i class="fas fa-list"></i>
+                <h3>Recent Activities</h3>
             </div>
             <div class="activity-content-wrapper">
+                {{-- Placeholder content - Replace with dynamic data --}}
                 <div class="activity-item">
                     <div class="activity-icon"></div>
                     <div class="activity-content">
-                        <div class="activity-title">COVID-19 Vaccination - 320/500</div>
-                        <div class="activity-meta">64% completion rate</div>
+                        <div class="activity-title">New resident registered</div>
+                        <div class="activity-meta">by Secretary Maria • 2 hours ago</div>
                     </div>
                 </div>
                 <div class="activity-item">
                     <div class="activity-icon"></div>
                     <div class="activity-content">
-                        <div class="activity-title">Nutrition Program - 145/150</div>
-                        <div class="activity-meta">96% completion rate</div>
+                        <div class="activity-title">Barangay clearance issued</div>
+                        <div class="activity-meta">by Secretary Maria • 3 hours ago</div>
                     </div>
                 </div>
                 <div class="activity-item">
                     <div class="activity-icon"></div>
                     <div class="activity-content">
-                        <div class="activity-title">Blood Pressure Monitoring</div>
-                        <div class="activity-meta">Every Tuesday & Thursday</div>
+                        <div class="activity-title">Incident report filed</div>
+                        <div class="activity-meta">by Tanod Juan • 5 hours ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon"></div>
+                    <div class="activity-content">
+                        <div class="activity-title">Project milestone completed</div>
+                        <div class="activity-meta">by Kagawad Pedro • 1 day ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon"></div>
+                    <div class="activity-content">
+                        <div class="activity-title">Health assistance approved</div>
+                        <div class="activity-meta">by Health Worker Ana • 1 day ago</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- MODIFIED: Added <div> wrapper and .activity-content-wrapper --}}
+        {{-- Removed outer card div, applying styles to header/content separately --}}
         <div>
-            <div class="activity-header orange">
-                <i class="fas fa-calendar-check"></i>
-                <h3>Scheduled Missions</h3>
+            <div class="activity-header orange"> {{-- Orange header --}}
+                <i class="fas fa-calendar-alt"></i>
+                <h3>Upcoming Events</h3>
             </div>
             <div class="activity-content-wrapper">
+                {{-- Placeholder content - Replace with dynamic data --}}
                 <div class="event-item">
-                    <div class="event-date">
-                        <div class="event-day">20</div>
-                        <div class="event-month">DEC</div>
+                    <div class="event-icon">
+                        <i class="fas fa-calendar-alt"></i>
                     </div>
                     <div class="event-details">
-                        <div class="event-title">Medical Mission</div>
-                        <div class="event-time">8:00 AM at Barangay Hall</div>
+                        <div class="event-title">Monthly Barangay Assembly</div>
+                        <div class="event-time">Dec 15, 2024 at 2:00 PM</div>
                     </div>
                 </div>
                 <div class="event-item">
-                    <div class="event-date">
-                        <div class="event-day">28</div>
-                        <div class="event-month">DEC</div>
+                    <div class="event-icon">
+                        <i class="fas fa-calendar-alt"></i>
                     </div>
                     <div class="event-details">
-                        <div class="event-title">Dental Clinic</div>
-                        <div class="event-time">10:00 AM</div>
+                        <div class="event-title">SK Sports Festival</div>
+                        <div class="event-time">Dec 20, 2024 at 8:00 AM</div>
                     </div>
                 </div>
                 <div class="event-item">
-                    <div class="event-date">
-                        <div class="event-day">15</div>
-                        <div class="event-month">JAN</div>
+                    <div class="event-icon">
+                        <i class="fas fa-calendar-alt"></i>
                     </div>
                     <div class="event-details">
-                        <div class="event-title">Health Awareness Drive</div>
-                        <div class="event-time">2:00 PM</div>
+                        <div class="event-title">Health Check-up Program</div>
+                        <div class="event-time">Dec 22, 2024 at 9:00 AM</div>
+                    </div>
+                </div>
+                <div class="event-item">
+                    <div class="event-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="event-details">
+                        <div class="event-title">Year-end Financial Review</div>
+                        <div class="event-time">Dec 28, 2024 at 10:00 AM</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</main>
 @endsection

@@ -5,7 +5,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB; // <-- Added this line
+use Illuminate\Support\Facades\DB; 
 
 class Resident extends Model
 {
@@ -22,22 +22,25 @@ class Resident extends Model
         'last_name',
         'suffix',
         'date_of_birth',
-        'age', // This should ideally be calculated, but storing it simplifies queries
+        'age', 
         'gender',
         'civil_status',
-        'household_id', // Foreign key linking to households table
-        'household_status', // Role within the household (Head, Spouse, Child, Member)
-        'address', // Resident's specific address (might be same as household)
+        'household_id', 
+        'household_status', 
+        'address', 
         'contact_number',
         'email',
         'occupation',
         'monthly_income',
         'is_registered_voter',
+        'precinct_number', // <-- ADDED
         'is_indigenous',
-        'is_pwd', // Person with Disability
-        'is_senior_citizen', // Calculated based on age
-        'is_4ps', // Pantawid Pamilyang Pilipino Program beneficiary
-        'is_active', // For soft deletes
+        'is_pwd', 
+        'pwd_id_number', // <-- ADDED
+        'disability_type', // <-- ADDED
+        'is_senior_citizen', 
+        'is_4ps', 
+        'is_active', 
     ];
 
     /**
@@ -173,13 +176,15 @@ class Resident extends Model
                 $searchTerm = "%{$search}%";
                 // Search concatenated full name
                 $q->where(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', $searchTerm)
-                  ->orWhere('first_name', 'like', $searchTerm)
-                  ->orWhere('last_name', 'like', $searchTerm)
-                  ->orWhere('contact_number', 'like', $searchTerm)
-                  ->orWhere('email', 'like', $searchTerm);
+                    ->orWhere('first_name', 'like', $searchTerm)
+                    ->orWhere('last_name', 'like', $searchTerm)
+                    ->orWhere('contact_number', 'like', $searchTerm)
+                    ->orWhere('email', 'like', $searchTerm)
+                    // ADDED: Search by new ID numbers
+                    ->orWhere('precinct_number', 'like', $searchTerm)
+                    ->orWhere('pwd_id_number', 'like', $searchTerm);
             });
         }
         return $query; // No filter if search is empty
     }
 }
-

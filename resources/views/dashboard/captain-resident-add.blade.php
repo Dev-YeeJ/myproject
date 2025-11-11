@@ -5,6 +5,7 @@
 @section('title', 'Add New Resident')
 
 @section('nav-items')
+    {{-- (Nav items remain unchanged) --}}
     <li class="nav-item">
         <a href="{{ route('dashboard.captain') }}" class="nav-link">
             <i class="fas fa-home"></i>
@@ -31,8 +32,8 @@
     </li>
     <li class="nav-item">
         <a href="{{ route('captain.health-services') }}" class="nav-link">
-             <i class="fas fa-heart"></i>
-             <span style="white-space: nowrap;">Health & Social Services</span>
+            <i class="fas fa-heart"></i>
+            <span style="white-space: nowrap;">Health & Social Services</span>
         </a>
     </li>
     <li class="nav-item">
@@ -69,6 +70,7 @@
 
 @section('content')
 <style>
+    /* (Styles remain unchanged) */
     .details-container {
         max-width: 1000px;
         margin: 0 auto;
@@ -276,6 +278,13 @@
         background: white;
     }
 
+    /* {{-- NEW: Disabled state --}} */
+    .form-control:disabled {
+        background: #F3F4F6;
+        color: #9CA3AF;
+        cursor: not-allowed;
+    }
+
     .form-control.error {
         border-color: #EF4444;
     }
@@ -289,13 +298,11 @@
         margin-top: 5px;
     }
     
-    /* === CSS FIX HERE === */
     .checkbox-grid {
-        display: flex; /* Changed from grid */
-        flex-direction: column; /* Stack items vertically */
-        gap: 15px; /* Keep the gap */
+        display: flex; 
+        flex-direction: column; 
+        gap: 15px; 
     }
-    /* === END OF FIX === */
 
     .checkbox-group {
         display: flex;
@@ -320,6 +327,15 @@
         color: #374151;
     }
     
+    /* {{-- NEW: Styling for conditional fields --}} */
+    .conditional-fields {
+        padding-left: 10px;
+        border-left: 3px solid #E5E7EB;
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
 
     @media (max-width: 768px) {
         .details-grid {
@@ -391,6 +407,7 @@
                     </div>
 
                     <div class="card-content">
+                        {{-- (Fields: First, Middle, Last Name) --}}
                         <div class="form-row triple">
                             <div class="form-group">
                                 <label for="first_name" class="required">First Name</label>
@@ -417,6 +434,7 @@
                             </div>
                         </div>
 
+                        {{-- (Fields: Suffix, DOB) --}}
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="suffix">Suffix</label>
@@ -434,6 +452,7 @@
                             </div>
                         </div>
 
+                        {{-- (Fields: Gender, Civil Status) --}}
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="gender" class="required">Gender</label>
@@ -472,6 +491,7 @@
                     </div>
 
                     <div class="card-content">
+                        {{-- (Fields: Household, Household Status) --}}
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="household_id">Household</label>
@@ -492,7 +512,7 @@
                                     <option value="Household Head" {{ old('household_status') == 'Household Head' ? 'selected' : '' }}>Household Head</option>
                                     <option value="Spouse" {{ old('household_status') == 'Spouse' ? 'selected' : '' }}>Spouse</option>
                                     <option value="Child" {{ old('household_status') == 'Child' ? 'selected' : '' }}>Child</option>
-                                    <option value="Member" {{ (old('household_status') ?? 'Member') == 'Member' ? 'selected' : '' }}>Member</option> {{-- Default to Member --}}
+                                    <option value="Member" {{ (old('household_status') ?? 'Member') == 'Member' ? 'selected' : '' }}>Member</option>
                                 </select>
                                 @error('household_status')
                                     <span class="error-message">{{ $message }}</span>
@@ -500,6 +520,7 @@
                             </div>
                         </div>
 
+                        {{-- (Fields: Address, Contact, Email) --}}
                         <div class="form-row single">
                             <div class="form-group">
                                 <label for="address" class="required">Address</label>
@@ -531,7 +552,7 @@
             {{-- Right Column --}}
             <div>
                 <div class="details-card">
-                     <div class="card-title">
+                    <div class="card-title">
                         <i class="fas fa-briefcase"></i>
                         <span>Employment & Categories</span>
                     </div>
@@ -540,8 +561,20 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="occupation">Occupation</label>
+                              
                                 <input type="text" id="occupation" name="occupation" class="form-control" 
-                                       value="{{ old('occupation') }}" placeholder="e.g., Teacher, Nurse, Farmer">
+                                       value="{{ old('occupation') }}" placeholder="e.g., Teacher, Student, Farmer" list="occupation_list">
+                                <datalist id="occupation_list">
+                                    <option value="Student"></option>
+                                    <option value="Teacher"></option>
+                                    <option value="Nurse"></option>
+                                    <option value="Farmer"></option>
+                                    <option value="Engineer"></option>
+                                    <option value="Driver"></option>
+                                    <option value="Retired"></option>
+                                    <option value="Unemployed"></option>
+                                    <option value="Housewife"></option>
+                                </datalist>
                             </div>
 
                             <div class="form-group">
@@ -560,6 +593,18 @@
                                 <label for="is_registered_voter">Registered Voter</label>
                             </div>
 
+                         
+                            <div id="voter_fields_wrapper" class="conditional-fields" style="display: {{ old('is_registered_voter') ? 'block' : 'none' }};">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="precinct_number" class="required">Precinct Number</label>
+                                    <input type="text" id="precinct_number" name="precinct_number" class="form-control @error('precinct_number') error @enderror" 
+                                           value="{{ old('precinct_number') }}" placeholder="e.g., 0021A">
+                                    @error('precinct_number')
+                                        <span class="error-message">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
                             <div class="checkbox-group">
                                 <input type="checkbox" id="is_indigenous" name="is_indigenous" value="1" 
                                        {{ old('is_indigenous') ? 'checked' : '' }}>
@@ -570,6 +615,26 @@
                                 <input type="checkbox" id="is_pwd" name="is_pwd" value="1" 
                                        {{ old('is_pwd') ? 'checked' : '' }}>
                                 <label for="is_pwd">PWD</label>
+                            </div>
+
+                            
+                            <div id="pwd_fields_wrapper" class="conditional-fields" style="display: {{ old('is_pwd') ? 'block' : 'none' }};">
+                                <div class="form-group">
+                                    <label for="pwd_id_number" class="required">PWD ID Number</label>
+                                    <input type="text" id="pwd_id_number" name="pwd_id_number" class="form-control @error('pwd_id_number') error @enderror" 
+                                           value="{{ old('pwd_id_number') }}" placeholder="e.g., PWD-12345">
+                                    @error('pwd_id_number')
+                                        <span class="error-message">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="disability_type" class="required">Type of Disability</label>
+                                    <input type="text" id="disability_type" name="disability_type" class="form-control @error('disability_type') error @enderror" 
+                                           value="{{ old('disability_type') }}" placeholder="e.g., Physical, Visual, Hearing">
+                                    @error('disability_type')
+                                        <span class="error-message">{{ $message }}</span>
+                                    @enderror
+                                </div>
                             </div>
 
                             <div class="checkbox-group">
@@ -585,5 +650,65 @@
         </div>
     </form>
 </div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Occupation Logic ---
+        const occupationInput = document.getElementById('occupation');
+        const incomeInput = document.getElementById('monthly_income');
+
+        function checkOccupation() {
+            if (occupationInput.value.trim().toLowerCase() === 'student') {
+                incomeInput.value = '';
+                incomeInput.disabled = true;
+                incomeInput.placeholder = 'N/A for Students';
+            } else {
+                incomeInput.disabled = false;
+                incomeInput.placeholder = '0.00';
+            }
+        }
+
+        // --- Voter Logic ---
+        const voterCheckbox = document.getElementById('is_registered_voter');
+        const voterWrapper = document.getElementById('voter_fields_wrapper');
+        const precinctInput = document.getElementById('precinct_number');
+
+        function checkVoter() {
+            if (voterCheckbox.checked) {
+                voterWrapper.style.display = 'block';
+            } else {
+                voterWrapper.style.display = 'none';
+                precinctInput.value = '';
+            }
+        }
+
+        // --- PWD Logic ---
+        const pwdCheckbox = document.getElementById('is_pwd');
+        const pwdWrapper = document.getElementById('pwd_fields_wrapper');
+        const pwdIdInput = document.getElementById('pwd_id_number');
+        const pwdTypeInput = document.getElementById('disability_type');
+
+        function checkPwd() {
+            if (pwdCheckbox.checked) {
+                pwdWrapper.style.display = 'block';
+            } else {
+                pwdWrapper.style.display = 'none';
+                pwdIdInput.value = '';
+                pwdTypeInput.value = '';
+            }
+        }
+
+        // --- Event Listeners ---
+        occupationInput.addEventListener('input', checkOccupation);
+        voterCheckbox.addEventListener('change', checkVoter);
+        pwdCheckbox.addEventListener('change', checkPwd);
+
+        // --- Run on page load ---
+        checkOccupation();
+        checkVoter();
+        checkPwd();
+    });
+</script>
 
 @endsection

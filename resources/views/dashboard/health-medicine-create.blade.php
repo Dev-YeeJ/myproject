@@ -1,11 +1,9 @@
-{{-- resources/views/dashboard/captain-medicine-create.blade.php --}}
-
 @extends('layouts.dashboard-layout')
 
 @section('title', 'Add New Medicine')
 
 @section('nav-items')
-    {{-- Navigation items for Captain Dashboard --}}
+    {{-- Navigation items for BHW Dashboard --}}
     <li class="nav-item">
         <a href="{{ route('dashboard.health') }}" class="nav-link">
             <i class="fas fa-home"></i>
@@ -19,7 +17,7 @@
             <i class="fas fa-heart"></i>
             <span>Health & Social Services</span>
         </a>
-   
+    </li>
     
 @endsection
 
@@ -66,6 +64,7 @@
         </div>
     @endif
 
+    {{-- This form correctly posts to the 'health.medicine.store' route --}}
     <form action="{{ route('health.medicine.store') }}" method="POST">
         @csrf
         
@@ -80,11 +79,30 @@
                 <input type="text" class="form-control" id="brand_name" name="brand_name" value="{{ old('brand_name') }}" placeholder="e.g., Biogesic">
             </div>
 
-            <div class="col-md-4 mb-3">
+            {{-- NEW: Category Dropdown --}}
+            <div class="col-md-6 mb-3">
+                <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
+                <select class="form-select" id="category" name="category" required>
+                    <option value="" disabled {{ old('category') ? '' : 'selected' }}>Select a category</option>
+                    <option value="Pain Relief/Fever" {{ old('category') == 'Pain Relief/Fever' ? 'selected' : '' }}>Pain Relief/Fever</option>
+                    <option value="Antibiotic" {{ old('category') == 'Antibiotic' ? 'selected' : '' }}>Antibiotic</option>
+                    <option value="Allergy" {{ old('category') == 'Allergy' ? 'selected' : '' }}>Allergy</option>
+                    <option value="Asthma" {{ old('category') == 'Asthma' ? 'selected' : '' }}>Asthma</option>
+                    <option value="Cold & Cough" {{ old('category') == 'Cold & Cough' ? 'selected' : '' }}>Cold & Cough</option>
+                    <option value="Vitamins & Supplements" {{ old('category') == 'Vitamins & Supplements' ? 'selected' : '' }}>Vitamins & Supplements</option>
+                    <option value="Digestive Health" {{ old('category') == 'Digestive Health' ? 'selected' : '' }}>Digestive Health</option>
+                    <option value="First Aid" {{ old('category') == 'First Aid' ? 'selected' : '' }}>First Aid</option>
+                    <option value="Other" {{ old('category') == 'Other' ? 'selected' : '' }}>Other</option>
+                </select>
+            </div>
+
+            {{-- UPDATED: Changed from col-md-4 to col-md-6 --}}
+            <div class="col-md-6 mb-3">
                 <label for="dosage" class="form-label">Dosage <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="dosage" name="dosage" value="{{ old('dosage') }}" placeholder="e.g., 500mg" required>
             </div>
 
+            {{-- UPDATED: Now on a new row --}}
             <div class="col-md-4 mb-3">
                 <label for="quantity" class="form-label">Quantity (pcs) <span class="text-danger">*</span></label>
                 <input type="number" class="form-control" id="quantity" name="quantity" value="{{ old('quantity', 0) }}" min="0" required>
@@ -95,15 +113,17 @@
                 <input type="date" class="form-control" id="expiration_date" name="expiration_date" value="{{ old('expiration_date') }}" required>
             </div>
             
-            <div class="col-md-12 mb-3">
-                <label for="low_stock_threshold" class="form-label">Low Stock Alert Level <span class="text-danger">*</span></label>
+            {{-- UPDATED: Changed from col-md-12 to col-md-4 and shortened text --}}
+            <div class="col-md-4 mb-3">
+                <label for="low_stock_threshold" class="form-label">Low Stock Alert <span class="text-danger">*</span></label>
                 <input type="number" class="form-control" id="low_stock_threshold" name="low_stock_threshold" value="{{ old('low_stock_threshold', 10) }}" min="0" required>
-                <small class="form-text text-muted">Show "Low Stock" warning when quantity falls below this number.</small>
+                <small class="form-text text-muted">Warn when qty is below this.</small>
             </div>
         </div>
 
         <div class="form-footer">
-            <a href="{{ route('captain.health-services') }}" class="btn btn-outline-secondary">Cancel</a>
+            {{-- FIXED: This route now correctly points to the BHW's page --}}
+            <a href="{{ route('health.health-services') }}" class="btn btn-outline-secondary">Cancel</a>
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save"></i> Save Medicine
             </button>

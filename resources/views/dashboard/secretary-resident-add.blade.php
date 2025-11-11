@@ -1,9 +1,11 @@
+{{-- resources/views/dashboards/secretary-resident-add.blade.php --}}
+
 @extends('layouts.dashboard-layout')
 
 @section('title', 'Add New Resident')
 
-{{-- THIS IS THE SECRETARY'S NAVIGATION --}}
 @section('nav-items')
+    {{-- THIS IS THE SECRETARY'S NAVIGATION --}}
     <li class="nav-item">
         <a href="{{ route('dashboard.secretary') }}" class="nav-link">
             <i class="fas fa-home"></i>
@@ -17,19 +19,19 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="far fa-file-alt"></i>
+        <a href="#" class="nav-link"> {{-- Add route later --}}
+            <i class="fas fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
+        <a href="#" class="nav-link"> {{-- Add route later --}}
             <i class="fas fa-search"></i>
             <span>Search Residents</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
+        <a href="#" class="nav-link"> {{-- Add route later --}}
             <i class="fas fa-cog"></i>
             <span>Settings</span>
         </a>
@@ -38,71 +40,153 @@
 
 @section('content')
 <style>
-    .form-container {
-        background: white;
-        border-radius: 12px;
-        padding: 40px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        margin: 0; 
+    /* (Styles remain unchanged) */
+    .details-container {
+        max-width: 1000px;
+        margin: 0 auto;
     }
 
-    .form-header {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 2px solid #F3F4F6; 
-    }
-
-    .form-header-icon {
-        width: 60px;
-        height: 60px;
+    .details-header {
+        /* Blue theme for 'Add' */
         background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
         color: white;
+        padding: 30px 40px;
         border-radius: 12px;
+        margin-bottom: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.8rem;
-        flex-shrink: 0;
+        font-size: 2.5rem;
+        border: 3px solid rgba(255, 255, 255, 0.3);
     }
 
-    .form-header-text h2 {
+    .header-info h1 {
         font-size: 1.8rem;
         font-weight: 700;
-        color: #1F2937;
-        margin: 0 0 5px 0;
+        margin: 0 0 8px 0;
     }
 
-    .form-header-text p {
-        color: #6B7280;
+    .header-info p {
         margin: 0;
-        font-size: 1rem; 
+        opacity: 0.9;
     }
 
-    .form-section {
-        margin-bottom: 35px;
+    .header-actions {
+        display: flex;
+        gap: 12px;
     }
 
-    .section-title {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: #1F2937;
-        margin-bottom: 20px;
+    .btn-header {
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: 2px solid white;
+        background: transparent;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
+        font-size: 0.95rem;
+    }
+    
+    .btn-header.btn-primary {
+        background: white;
+        color: #2B5CE6; /* Blue */
+        border-color: white;
+    }
+    .btn-header.btn-primary:hover {
+        background: rgba(255,255,255,0.9);
+        transform: translateY(-2px);
+    }
+    
+    .btn-header.btn-secondary {
+        background: transparent;
+        color: white;
+        border-color: rgba(255,255,255,0.8);
+    }
+    .btn-header.btn-secondary:hover {
+        background: rgba(255,255,255,0.1);
     }
 
-    .section-title i {
+
+    .details-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 25px;
+        margin-bottom: 25px;
+    }
+
+    .details-card {
+        background: white;
+        border-radius: 12px;
+        padding: 0; /* No padding on card */
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow: hidden; /* Important for border-radius */
+    }
+
+    .card-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #1F2937;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #E5E7EB;
+        padding: 30px 30px 15px 30px; /* Padding only here */
+        margin-bottom: 0; 
+    }
+
+    .card-title i {
+        color: #2B5CE6; /* Blue */
+        font-size: 1.5rem;
+    }
+
+    .card-content {
+        padding: 30px; /* Padding for form content */
+    }
+
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
         color: #2B5CE6;
+        text-decoration: none;
+        font-weight: 600;
+        margin-bottom: 20px;
+        transition: all 0.3s;
+    }
+
+    .back-link:hover {
+        gap: 12px;
+        color: #1E3A8A;
     }
 
     .form-row {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 25px; 
+        gap: 20px;
         margin-bottom: 20px;
     }
 
@@ -112,6 +196,10 @@
 
     .form-row.triple {
         grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .form-row:last-child {
+        margin-bottom: 0;
     }
 
     .form-group {
@@ -138,9 +226,10 @@
         border-radius: 8px;
         font-size: 0.95rem;
         transition: all 0.3s;
-        background: #F9FAFB; 
+        background: #F9FAFB; /* Light bg */
     }
- 
+    
+    /* Custom select arrow */
     select.form-control {
         -webkit-appearance: none;
         -moz-appearance: none;
@@ -156,7 +245,14 @@
         outline: none;
         border-color: #2B5CE6;
         box-shadow: 0 0 0 3px rgba(43, 92, 230, 0.1);
-        background: white; 
+        background: white;
+    }
+
+    /* {{-- NEW: Disabled state --}} */
+    .form-control:disabled {
+        background: #F3F4F6;
+        color: #9CA3AF;
+        cursor: not-allowed;
     }
 
     .form-control.error {
@@ -171,343 +267,413 @@
         font-size: 0.85rem;
         margin-top: 5px;
     }
+    
+    .checkbox-grid {
+        display: flex; 
+        flex-direction: column; 
+        gap: 15px; 
+    }
 
     .checkbox-group {
         display: flex;
         align-items: center;
-        gap: 8px;
-        margin-top: 10px;
+        gap: 10px;
+        background: #F9FAFB;
+        padding: 12px;
+        border-radius: 8px;
     }
 
     .checkbox-group input[type="checkbox"] {
         width: 18px;
         height: 18px;
         cursor: pointer;
-        accent-color: #2B5CE6; 
+        accent-color: #2B5CE6;
     }
 
     .checkbox-group label {
         margin: 0;
         cursor: pointer;
         font-weight: 500;
-        color: #374151; 
+        color: #374151;
     }
-
-    .form-actions {
+    
+    /* {{-- NEW: Styling for conditional fields --}} */
+    .conditional-fields {
+        padding-left: 10px;
+        border-left: 3px solid #E5E7EB;
+        margin-top: 20px;
         display: flex;
-        gap: 15px;
-        justify-content: flex-end;
-        margin-top: 40px;
-        padding-top: 25px;
-        border-top: 2px solid #F3F4F6; 
-    }
-
-    .btn {
-        padding: 12px 30px;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.95rem;
-        cursor: pointer;
-        transition: all 0.3s;
-        border: none;
-        display: inline-flex; 
-        align-items: center;
-        gap: 8px;
-    }
-
-    .btn-primary {
-        background: #2B5CE6;
-        color: white;
-    }
-
-    .btn-primary:hover {
-        background: #1E3A8A;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
-    }
-
-    .btn-secondary {
-        background: #F3F4F6;
-        color: #4B5563;
-        text-decoration: none;
-    }
-
-    .btn-secondary:hover {
-        background: #E5E7EB;
-    }
-
-    @media (max-width: 991px) {
-        .form-row.triple {
-            grid-template-columns: 1fr; 
-        }
-        .form-container {
-            padding: 30px;
-        }
+        flex-direction: column;
+        gap: 20px;
     }
 
     @media (max-width: 768px) {
-        .form-row,
-        .form-row.triple {
+        .details-grid {
             grid-template-columns: 1fr;
         }
 
-        .form-container {
-            padding: 25px;
-            margin: 0; 
-            box-shadow: none; 
-        }
-
-        .form-header {
-            flex-direction: column; 
+        .details-header {
+            flex-direction: column;
             align-items: flex-start;
-            gap: 10px;
-        }
-        .form-header-text h2 {
-            font-size: 1.5rem; 
+            gap: 20px;
         }
 
-        .form-actions {
-            flex-direction: column-reverse; 
-        }
-
-        .btn {
+        .header-actions {
             width: 100%;
+            flex-direction: column-reverse;
+        }
+
+        .btn-header {
+            flex: 1;
             justify-content: center;
+        }
+
+        .form-row,
+        .form-row.triple,
+        .checkbox-grid {
+            grid-template-columns: 1fr;
         }
     }
 </style>
 
-<div class="form-container">
-    <div class="form-header">
-        <div class="form-header-icon">
-            <i class="fas fa-user-plus"></i>
-        </div>
-        <div class="form-header-text">
-            <h2>Add New Resident</h2>
-            <p>Fill in the resident information below</p>
-        </div>
-    </div>
+<div class="details-container">
+    {{-- UPDATED: Route points to secretary --}}
+    <a href="{{ route('secretary.resident-profiling') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i>
+        <span>Back to Resident Directory</span>
+    </a>
 
-    {{-- UPDATED: Form action points to secretary --}}
+    {{-- UPDATED: Route points to secretary --}}
     <form action="{{ route('secretary.resident.store') }}" method="POST">
         @csrf
 
-        <div class="form-section">
-            <div class="section-title">
-                <i class="fas fa-user"></i>
-                <span>Personal Information</span>
-            </div>
-
-            <div class="form-row triple">
-                <div class="form-group">
-                    <label for="first_name" class="required">First Name</label>
-                    <input type="text" id="first_name" name="first_name" class="form-control @error('first_name') error @enderror" 
-                           value="{{ old('first_name') }}" required>
-                    @error('first_name')
-                        <span class="error-message">{{ $message }}</span>
-                    @enderror
+        <div class="details-header">
+            <div class="header-left">
+                <div class="profile-avatar">
+                    <i class="fas fa-user-plus"></i>
                 </div>
-
-                <div class="form-group">
-                    <label for="middle_name">Middle Name</label>
-                    <input type="text" id="middle_name" name="middle_name" class="form-control" 
-                           value="{{ old('middle_name') }}">
-                </div>
-
-                <div class="form-group">
-                    <label for="last_name" class="required">Last Name</label>
-                    <input type="text" id="last_name" name="last_name" class="form-control @error('last_name') error @enderror" 
-                           value="{{ old('last_name') }}" required>
-                    @error('last_name')
-                        <span class="error-message">{{ $message }}</span>
-                    @enderror
+                <div class="header-info">
+                    <h1>Add New Resident</h1>
+                    <p>Fill in the resident information below</p>
                 </div>
             </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="suffix">Suffix</label>
-                    <input type="text" id="suffix" name="suffix" class="form-control" 
-                           value="{{ old('suffix') }}" placeholder="Jr., Sr., III, etc.">
-                </div>
-
-                <div class="form-group">
-                    <label for="date_of_birth" class="required">Date of Birth</label>
-                    <input type="date" id="date_of_birth" name="date_of_birth" class="form-control @error('date_of_birth') error @enderror" 
-                           value="{{ old('date_of_birth') }}" required>
-                    @error('date_of_birth')
-                        <span class="error-message">{{ $message }}</span>
-                    @enderror
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="gender" class="required">Gender</label>
-                    <select id="gender" name="gender" class="form-control @error('gender') error @enderror" required>
-                        <option value="">Select Gender</option>
-                        <option value="Male" {{ old('gender') == 'Male' ? 'selected' : '' }}>Male</option>
-                        <option value="Female" {{ old('gender') == 'Female' ? 'selected' : '' }}>Female</option>
-                    </select>
-                    @error('gender')
-                        <span class="error-message">{{ $message }}</span>
-                    @enderror
-                </div>
-
-                <div class="form-group">
-                    <label for="civil_status" class="required">Civil Status</label>
-                    <select id="civil_status" name="civil_status" class="form-control @error('civil_status') error @enderror" required>
-                        <option value="">Select Status</option>
-                        <option value="Single" {{ old('civil_status') == 'Single' ? 'selected' : '' }}>Single</option>
-                        <option value="Married" {{ old('civil_status') == 'Married' ? 'selected' : '' }}>Married</option>
-                        <option value="Widowed" {{ old('civil_status') == 'Widowed' ? 'selected' : '' }}>Widowed</option>
-                        <option value="Separated" {{ old('civil_status') == 'Separated' ? 'selected' : '' }}>Separated</option>
-                        <option value="Divorced" {{ old('civil_status') == 'Divorced' ? 'selected' : '' }}>Divorced</option>
-                    </select>
-                    @error('civil_status')
-                        <span class="error-message">{{ $message }}</span>
-                    @enderror
-                </div>
+            <div class="header-actions">
+                {{-- UPDATED: Route points to secretary --}}
+                <a href="{{ route('secretary.resident-profiling') }}" class="btn-header btn-secondary">
+                    <i class="fas fa-times"></i>
+                    <span>Cancel</span>
+                </a>
+                <button type="submit" class="btn-header btn-primary">
+                    <i class="fas fa-save"></i>
+                    <span>Save Resident</span>
+                </button>
             </div>
         </div>
 
-        <div class="form-section">
-            <div class="section-title">
-                <i class="fas fa-home"></i>
-                <span>Household Information</span>
+        <div class="details-grid">
+            {{-- Left Column --}}
+            <div>
+                <div class="details-card" style="margin-bottom: 25px;">
+                    <div class="card-title">
+                        <i class="fas fa-user"></i>
+                        <span>Personal Information</span>
+                    </div>
+
+                    <div class="card-content">
+                        <div class="form-row triple">
+                            <div class="form-group">
+                                <label for="first_name" class="required">First Name</label>
+                                <input type="text" id="first_name" name="first_name" class="form-control @error('first_name') error @enderror" 
+                                       value="{{ old('first_name') }}" required>
+                                @error('first_name')
+                                    <span class="error-message">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
+                                <label for="middle_name">Middle Name</label>
+                                <input type="text" id="middle_name" name="middle_name" class="form-control" 
+                                       value="{{ old('middle_name') }}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="last_name" class="required">Last Name</label>
+                                <input type="text" id="last_name" name="last_name" class="form-control @error('last_name') error @enderror" 
+                                       value="{{ old('last_name') }}" required>
+                                @error('last_name')
+                                    <span class="error-message">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="suffix">Suffix</label>
+                                <input type="text" id="suffix" name="suffix" class="form-control" 
+                                       value="{{ old('suffix') }}" placeholder="Jr., Sr., III, etc.">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="date_of_birth" class="required">Date of Birth</label>
+                                <input type="date" id="date_of_birth" name="date_of_birth" class="form-control @error('date_of_birth') error @enderror" 
+                                       value="{{ old('date_of_birth') }}" required>
+                                @error('date_of_birth')
+                                    <span class="error-message">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="gender" class="required">Gender</label>
+                                <select id="gender" name="gender" class="form-control @error('gender') error @enderror" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male" {{ old('gender') == 'Male' ? 'selected' : '' }}>Male</option>
+                                    <option value="Female" {{ old('gender') == 'Female' ? 'selected' : '' }}>Female</option>
+                                </select>
+                                @error('gender')
+                                    <span class="error-message">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
+                                <label for="civil_status" class="required">Civil Status</label>
+                                <select id="civil_status" name="civil_status" class="form-control @error('civil_status') error @enderror" required>
+                                    <option value="">Select Status</option>
+                                    <option value="Single" {{ old('civil_status') == 'Single' ? 'selected' : '' }}>Single</option>
+                                    <option value="Married" {{ old('civil_status') == 'Married' ? 'selected' : '' }}>Married</option>
+                                    <option value="Widowed" {{ old('civil_status') == 'Widowed' ? 'selected' : '' }}>Widowed</option>
+                                    <option value="Separated" {{ old('civil_status') == 'Separated' ? 'selected' : '' }}>Separated</option>
+                                    <option value="Divorced" {{ old('civil_status') == 'Divorced' ? 'selected' : '' }}>Divorced</option>
+                                </select>
+                                @error('civil_status')
+                                    <span class="error-message">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="details-card">
+                    <div class="card-title">
+                        <i class="fas fa-home"></i>
+                        <span>Household & Contact</span>
+                    </div>
+
+                    <div class="card-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="household_id">Household</label>
+                                <select id="household_id" name="household_id" class="form-control">
+                                    <option value="">Select Household (Optional)</option>
+                                    @foreach($households as $household)
+                                        <option value="{{ $household->id }}" {{ (old('household_id') == $household->id || $selectedHousehold == $household->id) ? 'selected' : '' }}>
+                                            {{ $household->household_name }} ({{ $household->household_number }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="household_status" class="required">Household Status</label>
+                                <select id="household_status" name="household_status" class="form-control @error('household_status') error @enderror" required>
+                                    <option value="">Select Status</option>
+                                    <option value="Household Head" {{ old('household_status') == 'Household Head' ? 'selected' : '' }}>Household Head</option>
+                                    <option value="Spouse" {{ old('household_status') == 'Spouse' ? 'selected' : '' }}>Spouse</option>
+                                    <option value="Child" {{ old('household_status') == 'Child' ? 'selected' : '' }}>Child</option>
+                                    <option value="Member" {{ (old('household_status') ?? 'Member') == 'Member' ? 'selected' : '' }}>Member</option>
+                                </select>
+                                @error('household_status')
+                                    <span class="error-message">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-row single">
+                            <div class="form-group">
+                                <label for="address" class="required">Address</label>
+                                <input type="text" id="address" name="address" class="form-control @error('address') error @enderror" 
+                                       value="{{ old('address') }}" placeholder="Block, Lot, Street" required>
+                                @error('address')
+                                    <span class="error-message">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="contact_number">Contact Number</label>
+                                <input type="text" id="contact_number" name="contact_number" class="form-control" 
+                                       value="{{ old('contact_number') }}" placeholder="09XXXXXXXXX">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email">Email Address</label>
+                                <input type="email" id="email" name="email" class="form-control" 
+                                       value="{{ old('email') }}" placeholder="example@email.com">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="household_id">Household</label>
-                    <select id="household_id" name="household_id" class="form-control">
-                        <option value="">Select Household (Optional)</option>
-                        @foreach($households as $household)
-                            {{-- $selectedHousehold is passed from your controller --}}
-                            <option value="{{ $household->id }}" {{ (old('household_id') == $household->id || $selectedHousehold == $household->id) ? 'selected' : '' }}>
-                                {{ $household->household_name }} ({{ $household->household_number }}) - {{ $household->address }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+            {{-- Right Column --}}
+            <div>
+                <div class="details-card">
+                    <div class="card-title">
+                        <i class="fas fa-briefcase"></i>
+                        <span>Employment & Categories</span>
+                    </div>
+                    
+                    <div class="card-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="occupation">Occupation</label>
+                                <input type="text" id="occupation" name="occupation" class="form-control" 
+                                       value="{{ old('occupation') }}" placeholder="e.g., Teacher, Student, Farmer" list="occupation_list">
+                                <datalist id="occupation_list">
+                                    <option value="Student"></option>
+                                    <option value="Teacher"></option>
+                                    <option value="Nurse"></option>
+                                    <option value="Farmer"></option>
+                                    <option value="Engineer"></option>
+                                    <option value="Driver"></option>
+                                    <option value="Retired"></option>
+                                    <option value="Unemployed"></option>
+                                    <option value="Housewife"></option>
+                                </datalist>
+                            </div>
 
-                <div class="form-group">
-                    <label for="household_status" class="required">Household Status</label>
-                    <select id="household_status" name="household_status" class="form-control @error('household_status') error @enderror" required>
-                        <option value="">Select Status</option>
-                        <option value="Household Head" {{ old('household_status') == 'Household Head' ? 'selected' : '' }}>Household Head</option>
-                        <option value="Spouse" {{ old('household_status') == 'Spouse' ? 'selected' : '' }}>Spouse</option>
-                        <option value="Child" {{ old('household_status') == 'Child' ? 'selected' : '' }}>Child</option>
-                        <option value="Member" {{ old('household_status') == 'Member' ? 'selected' : '' }}>Member</option>
-                    </select>
-                    @error('household_status')
-                        <span class="error-message">{{ $message }}</span>
-                    @enderror
-                </div>
-            </div>
+                            <div class="form-group">
+                                <label for="monthly_income">Monthly Income </label>
+                                <input type="number" id="monthly_income" name="monthly_income" class="form-control" 
+                                       value="{{ old('monthly_income') }}" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                        </div>
+                        
+                        <hr style="border: 0; border-top: 2px solid #E5E7EB; margin: 25px 0;">
+                        
+                        <div class="checkbox-grid">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="is_registered_voter" name="is_registered_voter" value="1" 
+                                       {{ old('is_registered_voter') ? 'checked' : '' }}>
+                                <label for="is_registered_voter">Registered Voter</label>
+                            </div>
 
-            <div class="form-row single">
-                <div class="form-group">
-                    <label for="address" class="required">Address</label>
-                    <input type="text" id="address" name="address" class="form-control @error('address') error @enderror" 
-                           value="{{ old('address') }}" placeholder="Block, Lot, Street" required>
-                    @error('address')
-                        <span class="error-message">{{ $message }}</span>
-                    @enderror
-                </div>
-            </div>
-        </div>
+                            <div id="voter_fields_wrapper" class="conditional-fields" style="display: {{ old('is_registered_voter') ? 'block' : 'none' }};">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="precinct_number" class="required">Precinct Number</label>
+                                    <input type="text" id="precinct_number" name="precinct_number" class="form-control @error('precinct_number') error @enderror" 
+                                           value="{{ old('precinct_number') }}" placeholder="e.g., 0021A">
+                                    @error('precinct_number')
+                                        <span class="error-message">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
 
-        <div class="form-section">
-            <div class="section-title">
-                <i class="fas fa-phone"></i>
-                <span>Contact Information</span>
-            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="is_indigenous" name="is_indigenous" value="1" 
+                                       {{ old('is_indigenous') ? 'checked' : '' }}>
+                                <label for="is_indigenous">Indigenous Person</label>
+                            </div>
+                            
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="is_pwd" name="is_pwd" value="1" 
+                                       {{ old('is_pwd') ? 'checked' : '' }}>
+                                <label for="is_pwd">PWD</label>
+                            </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="contact_number">Contact Number</label>
-                    <input type="text" id="contact_number" name="contact_number" class="form-control" 
-                           value="{{ old('contact_number') }}" placeholder="09XXXXXXXXX">
-                </div>
+                            <div id="pwd_fields_wrapper" class="conditional-fields" style="display: {{ old('is_pwd') ? 'block' : 'none' }};">
+                                <div class="form-group">
+                                    <label for="pwd_id_number" class="required">PWD ID Number</label>
+                                    <input type="text" id="pwd_id_number" name="pwd_id_number" class="form-control @error('pwd_id_number') error @enderror" 
+                                           value="{{ old('pwd_id_number') }}" placeholder="e.g., PWD-12345">
+                                    @error('pwd_id_number')
+                                        <span class="error-message">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="disability_type" class="required">Type of Disability</label>
+                                    <input type="text" id="disability_type" name="disability_type" class="form-control @error('disability_type') error @enderror" 
+                                           value="{{ old('disability_type') }}" placeholder="e.g., Physical, Visual, Hearing">
+                                    @error('disability_type')
+                                        <span class="error-message">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
 
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" class="form-control" 
-                           value="{{ old('email') }}" placeholder="example@email.com">
-                </div>
-            </div>
-        </div>
-
-        <div class="form-section">
-            <div class="section-title">
-                <i class="fas fa-briefcase"></i>
-                <span>Employment Information</span>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="occupation">Occupation</label>
-                    <input type="text" id="occupation" name="occupation" class="form-control" 
-                           value="{{ old('occupation') }}" placeholder="e.g., Teacher, Nurse, Farmer">
-                </div>
-
-                <div class="form-group">
-                    <label for="monthly_income">Monthly Income (₱)</label>
-                    <input type="number" id="monthly_income" name="monthly_income" class="form-control" 
-                           value="{{ old('monthly_income') }}" placeholder="0.00" step="0.01" min="0">
-                </div>
-            </div>
-        </div>
-
-        <div class="form-section">
-            <div class="section-title">
-                <i class="fas fa-info-circle"></i>
-                <span>Additional Information</span>
-            </div>
-
-            <div class="form-row">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="is_registered_voter" name="is_registered_voter" value="1" 
-                           {{ old('is_registered_voter') ? 'checked' : '' }}>
-                    <label for="is_registered_voter">Registered Voter</label>
-                </div>
-
-                <div class="checkbox-group">
-                    <input type="checkbox" id="is_indigenous" name="is_indigenous" value="1" 
-                           {{ old('is_indigenous') ? 'checked' : '' }}>
-                    <label for="is_indigenous">Indigenous Person</label>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="is_4ps" name="is_4ps" value="1" 
+                                       {{ old('is_4ps') ? 'checked' : '' }}>
+                                <label for="is_4ps">4Ps Beneficiary</label>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
             </div>
-
-            <div class="form-row">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="is_pwd" name="is_pwd" value="1" 
-                           {{ old('is_pwd') ? 'checked' : '' }}>
-                    <label for="is_pwd">Person with Disability (PWD)</label>    
-                </div>
-
-                <div class="checkbox-group">
-                    <input type="checkbox" id="is_4ps" name="is_4ps" value="1" 
-                           {{ old('is_4ps') ? 'checked' : '' }}>
-                    <label for="is_4ps">4Ps Beneficiary (Pantawid Pamilya)</label>
-                </div>
-            </div>
-        </div>
-
-        <div class="form-actions">
-            {{-- UPDATED: Cancel link points to secretary --}}
-            <a href="{{ route('secretary.resident-profiling') }}" class="btn btn-secondary">
-                <i class="fas fa-times"></i>
-                <span>Cancel</span>
-            </a>
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i>
-                <span>Save Resident</span>
-            </button>
         </div>
     </form>
 </div>
 
-@endsection
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Occupation Logic ---
+        const occupationInput = document.getElementById('occupation');
+        const incomeInput = document.getElementById('monthly_income');
+
+        function checkOccupation() {
+            if (occupationInput.value.trim().toLowerCase() === 'student') {
+                incomeInput.value = '';
+                incomeInput.disabled = true;
+                incomeInput.placeholder = 'N/A for Students';
+            } else {
+                incomeInput.disabled = false;
+                incomeInput.placeholder = '0.00';
+            }
+        }
+
+        // --- Voter Logic ---
+        const voterCheckbox = document.getElementById('is_registered_voter');
+        const voterWrapper = document.getElementById('voter_fields_wrapper');
+        const precinctInput = document.getElementById('precinct_number');
+
+        function checkVoter() {
+            if (voterCheckbox.checked) {
+                voterWrapper.style.display = 'block';
+            } else {
+                voterWrapper.style.display = 'none';
+                precinctInput.value = '';
+            }
+        }
+
+        // --- PWD Logic ---
+        const pwdCheckbox = document.getElementById('is_pwd');
+        const pwdWrapper = document.getElementById('pwd_fields_wrapper');
+        const pwdIdInput = document.getElementById('pwd_id_number');
+        const pwdTypeInput = document.getElementById('disability_type');
+
+        function checkPwd() {
+            if (pwdCheckbox.checked) {
+                pwdWrapper.style.display = 'block';
+            } else {
+                pwdWrapper.style.display = 'none';
+                pwdIdInput.value = '';
+                pwdTypeInput.value = '';
+            }
+        }
+
+        // --- Event Listeners ---
+        occupationInput.addEventListener('input', checkOccupation);
+        voterCheckbox.addEventListener('change', checkVoter);
+        pwdCheckbox.addEventListener('change', checkPwd);
+
+        // --- Run on page load ---
+        checkOccupation();
+        checkVoter();
+        checkPwd();
+    });
+</script>
+
+@endsection

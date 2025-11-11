@@ -5,6 +5,7 @@
 @section('title', 'Add New Household')
 
 @section('nav-items')
+    {{-- (Nav items remain unchanged) --}}
     <li class="nav-item">
         <a href="{{ route('dashboard.captain') }}" class="nav-link">
             <i class="fas fa-home"></i>
@@ -69,6 +70,7 @@
 
 @section('content')
 <style>
+    /* (Styles remain unchanged) */
     .details-container {
         max-width: 1000px;
         margin: 0 auto;
@@ -368,7 +370,6 @@
                     </div>
 
                     <div class="card-content">
-                        {{-- === MODIFICATION: Changed to 2-column row === --}}
                         <div class="form-row"> 
                             <div class="form-group">
                                 <label for="household_name" class="required">Household Name</label>
@@ -379,7 +380,6 @@
                                 @enderror
                             </div>
 
-                            {{-- === NEW FIELD ADDED === --}}
                             <div class="form-group">
                                 <label for="household_number">Generated Household Number</label>
                                 <input type="text" id="household_number" class="form-control" 
@@ -405,9 +405,9 @@
             {{-- Right Column --}}
             <div>
                 <div class="details-card">
-                     <div class="card-title">
+                    <div class="card-title">
                         <i class="fas fa-map-marker-alt"></i>
-                        <span>Location & Status</span>
+                        <span>Location</span>
                     </div>
                     
                     <div class="card-content">
@@ -416,7 +416,6 @@
                                 <label for="purok">Purok</label>
                                 <select id="purok" name="purok" class="form-control @error('purok') error @enderror">
                                     <option value="">Select Purok (Optional)</option>
-                                    {{-- You can update this list as needed --}}
                                     <option value="Purok 1" {{ old('purok') == 'Purok 1' ? 'selected' : '' }}>Purok 1</option>
                                     <option value="Purok 2" {{ old('purok') == 'Purok 2' ? 'selected' : '' }}>Purok 2</option>
                                     <option value="Purok 3" {{ old('purok') == 'Purok 3' ? 'selected' : '' }}>Purok 3</option>
@@ -431,20 +430,8 @@
                             </div>
                         </div>
                         
-                        <div class="form-row single">
-                             <div class="form-group">
-                                <label for="status" class="required">Data Status</label>
-                                <select id="status" name="status" class="form-control @error('status') error @enderror" required>
-                                    <option value="">Select Status</option>
-                                    <option value="complete" {{ old('status') == 'complete' ? 'selected' : '' }}>Complete</option>
-                                    <option value="incomplete" {{ (old('status') ?? 'incomplete') == 'incomplete' ? 'selected' : '' }}>Incomplete</option>
-                                </select>
-                                <small>Is the household's data complete or incomplete?</small>
-                                @error('status')
-                                    <span class="error-message">{{ $message }}</span>
-                                @enderror
-                            </div>
-                        </div>
+                        {{-- {{-- MODIFIED: Removed the "Data Status" field --}} --}}
+                        
                     </div>
                 </div>
             </div>

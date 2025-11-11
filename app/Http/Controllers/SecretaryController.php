@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule; // <-- IMPORTED FOR UNIQUE EMAIL RULE
 
 class SecretaryController extends Controller
 {
@@ -32,14 +33,17 @@ class SecretaryController extends Controller
      */
     private function _getProfilingStats()
     {
+        // ============================================
+        // MODIFIED: Simplified stats to use model columns
+        // ============================================
         return [
             'totalResidents' => Resident::where('is_active', true)->count(),
             'totalHouseholds' => Household::count(),
             'completeHouseholds' => Household::where('status', 'complete')->count(),
-            'seniorCitizens' => Resident::whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= 60')
+            'seniorCitizens' => Resident::where('is_senior_citizen', true)
                 ->where('is_active', true)
                 ->count(),
-            'minors' => Resident::whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < 18')
+            'minors' => Resident::where('age', '<', 18)
                 ->where('is_active', true)
                 ->count(),
         ];
@@ -65,35 +69,27 @@ class SecretaryController extends Controller
         $households = null;
 
         if ($view === 'residents') {
-            $query = Resident::with('household')->where('is_active', true);
+            // ============================================
+            // MODIFIED: Use model scopes for cleaner query
+            // ============================================
+            $query = Resident::with('household')
+                ->where('is_active', true)
+                ->search($search) // Use the search scope
+                ->byHouseholdStatus($status) // Use the status scope
+                ->byGender($gender); // Use the gender scope
 
-            if ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%")
-                        ->orWhere('first_name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhere('contact_number', 'like', "%{$search}%");
-                });
-            }
-            if ($status && $status !== 'All Status') {
-                $query->where('household_status', $status);
-            }
-            if ($gender && $gender !== 'All') {
-                $query->where('gender', $gender);
-            }
             $residents = $query->orderBy('last_name')->paginate(10);
+
         } else {
-            $query = Household::with(['head', 'residents' => function ($q) {
-                $q->where('is_active', true);
-            }]);
+            $query = Household::with(['head', 'activeResidents']); // Eager load activeResidents
 
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('household_name', 'like', "%{$search}%")
                         ->orWhere('household_number', 'like', "%{$search}%")
                         ->orWhereHas('head', function ($q_head) use ($search) {
-                            $q_head->where('first_name', 'like', "%{$search}%")
-                                    ->orWhere('last_name', 'like', "%{$search}%");
+                            // Search by concatenated head name
+                            $q_head->where(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%");
                         });
                 });
             }
@@ -147,6 +143,16 @@ class SecretaryController extends Controller
             'is_4ps' => $request->input('is_4ps', 0),
         ]);
 
+        // ============================================
+        // LOGIC: Handle 'Student' occupation
+        // ============================================
+        if (strtolower($request->input('occupation')) === 'student') {
+            $request->merge(['monthly_income' => null]);
+        }
+
+        // ============================================
+        // MODIFIED: Added new validation rules
+        // ============================================
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
@@ -159,13 +165,18 @@ class SecretaryController extends Controller
             'household_status' => 'required|in:Household Head,Spouse,Child,Member',
             'address' => 'required|string|max:255',
             'contact_number' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
+            'email' => 'nullable|email|max:255|unique:residents,email',
             'occupation' => 'nullable|string|max:255',
             'monthly_income' => 'nullable|numeric|min:0',
             'is_registered_voter' => 'boolean',
             'is_indigenous' => 'boolean',
             'is_pwd' => 'boolean',
             'is_4ps' => 'boolean',
+
+            // --- Conditional validation ---
+            'precinct_number' => 'nullable|required_if:is_registered_voter,true|string|max:100',
+            'pwd_id_number' => 'nullable|required_if:is_pwd,true|string|max:100',
+            'disability_type' => 'nullable|required_if:is_pwd,true|string|max:255',
         ]);
 
         $birthDate = new \DateTime($validated['date_of_birth']);
@@ -175,20 +186,42 @@ class SecretaryController extends Controller
         $validated['is_senior_citizen'] = $age >= 60;
         $validated['is_active'] = true;
 
+        // ============================================
+        // LOGIC: Clean up conditional data
+        // ============================================
+        if (!$validated['is_registered_voter']) {
+            $validated['precinct_number'] = null;
+        }
+        if (!$validated['is_pwd']) {
+            $validated['pwd_id_number'] = null;
+            $validated['disability_type'] = null;
+        }
+
+        // ============================================
+        // LOGIC: Handle Household Head Uniqueness
+        // ============================================
+        if ($validated['household_status'] === 'Household Head' && $validated['household_id']) {
+            Resident::where('household_id', $validated['household_id'])
+                ->where('household_status', 'Household Head')
+                ->where('is_active', true)
+                ->update(['household_status' => 'Member']);
+        }
+
         $resident = Resident::create($validated);
 
+        // ============================================
+        // MODIFIED: Use Household model methods
+        // ============================================
         if ($resident->household_id) {
             $household = Household::find($resident->household_id);
             if ($household) {
-                $household->total_members = Resident::where('household_id', $household->id)
-                    ->where('is_active', true)
-                    ->count();
-                $household->save();
+                $household->updateTotalMembers();
+                $household->updateHouseholdStatus(); // <-- ADDED
             }
         }
 
         return redirect()->route('secretary.resident-profiling', ['view' => 'residents'])
-                         ->with('success', 'Resident added successfully!');
+            ->with('success', 'Resident added successfully!');
     }
 
     /**
@@ -200,7 +233,6 @@ class SecretaryController extends Controller
         $resident = Resident::with('household')->findOrFail($id);
         $stats = $this->_getProfilingStats();
         
-        // --- FIXED VIEW PATH ---
         return view('dashboard.secretary-resident-view', array_merge(compact(
             'user', 
             'resident'
@@ -217,7 +249,6 @@ class SecretaryController extends Controller
         $households = Household::orderBy('household_number')->get();
         $stats = $this->_getProfilingStats();
 
-        // --- FIXED VIEW PATH ---
         return view('dashboard.secretary-resident-edit', array_merge(compact(
             'user', 
             'resident', 
@@ -242,6 +273,14 @@ class SecretaryController extends Controller
             'is_4ps' => $request->input('is_4ps', 0),
         ]);
 
+        // LOGIC: Handle 'Student' occupation
+        if (strtolower($request->input('occupation')) === 'student') {
+            $request->merge(['monthly_income' => null]);
+        }
+
+        // ============================================
+        // MODIFIED: Added new validation rules
+        // ============================================
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
@@ -254,13 +293,18 @@ class SecretaryController extends Controller
             'household_status' => 'required|in:Household Head,Spouse,Child,Member',
             'address' => 'required|string|max:255',
             'contact_number' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('residents')->ignore($id)],
             'occupation' => 'nullable|string|max:255',
             'monthly_income' => 'nullable|numeric|min:0',
             'is_registered_voter' => 'boolean',
             'is_indigenous' => 'boolean',
             'is_pwd' => 'boolean',
             'is_4ps' => 'boolean',
+
+            // --- Conditional validation ---
+            'precinct_number' => 'nullable|required_if:is_registered_voter,true|string|max:100',
+            'pwd_id_number' => 'nullable|required_if:is_pwd,true|string|max:100',
+            'disability_type' => 'nullable|required_if:is_pwd,true|string|max:255',
         ]);
 
         $birthDate = new \DateTime($validated['date_of_birth']);
@@ -269,30 +313,53 @@ class SecretaryController extends Controller
         $validated['age'] = $age;
         $validated['is_senior_citizen'] = $age >= 60;
 
+        // LOGIC: Clean up conditional data
+        if (!$validated['is_registered_voter']) {
+            $validated['precinct_number'] = null;
+        }
+        if (!$validated['is_pwd']) {
+            $validated['pwd_id_number'] = null;
+            $validated['disability_type'] = null;
+        }
+
+        // ============================================
+        // LOGIC: Handle Household Head Uniqueness
+        // ============================================
+        if ($validated['household_status'] === 'Household Head' && $validated['household_id']) {
+            Resident::where('household_id', $validated['household_id'])
+                ->where('household_status', 'Household Head')
+                ->where('id', '!=', $id) // Exclude self
+                ->where('is_active', true)
+                ->update(['household_status' => 'Member']);
+        }
+
         $resident->update($validated);
         $newHouseholdId = $resident->household_id;
 
-        if ($oldHouseholdId && $oldHouseholdId != $newHouseholdId) {
-            $oldHousehold = Household::find($oldHouseholdId);
-            if ($oldHousehold) {
-                $oldHousehold->total_members = Resident::where('household_id', $oldHousehold->id)
-                    ->where('is_active', true)
-                    ->count();
-                $oldHousehold->save();
-            }
-        }
+        // ============================================
+        // MODIFIED: Use Household model methods
+        // ============================================
+        
+        // Find the new household (if any) and update it
         if ($newHouseholdId) {
             $newHousehold = Household::find($newHouseholdId);
             if ($newHousehold) {
-                $newHousehold->total_members = Resident::where('household_id', $newHousehold->id)
-                    ->where('is_active', true)
-                    ->count();
-                $newHousehold->save();
+                $newHousehold->updateTotalMembers();
+                $newHousehold->updateHouseholdStatus();
+            }
+        }
+
+        // If the resident moved, update the old household too
+        if ($oldHouseholdId && $oldHouseholdId != $newHouseholdId) {
+            $oldHousehold = Household::find($oldHouseholdId);
+            if ($oldHousehold) {
+                $oldHousehold->updateTotalMembers();
+                $oldHousehold->updateHouseholdStatus();
             }
         }
 
         return redirect()->route('secretary.resident-profiling', ['view' => 'residents'])
-                         ->with('success', 'Resident updated successfully!');
+            ->with('success', 'Resident updated successfully!');
     }
 
     /**
@@ -309,17 +376,18 @@ class SecretaryController extends Controller
         if ($householdId) {
             $household = Household::find($householdId);
             if ($household) {
-                $household->total_members = Resident::where('household_id', $household->id)
-                    ->where('is_active', true)
-                    ->count();
-                $household->save();
+                // ============================================
+                // MODIFIED: Use Household model methods
+                // ============================================
+                $household->updateTotalMembers();
+                $household->updateHouseholdStatus(); // <-- ADDED
             }
         }
 
         $view = request('view', 'residents');
 
         return redirect()->route('secretary.resident-profiling', ['view' => $view])
-                         ->with('success', 'Resident removed successfully!');
+            ->with('success', 'Resident removed successfully!');
     }
 
     // ============================================
@@ -333,10 +401,14 @@ class SecretaryController extends Controller
     {
         $user = Auth::user();
         $stats = $this->_getProfilingStats();
-        
-        // --- FIXED VIEW PATH ---
+        // ============================================
+        // ADDED: Get auto-generated number
+        // ============================================
+        $nextHouseholdNumber = \App\Models\Household::generateHouseholdNumber();
+
         return view('dashboard.secretary-household-create', array_merge(compact(
-            'user'
+            'user',
+            'nextHouseholdNumber' // <-- Pass to view
         ), $stats));
     }
 
@@ -345,18 +417,25 @@ class SecretaryController extends Controller
      */
     public function storeHousehold(Request $request)
     {
+        // ============================================
+        // MODIFIED: Removed household_number and status from validation
+        // ============================================
         $validated = $request->validate([
             'household_name' => 'required|string|max:255',
-            'household_number' => 'required|string|max:50|unique:households,household_number',
+            // 'household_number' => 'required|string|max:50|unique:households,household_number', // <-- REMOVED
             'address' => 'required|string|max:255',
             'purok' => 'nullable|string|max:100',
-            'status' => 'required|in:complete,incomplete',
+            // 'status' => 'required|in:complete,incomplete', // <-- REMOVED
         ]);
 
-        Household::create($validated + ['total_members' => 0]);
+        // Create household, forcing 'incomplete' status
+        Household::create($validated + [
+            'total_members' => 0,
+            'status' => 'incomplete' // <-- ADDED LOGIC
+        ]);
 
         return redirect()->route('secretary.resident-profiling', ['view' => 'households'])
-                         ->with('success', 'Household added successfully!');
+            ->with('success', 'Household added successfully!');
     }
 
     /**
@@ -368,7 +447,6 @@ class SecretaryController extends Controller
         $household = Household::findOrFail($id);
         $stats = $this->_getProfilingStats();
 
-        // --- FIXED VIEW PATH ---
         return view('dashboard.secretary-household-edit', array_merge(compact(
             'user', 
             'household'
@@ -382,19 +460,27 @@ class SecretaryController extends Controller
     {
         $household = Household::findOrFail($id);
 
+        // ============================================
+        // MODIFIED: Removed household_number and status from validation
+        // ============================================
         $validated = $request->validate([
             'household_name' => 'required|string|max:255',
-            'household_number' => 'required|string|max:50|unique:households,household_number,' . $id,
+            // 'household_number' => 'required|string|max:50|unique:households,household_number,' . $id, // <-- REMOVED
             'address' => 'required|string|max:255',
             'purok' => 'nullable|string|max:100',
-            'status' => 'required|in:complete,incomplete',
+            // 'status' => 'required|in:complete,incomplete', // <-- REMOVED
         ]);
 
+        // Recalculate total members just in case
         $validated['total_members'] = Resident::where('household_id', $id)->where('is_active', true)->count();
+        
         $household->update($validated);
+        
+        // Re-run the status check just in case
+        $household->updateHouseholdStatus();
 
         return redirect()->route('secretary.resident-profiling', ['view' => 'households'])
-                         ->with('success', 'Household updated successfully!');
+            ->with('success', 'Household updated successfully!');
     }
 
     /**
@@ -403,21 +489,33 @@ class SecretaryController extends Controller
     public function destroyHousehold($id)
     {
         $household = Household::findOrFail($id);
-        Resident::where('household_id', $id)->where('is_active', true)->update(['is_active' => false]);
+        
+        // Soft delete all active residents
+        Resident::where('household_id', $id)
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
+            
+        // Hard delete the household
         $household->delete();
 
         return redirect()->route('secretary.resident-profiling', ['view' => 'households'])
-                         ->with('success', 'Household and all associated residents removed successfully!');
+            ->with('success', 'Household and all associated residents removed successfully!');
     }
-
+    /**
+     * Show household details and members
+     */
+    public function showHousehold($id)
+    {
+        $user = Auth::user();
+        $household = Household::with(['activeResidents', 'head'])->findOrFail($id);
+        return view('dashboard.secretary-household-view', compact('user', 'household'));
+    }
 
     // ============================================
     // DOCUMENT SERVICES (Settings)
+    // (No changes requested - Left as is)
     // ============================================
 
-    /**
-     * Display the document services page (Types & Templates)
-     */
     public function documentServices(Request $request)
     {
         $user = Auth::user();
@@ -443,7 +541,6 @@ class SecretaryController extends Controller
         }
         $templates = $templatesQuery->orderBy('name')->paginate(10, ['*'], 'templatesPage');
         
-        // --- FIXED VIEW PATH ---
         return view('dashboard.secretary-document-services', compact(
             'user',
             'stats',
@@ -456,11 +553,9 @@ class SecretaryController extends Controller
 
     // ============================================
     // DOCUMENT REQUESTS (Processing)
+    // (No changes requested - Left as is)
     // ============================================
 
-    /**
-     * Display the list of document requests (Pending, Approved, etc.)
-     */
     public function documentRequests(Request $request)
     {
         $user = Auth::user();
@@ -468,7 +563,7 @@ class SecretaryController extends Controller
         $search = $request->input('search');
 
         $query = DocumentRequest::with(['resident', 'documentType'])
-                    ->orderBy('created_at', 'desc');
+            ->orderBy('created_at', 'desc');
 
         if ($status !== 'All') {
             $query->where('status', $status);
@@ -482,13 +577,12 @@ class SecretaryController extends Controller
                 ->orWhereHas('documentType', function($dq) use ($search) {
                     $dq->where('name', 'like', "%{$search}%");
                 })
-                ->orWhere('control_number', 'like', "%{$search}%");
+                ->orWhere('tracking_number', 'like', "%{$search}%"); // Use tracking_number, not control_number
             });
         }
 
         $requests = $query->paginate(15);
 
-        // --- FIXED VIEW PATH ---
         return view('dashboard.secretary-document-requests', compact(
             'user',
             'requests',
@@ -497,40 +591,34 @@ class SecretaryController extends Controller
         ));
     }
 
-    /**
-     * Show the details of a specific document request for processing
-     */
     public function showDocumentRequest($id)
     {
         $user = Auth::user();
         $request = DocumentRequest::with(['resident', 'documentType.template'])->findOrFail($id);
+        
+        // ============================================
+        // MODIFIED: Corrected typo in variable name
+        // ============================================
+        $docRequest = $request; 
 
-        // --- FIXED VIEW PATH ---
-        return view('dashboard.secretary-document-process', compact('user', 'request'));
+        return view('dashboard.secretary-document-process', compact('user', 'docRequest'));
     }
 
-    /**
-     * Update a document request (Approve, Deny, Mark as Completed)
-     */
     public function updateDocumentRequest(Request $request, $id)
     {
         $docRequest = DocumentRequest::findOrFail($id);
-
         $action = $request->input('action');
 
         if ($action === 'approve') {
             $docRequest->status = 'Approved';
             $docRequest->processed_by_id = Auth::id();
             $docRequest->save();
-
             return redirect()->route('secretary.document-requests')->with('success', 'Document approved successfully.');
-
         } elseif ($action === 'deny') {
             $docRequest->status = 'Denied';
             $docRequest->remarks = $request->input('remarks');
             $docRequest->processed_by_id = Auth::id();
             $docRequest->save();
-
             return redirect()->route('secretary.document-requests')->with('success', 'Document denied.');
         }
 

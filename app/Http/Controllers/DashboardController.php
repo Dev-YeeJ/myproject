@@ -13,6 +13,7 @@ use App\Models\Household;
 use App\Models\Project;
 use App\Models\Incident;
 use App\Models\HealthProgram;
+// No need to import Medicine here, as HealthController handles it
 
 class DashboardController extends Controller
 {
@@ -105,7 +106,7 @@ class DashboardController extends Controller
             $modelInstance = new $modelClass();
             $tableName = $modelInstance->getTable();
             if (!Schema::hasTable($tableName)) {
-                Log::warning("Table {$tableName} for model {$modelClass} does not exist.");
+                 Log::warning("Table {$tableName} for model {$modelClass} does not exist.");
                 return 0;
             }
             return $modelClass::count();
@@ -235,7 +236,7 @@ class DashboardController extends Controller
                 'active_households' => $householdCount, // Count all households
                 'pending_documents' => $this->safeCountWhere(Document::class, 'status', 'pending'),
                 'documents_today' => $this->safeCountDate(Document::class, 'created_at'), // Assuming documents have created_at
-            ];
+             ];
         } catch (\Exception $e) {
              Log::error('Secretary Dashboard stats error: ' . $e->getMessage());
              $stats = [ // Fallback
@@ -244,7 +245,7 @@ class DashboardController extends Controller
                 'active_households' => 0,
                 'pending_documents' => 0,
                 'documents_today' => 0,
-            ];
+             ];
         }
 
         return view('dashboard.secretary', compact('user', 'stats'));
@@ -268,10 +269,10 @@ class DashboardController extends Controller
                 'total_expenses' => 180000, // Placeholder
                 'monthly_budget' => 150000, // Placeholder
                 'budget_spent' => 115000, // Placeholder
-            ];
+             ];
          } catch (\Exception $e) {
              Log::error('Treasurer Dashboard stats error: ' . $e->getMessage());
-              $stats = [ // Fallback
+             $stats = [ // Fallback
                 'registered_residents' => 0,
                 'documents_processed' => 0,
                 'active_households' => 0,
@@ -303,7 +304,7 @@ class DashboardController extends Controller
                 'active_projects' => $this->safeCountWhere(Project::class, 'status', 'active'),
                 'completed_projects' => $this->safeCountWhere(Project::class, 'status', 'completed'),
                 'community_programs' => 8, // Placeholder: fetch actual program data
-            ];
+             ];
         } catch (\Exception $e) {
             Log::error('Kagawad Dashboard stats error: ' . $e->getMessage());
             $stats = [ // Fallback
@@ -325,6 +326,10 @@ class DashboardController extends Controller
     public function health()
     {
         $user = Auth::user();
+        
+        // --- NEW: Initialize dynamic lists ---
+        $ongoingPrograms = [];
+        $scheduledMissions = [];
 
         try {
              $residentCount = $this->getResidentCount();
@@ -338,7 +343,46 @@ class DashboardController extends Controller
                 'completed_programs' => $this->safeCountWhere(HealthProgram::class, 'status', 'completed'),
                 'beneficiaries_served' => 245, // Placeholder: fetch actual beneficiary data
                 'scheduled_activities' => 12, // Placeholder: fetch actual schedule data
+             ];
+
+             // --- NEW: Populate dynamic lists ---
+             // (Replace with real queries when models exist)
+            $ongoingPrograms = [
+                [
+                    'title' => 'COVID-19 Vaccination - 320/500',
+                    'meta' => '64% completion rate'
+                ],
+                [
+                    'title' => 'Nutrition Program - 145/150',
+                    'meta' => '96% completion rate'
+                ],
+                [
+                    'title' => 'Blood Pressure Monitoring',
+                    'meta' => 'Every Tuesday & Thursday'
+                ]
             ];
+
+            $scheduledMissions = [
+                [
+                    'day' => '20',
+                    'month' => 'DEC',
+                    'title' => 'Medical Mission',
+                    'time' => '8:00 AM at Barangay Hall'
+                ],
+                [
+                    'day' => '28',
+                    'month' => 'DEC',
+                    'title' => 'Dental Clinic',
+                    'time' => '10:00 AM'
+                ],
+                [
+                    'day' => '15',
+                    'month' => 'JAN',
+                    'title' => 'Health Awareness Drive',
+                    'time' => '2:00 PM'
+                ]
+            ];
+
         } catch (\Exception $e) {
              Log::error('Health Worker Dashboard stats error: ' . $e->getMessage());
             $stats = [ // Fallback
@@ -351,9 +395,17 @@ class DashboardController extends Controller
                 'beneficiaries_served' => 0,
                 'scheduled_activities' => 0,
             ];
+            // $ongoingPrograms and $scheduledMissions will remain empty arrays,
+            // which is safe for the @forelse loop
         }
 
-        return view('dashboard.health', compact('user', 'stats'));
+        // --- NEW: Pass all required data to the view ---
+        return view('dashboard.health', compact(
+            'user', 
+            'stats', 
+            'ongoingPrograms', 
+            'scheduledMissions'
+        ));
     }
 
     /**
@@ -378,7 +430,7 @@ class DashboardController extends Controller
                 'resolved_incidents' => $resolvedIncidents,
                 'pending_incidents' => $this->safeCountWhere(Incident::class, 'status', 'pending'),
                 'resolution_rate' => $resolutionRate, // Calculated rate
-            ];
+             ];
         } catch (\Exception $e) {
              Log::error('Tanod Dashboard stats error: ' . $e->getMessage());
             $stats = [ // Fallback
@@ -408,7 +460,7 @@ class DashboardController extends Controller
         // $myDocuments = Document::where('resident_id', $residentProfile->id)->count();
         
         // For now, we'll just pass the user
-        
+        $stats = []; // Add empty stats array for consistency
 
         return view('dashboard.resident', compact('user', 'stats'));
     }
@@ -446,7 +498,10 @@ class DashboardController extends Controller
 
         if (method_exists($user, 'isResident') && $user->isResident()) {
             return redirect()->route('dashboard.resident');
-        }       
-
+        } 
+       
+        // Fallback for any other case or if methods don't exist
+        Auth::logout();
+        return redirect('/login')->with('error', 'Unable to determine user role or dashboard.');
     }
 }

@@ -17,8 +17,9 @@ class DocumentRequest extends Model
      */
     protected $fillable = [
         'resident_id',
-        'tracking_number',
         'document_type',
+        'tracking_number',
+        // 'document_type', // <-- This was a duplicate, I removed it
         'purpose',
         'price',
         'priority',
@@ -32,5 +33,15 @@ class DocumentRequest extends Model
     public function resident(): BelongsTo
     {
         return $this->belongsTo(Resident::class);
+    }
+
+    /**
+     * Get the document type that this request is for.
+     */
+    public function documentType(): BelongsTo
+    {
+        // This links the 'document_type' (foreign key) on this model
+        // to the 'id' (primary key) on the DocumentType model.
+        return $this->belongsTo(DocumentType::class, 'document_type', 'id');
     }
 }

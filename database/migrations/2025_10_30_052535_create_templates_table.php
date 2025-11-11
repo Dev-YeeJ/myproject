@@ -14,9 +14,13 @@ return new class extends Migration
         Schema::create('templates', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->text('description')->nullable();
-            $table->string('file_path')->nullable(); // Path to the template file
+            $table->text('content')->nullable();
+            $table->string('file_path')->nullable();
             $table->foreignId('document_type_id')->nullable()->constrained('document_types')->onDelete('set null');
+            
+            // 👇 ADD THIS LINE
+            $table->boolean('is_active')->default(true); 
+            
             $table->timestamps();
         });
     }

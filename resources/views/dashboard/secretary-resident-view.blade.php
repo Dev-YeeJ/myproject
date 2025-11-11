@@ -1,9 +1,11 @@
+{{-- resources/views/dashboards/secretary-resident-view.blade.php --}}
+
 @extends('layouts.dashboard-layout')
 
-@section('title', 'Resident Details')
+@section('title', 'Resident Details - ' . $resident->first_name . ' ' . $resident->last_name)
 
-{{-- THIS IS THE SECRETARY'S NAVIGATION --}}
 @section('nav-items')
+    {{-- (Secretary Nav Items) --}}
     <li class="nav-item">
         <a href="{{ route('dashboard.secretary') }}" class="nav-link">
             <i class="fas fa-home"></i>
@@ -38,12 +40,12 @@
 
 @section('content')
 <style>
-    /* All styles are copied directly from the captain's view */
     .details-container {
         max-width: 1000px;
         margin: 0 auto;
     }
 
+    /* {{-- MODIFIED: Reverted to blue theme --}} */
     .details-header {
         background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
         color: white;
@@ -112,14 +114,15 @@
         gap: 8px;
     }
 
+    /* {{-- MODIFIED: Reverted to blue theme --}} */
     .btn-header:hover {
         background: white;
-        color: #2B5CE6;
+        color: #2B5CE6; /* Blue */
     }
 
     .details-grid {
         display: grid;
-        grid-template-columns: 2fr 1fr;
+        grid-template-columns: 1fr 1fr;
         gap: 25px;
         margin-bottom: 25px;
     }
@@ -143,8 +146,9 @@
         border-bottom: 2px solid #E5E7EB;
     }
 
+    /* {{-- MODIFIED: Reverted to blue theme --}} */
     .card-title i {
-        color: #2B5CE6;
+        color: #2B5CE6; /* Blue */
         font-size: 1.5rem;
     }
 
@@ -157,6 +161,10 @@
 
     .info-row.single {
         grid-template-columns: 1fr;
+    }
+    
+    .info-row:last-child {
+        margin-bottom: 0;
     }
 
     .info-item {
@@ -179,8 +187,9 @@
         font-weight: 500;
     }
 
+    /* {{-- MODIFIED: Reverted to blue theme --}} */
     .info-value.highlight {
-        color: #2B5CE6;
+        color: #2B5CE6; /* Blue */
         font-weight: 600;
     }
 
@@ -203,8 +212,9 @@
         color: #BE185D;
     }
 
+    /* {{-- MODIFIED: Reverted to blue theme --}} */
     .badge-head {
-        background: #1E3A8A;
+        background: #1E3A8A; /* Dark Blue */
         color: white;
     }
 
@@ -216,47 +226,6 @@
     .badge-single {
         background: #F3F4F6;
         color: #4B5563;
-    }
-
-    .stats-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-
-    .stat-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 15px;
-        background: #F9FAFB;
-        border-radius: 8px;
-    }
-
-    .stat-label {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        color: #6B7280;
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-
-    .stat-label i {
-        width: 32px;
-        height: 32px;
-        background: white;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #2B5CE6;
-    }
-
-    .stat-value {
-        font-weight: 700;
-        color: #1F2937;
-        font-size: 1.1rem;
     }
 
     .checkbox-indicators {
@@ -282,10 +251,12 @@
         align-items: center;
         justify-content: center;
         font-size: 0.75rem;
+        flex-shrink: 0;
     }
 
+    /* {{-- NOTE: Kept green as it's functional (like in captain's view) --}} */
     .checkbox-icon.checked {
-        background: #10B981;
+        background: #10B981; 
         color: white;
     }
 
@@ -298,6 +269,14 @@
         font-weight: 600;
         color: #374151;
         font-size: 0.9rem;
+    }
+
+    .checkbox-sub-label {
+        font-weight: 500;
+        color: #6B7280;
+        font-size: 0.85rem;
+        display: block;
+        margin-top: 2px;
     }
 
     .back-link {
@@ -316,7 +295,7 @@
         color: #1E3A8A;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
         .details-grid {
             grid-template-columns: 1fr;
         }
@@ -343,7 +322,7 @@
 </style>
 
 <div class="details-container">
-    {{-- UPDATED: Route points to secretary --}}
+    {{-- (Route remains secretary-specific) --}}
     <a href="{{ route('secretary.resident-profiling') }}" class="back-link">
         <i class="fas fa-arrow-left"></i>
         <span>Back to Residents</span>
@@ -366,7 +345,7 @@
             </div>
         </div>
         <div class="header-actions">
-            {{-- UPDATED: Route points to secretary --}}
+            {{-- (Route remains secretary-specific) --}}
             <a href="{{ route('secretary.resident.edit', $resident->id) }}" class="btn-header">
                 <i class="fas fa-edit"></i>
                 <span>Edit</span>
@@ -378,7 +357,10 @@
         </div>
     </div>
 
+    {{-- (Layout is 1fr 1fr) --}}
     <div class="details-grid">
+        
+        {{-- Left Column --}}
         <div>
             <div class="details-card" style="margin-bottom: 25px;">
                 <div class="card-title">
@@ -404,7 +386,7 @@
                     </div>
                     <div class="info-item">
                         <div class="info-label">Age</div>
-                        <div class="info-value highlight">{{ $resident->age }} years old</div>
+                        <div class="info-value">{{ $resident->age }} years old</div>
                     </div>
                 </div>
 
@@ -436,8 +418,8 @@
 
                 <div class="info-row">
                     <div class="info-item">
-                        <div class="info-label">Household Number</div>
-                        <div class="info-value">{{ $resident->household ? $resident->household->household_number : 'Not Assigned' }}</div>
+                        <div class="info-label">Household</div>
+                        <div class="info-value">{{ $resident->household ? $resident->household->household_name : 'Not Assigned' }}</div>
                     </div>
                     <div class="info-item">
                         <div class="info-label">Household Status</div>
@@ -469,8 +451,11 @@
                 </div>
                 @endif
             </div>
+        </div>
 
-            <div class="details-card">
+        {{-- Right Column --}}
+        <div>
+            <div class="details-card" style="margin-bottom: 25px;">
                 <div class="card-title">
                     <i class="fas fa-briefcase"></i>
                     <span>Contact & Employment</span>
@@ -498,43 +483,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div>
-            <div class="details-card" style="margin-bottom: 25px;">
-                <div class="card-title">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Quick Stats</span>
-                </div>
-
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-label">
-                            <i class="fas fa-calendar"></i>
-                            <span>Age</span>
-                        </div>
-                        <div class="stat-value">{{ $resident->age }}</div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-label">
-                            <i class="fas fa-users"></i>
-                            <span>Status</span>
-                        </div>
-                        <div class="stat-value" style="font-size: 0.85rem;">{{ $resident->household_status }}</div>
-                    </div>
-
-                    @if($resident->monthly_income)
-                    <div class="stat-item">
-                        <div class="stat-label">
-                            <i class="fas fa-money-bill"></i>
-                            <span>Income</span>
-                        </div>
-                        <div class="stat-value" style="font-size: 0.9rem;">₱{{ number_format($resident->monthly_income, 0) }}</div>
-                    </div>
-                    @endif
-                </div>
-            </div>
 
             <div class="details-card">
                 <div class="card-title">
@@ -547,21 +495,35 @@
                         <div class="checkbox-icon {{ $resident->is_registered_voter ? 'checked' : 'unchecked' }}">
                             <i class="fas {{ $resident->is_registered_voter ? 'fa-check' : 'fa-times' }}"></i>
                         </div>
-                        <div class="checkbox-label">Registered Voter</div>
-                    </div>
-
-                    <div class="checkbox-indicator">
-                        <div class="checkbox-icon {{ $resident->is_senior_citizen ? 'checked' : 'unchecked' }}">
-                            <i class="fas {{ $resident->is_senior_citizen ? 'fa-check' : 'fa-times' }}"></i>
+                        <div class="checkbox-label">
+                            Registered Voter
+                            @if($resident->is_registered_voter && $resident->precinct_number)
+                                <span class="checkbox-sub-label">
+                                    Precinct: {{ $resident->precinct_number }}
+                                </span>
+                            @endif
                         </div>
-                        <div class="checkbox-label">Senior Citizen</div>
                     </div>
 
                     <div class="checkbox-indicator">
                         <div class="checkbox-icon {{ $resident->is_pwd ? 'checked' : 'unchecked' }}">
                             <i class="fas {{ $resident->is_pwd ? 'fa-check' : 'fa-times' }}"></i>
                         </div>
-                        <div class="checkbox-label">Person with Disability</div>
+                        <div class="checkbox-label">
+                            Person with Disability
+                            @if($resident->is_pwd)
+                                @if($resident->pwd_id_number)
+                                <span class="checkbox-sub-label">
+                                    ID: {{ $resident->pwd_id_number }}
+                                </span>
+                                @endif
+                                @if($resident->disability_type)
+                                <span class="checkbox-sub-label">
+                                    Type: {{ $resident->disability_type }}
+                                </span>
+                                @endif
+                            @endif
+                        </div>
                     </div>
 
                     <div class="checkbox-indicator">
@@ -575,14 +537,7 @@
                         <div class="checkbox-icon {{ $resident->is_4ps ? 'checked' : 'unchecked' }}">
                             <i class="fas {{ $resident->is_4ps ? 'fa-check' : 'fa-times' }}"></i>
                         </div>
-                        <div class="checkbox-label">4Ps Beneficiary (Pantawid Pamilya)</div>
-                    </div>
-
-                    <div class="checkbox-indicator">
-                        <div class="checkbox-icon {{ $resident->age < 18 ? 'checked' : 'unchecked' }}">
-                            <i class="fas {{ $resident->age < 18 ? 'fa-check' : 'fa-times' }}"></i>
-                        </div>
-                        <div class="checkbox-label">Minor (Under 18)</div>
+                        <div class="checkbox-label">4Ps Beneficiary</div>
                     </div>
                 </div>
             </div>
