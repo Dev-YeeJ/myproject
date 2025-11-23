@@ -7,7 +7,7 @@
 @section('nav-items')
     {{-- Active class on Dashboard link --}}
     <li class="nav-item">
-        <a href="{{ route('dashboard.resident') }}" class="nav-link active">
+        <a href="{{ route('resident.dashboard') }}" class="nav-link active">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
@@ -20,6 +20,12 @@
             <span>Documents Services</span>
         </a>
     </li>
+    <li class="nav-item">
+    <a href="{{ route('resident.health-services') }}" class="nav-link {{ request()->routeIs('resident.health-services') ? 'active' : '' }}">
+        <i class="fas fa-heartbeat"></i>
+        <span>Health Services</span>
+    </a>
+</li>
     
     <li class="nav-item">
         <a href="#" class="nav-link"> {{-- Add route later --}}

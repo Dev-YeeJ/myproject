@@ -1,4 +1,4 @@
-{{-- resources/views/dashboards/captain-resident-add.blade.php --}}
+{{-- resources/views/dashboard/captain-resident-add.blade.php --}}
 
 @extends('layouts.dashboard-layout')
 
@@ -7,7 +7,7 @@
 @section('nav-items')
     {{-- (Nav items remain unchanged) --}}
     <li class="nav-item">
-        <a href="{{ route('dashboard.captain') }}" class="nav-link">
+        <a href="{{ route('captain.dashboard') }}" class="nav-link">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
@@ -484,7 +484,7 @@
                     </div>
                 </div>
 
-                <div class="details-card">
+                <div class="details-card" style="margin-top: 25px;">
                     <div class="card-title">
                         <i class="fas fa-home"></i>
                         <span>Household & Contact</span>
@@ -541,8 +541,11 @@
 
                             <div class="form-group">
                                 <label for="email">Email Address</label>
-                                <input type="email" id="email" name="email" class="form-control" 
+                                <input type="email" id="email" name="email" class="form-control @error('email') error @enderror" 
                                        value="{{ old('email') }}" placeholder="example@email.com">
+                                @error('email')
+                                    <span class="error-message">{{ $message }}</span>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -561,7 +564,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="occupation">Occupation</label>
-                              
+                            
                                 <input type="text" id="occupation" name="occupation" class="form-control" 
                                        value="{{ old('occupation') }}" placeholder="e.g., Teacher, Student, Farmer" list="occupation_list">
                                 <datalist id="occupation_list">
@@ -593,7 +596,7 @@
                                 <label for="is_registered_voter">Registered Voter</label>
                             </div>
 
-                         
+                        
                             <div id="voter_fields_wrapper" class="conditional-fields" style="display: {{ old('is_registered_voter') ? 'block' : 'none' }};">
                                 <div class="form-group" style="margin-bottom: 0;">
                                     <label for="precinct_number" class="required">Precinct Number</label>

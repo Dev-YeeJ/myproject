@@ -19,17 +19,12 @@ use App\Http\Controllers\ResidentController;
 */
 
 // ============================================
-// ROOT ROUTE "/" - (IMPROVED VERSION)
+// ROOT ROUTE "/"
 // ============================================
 Route::get('/', function () {
-    // Check if the user is already logged in
     if (Auth::check()) {
-        // If they are, redirect them to the main dashboard
-        // (which will then redirect them to their role-specific dashboard)
         return redirect()->route('dashboard');
     }
-
-    // If they are not logged in, show them the login page
     return redirect()->route('login');
 })->name('home');
 
@@ -37,13 +32,8 @@ Route::get('/', function () {
 // ============================================
 // GUEST ROUTES - Only for users NOT logged in
 // ============================================
-
 Route::middleware('guest')->group(function () {
-
-    // Show login form - FIRST page users see
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-
-    // Handle login submission
     Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 });
 
@@ -51,13 +41,9 @@ Route::middleware('guest')->group(function () {
 // ============================================
 // AUTHENTICATED ROUTES - Only for logged-in users
 // ============================================
-
 Route::middleware('auth')->group(function () {
 
-    // Logout route
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-
-    // Dashboard redirector
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // ============================================
@@ -65,167 +51,113 @@ Route::middleware('auth')->group(function () {
     // ============================================
 
     // --- Captain Routes ---
-    Route::middleware(CheckRole::class . ':barangay_captain')->group(function() {
-        // Captain Dashboard
-        Route::get('/dashboard/captain', [DashboardController::class, 'captain'])
-            ->name('dashboard.captain');
+    Route::middleware(CheckRole::class . ':barangay_captain')->prefix('captain')->name('captain.')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'captain'])->name('dashboard');
+        
+        // Resident Profiling
+        Route::get('/resident-profiling', [CaptainController::class, 'residentProfiling'])->name('resident-profiling');
+        Route::get('/resident/create', [CaptainController::class, 'createResident'])->name('resident.create');
+        Route::post('/resident', [CaptainController::class, 'storeResident'])->name('resident.store');
+        Route::get('/resident/{id}', [CaptainController::class, 'showResident'])->name('resident.show')->where('id', '[0-9]+');
+        Route::get('/resident/{id}/edit', [CaptainController::class, 'editResident'])->name('resident.edit')->where('id', '[0-9]+');
+        Route::put('/resident/{id}', [CaptainController::class, 'updateResident'])->name('resident.update')->where('id', '[0-9]+');
+        Route::delete('/resident/{id}', [CaptainController::class, 'destroyResident'])->name('resident.destroy')->where('id', '[0-9]+');
+        Route::post('/resident/{resident}/reset-password', [CaptainController::class, 'resetPassword'])->name('resident.reset-password');
 
-        // Resident Profiling Routes
-        Route::get('/captain/resident-profiling', [CaptainController::class, 'residentProfiling'])
-            ->name('captain.resident-profiling');
-        Route::get('/captain/resident/create', [CaptainController::class, 'createResident'])
-            ->name('captain.resident.create');
-        Route::post('/captain/resident', [CaptainController::class, 'storeResident'])
-            ->name('captain.resident.store');
-        Route::get('/captain/resident/{id}', [CaptainController::class, 'showResident'])
-            ->name('captain.resident.show')->where('id', '[0-9]+');
-       Route::get('/captain/resident/{id}/edit', [CaptainController::class, 'editResident'])
- ->name('captain.resident.edit')->where('id', '[0-9]+');
-        Route::put('/captain/resident/{id}', [CaptainController::class, 'updateResident'])
-            ->name('captain.resident.update')->where('id', '[0-9]+');
-        Route::delete('/captain/resident/{id}', [CaptainController::class, 'destroyResident'])
-            ->name('captain.resident.destroy')->where('id', '[0-9]+');
+        // Household Management
+        Route::get('/household/create', [CaptainController::class, 'createHousehold'])->name('household.create');
+        Route::post('/household', [CaptainController::class, 'storeHousehold'])->name('household.store');
+        Route::get('/household/{id}/edit', [CaptainController::class, 'editHousehold'])->name('household.edit')->where('id', '[0-9]+');
+        Route::put('/household/{id}', [CaptainController::class, 'updateHousehold'])->name('household.update')->where('id', '[0-9]+');
+        Route::delete('/household/{id}', [CaptainController::class, 'destroyHousehold'])->name('household.destroy')->where('id', '[0-9]+');
+        Route::get('/household/{id}/show', [CaptainController::class, 'showHousehold'])->name('household.show');
 
-        // Household Management Routes
-        Route::get('/captain/household/create', [CaptainController::class, 'createHousehold'])
-            ->name('captain.household.create');
-        Route::post('/captain/household', [CaptainController::class, 'storeHousehold'])
-            ->name('captain.household.store');
-        Route::get('/captain/household/{id}/edit', [CaptainController::class, 'editHousehold'])
-            ->name('captain.household.edit')->where('id', '[0-9]+');
-        Route::put('/captain/household/{id}', [CaptainController::class, 'updateHousehold'])
-            ->name('captain.household.update')->where('id', '[0-9]+');
-        Route::delete('/captain/household/{id}', [CaptainController::class, 'destroyHousehold'])
-            ->name('captain.household.destroy')->where('id', '[0-9]+');
-        Route::get('/captain/household/{id}/show', [CaptainController::class, 'showHousehold'])->name('captain.household.show');
-
-        // Health & Social Services Route
-        Route::get('/captain/health-services', [CaptainController::class, 'healthAndSocialServices'])
-                ->name('captain.health-services');
-
-        // --- NEW MEDICINE ROUTES ---
-        // Show form to add medicine
-        Route::get('/captain/medicine/create', [CaptainController::class, 'createMedicine'])
-                ->name('captain.medicine.create');
-        // Store new medicine
-        Route::post('/captain/medicine', [CaptainController::class, 'storeMedicine'])
-                ->name('captain.medicine.store');
+        // Health Services (View-Only)
+        Route::get('/health-services', [CaptainController::class, 'healthAndSocialServices'])->name('health-services');
+        Route::get('/medicine/create', [CaptainController::class, 'createMedicine'])->name('medicine.create');
+        Route::post('/medicine', [CaptainController::class, 'storeMedicine'])->name('medicine.store');
                 
-        //Document Services
-        Route::get('/captain/document-services', [CaptainController::class, 'documentServices'])
-            ->name('captain.document-services');
+        // Document Services
+        Route::get('/document-services', [CaptainController::class, 'documentServices'])->name('document-services');
 
-        // --- ADDED: Routes for Document Types ---
-        Route::get('/captain/document-type/create', [DocumentTypeController::class, 'create'])->name('captain.document-type.create');
-        Route::post('/captain/document-type', [DocumentTypeController::class, 'store'])->name('captain.document-type.store');
-        Route::get('/captain/document-type/{id}/edit', [DocumentTypeController::class, 'edit'])->name('captain.document-type.edit');
-        Route::put('/captain/document-type/{id}', [DocumentTypeController::class, 'update'])->name('captain.document-type.update');
-        Route::delete('/captain/document-type/{id}', [DocumentTypeController::class, 'destroy'])->name('captain.document-type.destroy');
-
-        // --- ADDED: Routes for Templates ---
-        Route::get('/captain/template/create', [TemplateController::class, 'create'])->name('captain.template.create');
-        Route::post('/captain/template', [TemplateController::class, 'store'])->name('captain.template.store');
-        Route::get('/captain/template/{id}/edit', [TemplateController::class, 'edit'])->name('captain.template.edit');
-        Route::put('/captain/template/{id}', [TemplateController::class, 'update'])->name('captain.template.update');
-        Route::delete('/captain/template/{id}', [TemplateController::class, 'destroy'])->name('captain.template.destroy');
-
-
-    }); // End Captain Middleware Group
-
-    
-    // ============================================
-    // --- NEW: Secretary Routes ---
-    // ============================================
-    Route::middleware(CheckRole::class . ':secretary')->group(function() {
+        // Document Request Management Routes
+        Route::get('/document-request/{id}', [CaptainController::class, 'showDocumentRequest'])->name('document.show');
+        Route::put('/document-request/{id}', [CaptainController::class, 'updateDocumentRequest'])->name('document.update');
+        Route::get('/requirement/{id}/download', [CaptainController::class, 'downloadRequirement'])->name('requirement.download');
         
-        // Secretary Dashboard
-        Route::get('/dashboard/secretary', [DashboardController::class, 'secretary'])
-            ->name('dashboard.secretary');
+        // Document Type & Template CRUD
+        Route::get('/document-type/create', [DocumentTypeController::class, 'create'])->name('document-type.create');
+        Route::post('/document-type', [DocumentTypeController::class, 'store'])->name('document-type.store');
+        Route::get('/document-type/{id}/edit', [DocumentTypeController::class, 'edit'])->name('document-type.edit');
+        Route::put('/document-type/{id}', [DocumentTypeController::class, 'update'])->name('document-type.update');
+        Route::delete('/document-type/{id}', [DocumentTypeController::class, 'destroy'])->name('document-type.destroy');
+        Route::get('/template/create', [TemplateController::class, 'create'])->name('template.create');
+        Route::post('/template', [TemplateController::class, 'store'])->name('template.store');
+        Route::get('/template/{id}/edit', [TemplateController::class, 'edit'])->name('template.edit');
+        Route::put('/template/{id}', [TemplateController::class, 'update'])->name('template.update');
+        Route::delete('/template/{id}', [TemplateController::class, 'destroy'])->name('template.destroy');
+    });
 
-        // Resident Profiling Routes
-        Route::get('/secretary/resident-profiling', [SecretaryController::class, 'residentProfiling'])
-            ->name('secretary.resident-profiling');
-        Route::get('/secretary/resident/create', [SecretaryController::class, 'createResident'])
-            ->name('secretary.resident.create');
-        Route::post('/secretary/resident', [SecretaryController::class, 'storeResident'])
-            ->name('secretary.resident.store');
-        Route::get('/secretary/resident/{id}', [SecretaryController::class, 'showResident'])
-            ->name('secretary.resident.show')->where('id', '[0-9]+');
-        Route::get('/secretary/resident/{id}/edit', [SecretaryController::class, 'editResident'])
-            ->name('secretary.resident.edit')->where('id', '[0-9]+');
-        Route::put('/secretary/resident/{id}', [SecretaryController::class, 'updateResident'])
-            ->name('secretary.resident.update')->where('id', '[0-9]+');
-        Route::delete('/secretary/resident/{id}', [SecretaryController::class, 'destroyResident'])
-            ->name('secretary.resident.destroy')->where('id', '[0-9]+');
+    // --- Secretary Routes ---
+    Route::middleware(CheckRole::class . ':secretary')->prefix('secretary')->name('secretary.')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'secretary'])->name('dashboard');
+        
+        // Resident Profiling
+        Route::get('/resident-profiling', [SecretaryController::class, 'residentProfiling'])->name('resident-profiling');
+        Route::get('/resident/create', [SecretaryController::class, 'createResident'])->name('resident.create');
+        Route::post('/resident', [SecretaryController::class, 'storeResident'])->name('resident.store');
+        Route::get('/resident/{id}', [SecretaryController::class, 'showResident'])->name('resident.show')->where('id', '[0-9]+');
+        Route::get('/resident/{id}/edit', [SecretaryController::class, 'editResident'])->name('resident.edit')->where('id', '[0-9]+');
+        Route::put('/resident/{id}', [SecretaryController::class, 'updateResident'])->name('resident.update')->where('id', '[0-9]+');
+        Route::delete('/resident/{id}', [SecretaryController::class, 'destroyResident'])->name('resident.destroy')->where('id', '[0-9]+');
+        Route::post('/resident/{resident}/reset-password', [SecretaryController::class, 'resetPassword'])->name('resident.reset-password');
             
-
-        // Household Management Routes
-        Route::get('/secretary/household/create', [SecretaryController::class, 'createHousehold'])
-        ->name('secretary.household.create');
-        
-        Route::get('/secretary/household/{id}/edit', [SecretaryController::class, 'editHousehold'])
-            ->name('secretary.household.edit')->where('id', '[0-9]+');
-
-         Route::put('/secretary/household/{id}', [SecretaryController::class, 'updateHousehold'])
-            ->name('secretary.household.update')->where('id', '[0-9]+');
-
-         Route::post('/secretary/household', [SecretaryController::class, 'storeHousehold'])
-            ->name('secretary.household.store');
-
-        Route::delete('/secretary/household/{id}', [SecretaryController::class, 'destroyHousehold'])
-            ->name('secretary.household.destroy')->where('id', '[0-9]+');
-
-        Route::get('/secretary/household/{id}/show', [SecretaryController::class, 'showHousehold'])
-            ->name('secretary.household.show');
-
-
-        // Add other secretary routes here (e.g., documents, settings)
-        
-    }); // End Secretary Middleware Group
-
+        // Household Management
+        Route::get('/household/create', [SecretaryController::class, 'createHousehold'])->name('household.create');
+        Route::get('/household/{id}/edit', [SecretaryController::class, 'editHousehold'])->name('household.edit')->where('id', '[0-9]+');
+        Route::put('/household/{id}', [SecretaryController::class, 'updateHousehold'])->name('household.update')->where('id', '[0-9]+');
+        Route::post('/household', [SecretaryController::class, 'storeHousehold'])->name('household.store');
+        Route::delete('/household/{id}', [SecretaryController::class, 'destroyHousehold'])->name('household.destroy')->where('id', '[0-9]+');
+        Route::get('/household/{id}/show', [SecretaryController::class, 'showHousehold'])->name('household.show');
+    });
 
     // --- Health Worker (BHW) Routes ---
-    // This group handles all BHW-specific actions *except* the main dashboard
-    Route::middleware(CheckRole::class . ':health_worker')->prefix('health')->group(function () {
+    Route::middleware(CheckRole::class . ':health_worker')->prefix('health')->name('health.')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'health'])->name('dashboard');
         
-        // Health Services Page (Medicine Inventory)
-        Route::get('/health-services', [HealthController::class, 'showHealthServices'])
-             ->name('health.health-services');
-    
-        // Show form to add medicine
-        Route::get('/medicine/create', [HealthController::class, 'createMedicine'])
-             ->name('health.medicine.create');
-    
-        // Store new medicine
-        Route::post('/medicine', [HealthController::class, 'storeMedicine'])
-             ->name('health.medicine.store');
-    
-        // "Manage Requests" button
-        Route::get('/medicine/requests', [HealthController::class, 'showMedicineRequests'])
-             ->name('health.medicine.requests');
+        // Medicine Inventory CRUD
+        Route::get('/health-services', [HealthController::class, 'showHealthServices'])->name('health-services');
+        Route::get('/medicine/create', [HealthController::class, 'createMedicine'])->name('medicine.create');
+        Route::post('/medicine', [HealthController::class, 'storeMedicine'])->name('medicine.store');
         
-        // READ (Single Item)
-    Route::get('/medicine/{medicine}', [HealthController::class, 'showMedicine'])->name('health.medicine.show');
+        // --- CRITICAL: Request Management MUST BE BEFORE Wildcard Routes ---
+        Route::get('/medicine/requests', [HealthController::class, 'showMedicineRequests'])->name('medicine.requests');
+        Route::put('/medicine/requests/{id}', [HealthController::class, 'updateRequestStatus'])->name('medicine.request.update');
 
-    // UPDATE
-    Route::get('/medicine/{medicine}/edit', [HealthController::class, 'editMedicine'])->name('health.medicine.edit');
-    Route::put('/medicine/{medicine}', [HealthController::class, 'updateMedicine'])->name('health.medicine.update');
+        // Medicine Specific Routes (Wildcards)
+        Route::get('/medicine/{medicine}', [HealthController::class, 'showMedicine'])->name('medicine.show');
+        Route::get('/medicine/{medicine}/edit', [HealthController::class, 'editMedicine'])->name('medicine.edit');
+        Route::put('/medicine/{medicine}', [HealthController::class, 'updateMedicine'])->name('medicine.update');
+        Route::delete('/medicine/{medicine}', [HealthController::class, 'destroyMedicine'])->name('medicine.destroy'); 
+    });
 
-    // DELETE
-    Route::delete('/medicine/{medicine}', [HealthController::class, 'destroyMedicine'])->name('health.medicine.destroy');     
-
-        // You will also need routes for edit, update, delete
-        // Route::get('/medicine/{id}/edit', [HealthController::class, 'editMedicine'])->name('bhw.medicine.edit');
-        // Route::put('/medicine/{id}', [HealthController::class, 'updateMedicine'])->name('bhw.medicine.update');
-        // Route::delete('/medicine/{id}', [HealthController::class, 'destroyMedicine'])->name('bhw.medicine.destroy');
-
-    }); // End Health Worker Middleware Group
-
+    // --- Resident Routes ---
+    Route::middleware(CheckRole::class . ':resident')->prefix('resident')->name('resident.')->group(function () {
+        Route::get('/dashboard', [ResidentController::class, 'dashboard'])->name('dashboard');
+        
+        // Document Services
+        Route::get('/document-services', [ResidentController::class, 'showDocumentServices'])->name('document-services');
+        Route::get('/document/create', [ResidentController::class, 'createDocumentRequest'])->name('document.create');
+        Route::post('/document/store', [ResidentController::class, 'storeDocumentRequest'])->name('document.store');
+        Route::delete('/document-request/{id}/cancel', [ResidentController::class, 'cancelDocumentRequest'])->name('document.cancel');
+        Route::get('/document-request/{id}/download', [ResidentController::class, 'downloadGeneratedDocument'])->name('document.download');
+        
+        // Health & Social Services
+        Route::get('/health-services', [ResidentController::class, 'showHealthServices'])->name('health-services');
+        Route::post('/health-services/request', [ResidentController::class, 'storeMedicineRequest'])->name('health.request.store');
+    });
 
     // --- Other Role Dashboards ---
-
-    // Note: The '/dashboard/secretary' route is now inside the new secretary group above
-    
     Route::get('/dashboard/treasurer', [DashboardController::class, 'treasurer'])
         ->name('dashboard.treasurer')
         ->middleware(CheckRole::class . ':treasurer');
@@ -234,38 +166,8 @@ Route::middleware('auth')->group(function () {
         ->name('dashboard.kagawad')
         ->middleware(CheckRole::class . ':kagawad');
 
-    // This is the main BHW dashboard route
-    Route::get('/dashboard/health', [DashboardController::class, 'health'])
-        ->name('dashboard.health')
-        ->middleware(CheckRole::class . ':health_worker');
-
     Route::get('/dashboard/tanod', [DashboardController::class, 'tanod'])
         ->name('dashboard.tanod')
         ->middleware(CheckRole::class . ':tanod');
 
-    // *** THIS IS THE NEW ROUTE ***
-    // --- NEW: Resident Dashboard Route ---
-    Route::get('/dashboard/resident', [DashboardController::class, 'resident'])
-        ->name('dashboard.resident')
-        ->middleware(CheckRole::class . ':resident');
-    // Resident Document Services Route
-    Route::get('/resident/document-services', [ResidentController::class, 'showDocumentServices'])
-        ->name('resident.document-services');
-    Route::get('/resident/document/create', [ResidentController::class, 'createDocumentRequest'])
-     ->name('resident.document.create');
-
-Route::post('/resident/document/store', [ResidentController::class, 'storeDocumentRequest'])
-     ->name('resident.document.store');
-
-Route::delete('/resident/document-request/{id}/cancel', [ResidentController::class, 'cancelDocumentRequest'])
-     ->name('resident.document.cancel');
-
-    // --- SK Official Routes --- (Uncomment and adjust if needed)
-    // Route::get('/dashboard/sk', [DashboardController::class, 'sk_official']) // Create sk_official method if needed
-    //     ->name('dashboard.sk')
-    //     ->middleware(CheckRole::class . ':sk_official');
-    // Route::middleware(CheckRole::class . ':sk_official')->prefix('sk')->name('sk.')->group(function () {
-    //     // Add SK-specific routes here
-    // });
-
-}); // End Auth Middleware Group
+});

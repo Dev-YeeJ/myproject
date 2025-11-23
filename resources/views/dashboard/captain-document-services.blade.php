@@ -5,19 +5,18 @@
 @section('title', 'Document Management')
 
 @section('nav-items')
-    {{-- This nav is copied from your reference, with 'Documents Services' active --}}
     <li class="nav-item">
-        <a href="{{ route('dashboard.captain') }}" class="nav-link ">
+        <a href="{{ route('captain.dashboard') }}" class="nav-link ">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.resident-profiling') }}" class="nav-link">
-            <i class="fas fa-users"></i>
-            <span>Resident Profiling</span>
-        </a>
-    </li>
+    <a href="{{ route('captain.resident-profiling') }}" class="nav-link ">
+        <i class="fas fa-users"></i>
+        <span>Resident Profiling</span>
+    </a>
+</li>
     <li class="nav-item">
         <a href="{{ route('captain.document-services') }}" class="nav-link active">
             <i class="far fa-file-alt"></i>
@@ -31,7 +30,7 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.health-services') }}" class="nav-link ">
+        <a href="{{ route('captain.health-services') }}" class="nav-link  ">
             <i class="fas fa-heart"></i>
             <span>Health & Social Services</span>
         </a>
@@ -206,7 +205,7 @@
         gap: 24px;
     }
 
-    /* Card for Document Types (image_709296.png) */
+    /* Card for Document Types */
     .doc-type-card {
         background: white;
         border: 1px solid #E5E7EB;
@@ -326,7 +325,7 @@
     .status-badge.disabled { background: #FEE2E2; color: #991B1B; }
 
 
-    /* Card for Templates (image_70965b.png) */
+    /* Card for Templates */
     .template-card {
         background: white;
         border: 1px solid #E5E7EB;
@@ -414,7 +413,7 @@
         background-color: #ECFDF5;
     }
     
-    /* === 1. NEW STYLES FOR DOCUMENT REQUESTS TABLE === */
+    /* === STYLES FOR DOCUMENT REQUESTS TABLE === */
     .table-container {
         background: white;
         border-radius: 12px;
@@ -534,6 +533,7 @@
     .badge-processing { background: #E0E7FF; color: #4338CA; }
     .badge-under-review { background: #F3E8FF; color: #7E22CE; }
     .badge-completed { background: #D1FAE5; color: #065F46; }
+    .badge-rejected { background: #FEE2E2; color: #991B1B; } /* --- NEW --- */
 
     .badge-urgent { background: #FECACA; color: #B91C1C; }
     .badge-normal { background: #E5E7EB; color: #4B5563; }
@@ -542,19 +542,32 @@
     .table-actions a, .table-actions button {
         color: #6B7280;
         text-decoration: none;
-        font-size: 1.1rem;
-        margin: 0 6px;
+        font-size: 0.9rem; /* --- UPDATED --- */
+        margin: 0 4px;
         border: none; background: transparent; cursor: pointer;
+        font-weight: 600; padding: 6px 10px; border-radius: 6px;
     }
-    .table-actions a:hover, .table-actions button:hover {
+    /* --- NEW --- */
+    .table-actions .manage-btn {
+        background: #EFF6FF;
         color: #2B5CE6;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
-    .table-actions .delete-action:hover {
-        color: #DC2626;
+    .table-actions .manage-btn:hover {
+        background: #DBEAFE;
     }
-    /* === END OF NEW STYLES === */
-
-
+    /* --- NEW --- */
+    .attachment-icon {
+        color: #9CA3AF;
+        font-size: 0.9rem;
+        margin-left: 8px;
+    }
+    .attachment-icon:hover {
+        color: #1F2937;
+    }
+    
     @media (max-width: 1200px) {
         .card-grid { grid-template-columns: repeat(2, 1fr); }
     }
@@ -637,7 +650,6 @@
     </div>
     <div class="stat-box">
         <div class="stat-content">
-            {{-- 2. UPDATED STAT BOX --}}
             <h3>{{ $stats['pending_requests'] ?? 0 }}</h3>
             <p>Pending Requests</p>
             <div class="stat-badge purple">
@@ -653,11 +665,11 @@
 
 {{-- Action buttons, adapted from reference --}}
 <div class="action-buttons">
-    <a href="{{ route('captain.document-type.create') }}" class="btn-action btn-add">
+    <a href="{{-- {{ route('captain.document-type.create') }} --}}" class="btn-action btn-add">
         <i class="fas fa-plus"></i>
         <span>Add Document Type</span>
     </a>
-    <a href="{{ route('captain.template.create') }}" class="btn-action btn-add-household">
+    <a href="{{-- {{ route('captain.template.create') }} --}}" class="btn-action btn-add-household">
         <i class="fas fa-plus"></i>
         <span>Add Template</span>
     </a>
@@ -703,6 +715,7 @@
                 'Processing' => 'badge-processing',
                 'Under Review' => 'badge-under-review',
                 'Completed' => 'badge-completed',
+                'Rejected' => 'badge-rejected',
             ];
             $class = $map[$status] ?? 'badge-normal';
             return "<span class='badge {$class}'>{$status}</span>";
@@ -739,8 +752,8 @@
                         <option value="Processing" {{ request('status') === 'Processing' ? 'selected' : '' }}>Processing</option>
                         <option value="Ready for Pickup" {{ request('status') === 'Ready for Pickup' ? 'selected' : '' }}>Ready for Pickup</option>
                         <option value="Completed" {{ request('status') === 'Completed' ? 'selected' : '' }}>Completed</option>
+                        <option value="Rejected" {{ request('status') === 'Rejected' ? 'selected' : '' }}>Rejected</option>
                     </select>
-                    {{-- You can add a Document Type filter dropdown here if needed --}}
                 </form>
             </div>
         </div>
@@ -752,9 +765,9 @@
                         <th>Tracking #</th>
                         <th>Requestor</th>
                         <th>Document Type</th>
-                        <th>Purpose</th>
+                        {{-- <th>Purpose</th> --}}
                         <th>Date</th>
-                        <th>Priority</th>
+                        {{-- <th>Priority</th> --}}
                         <th>Payment</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -764,7 +777,8 @@
                     @forelse($documentRequests as $request)
                     <tr>
                         <td>
-                            <a href="#" class="tracking-number">{{ $request->tracking_number }}</a>
+                            {{-- !!! UPDATED: LINK TO MANAGE PAGE !!! --}}
+                            <a href="{{ route('captain.document.show', $request->id) }}" class="tracking-number">{{ $request->tracking_number }}</a>
                         </td>
                         <td>
                             <div class="requestor-info">
@@ -774,25 +788,31 @@
                         </td>
                         <td>
                             <div class="document-type-info">
-                                <span>{{ $request->documentType->name ?? 'N/A' }}</span>
-                                <small>₱{{ number_format($request->documentType->price ?? 0, 0) }}</small>
+                                <span>
+                                    {{ $request->documentType->name ?? 'N/A' }}
+                                    {{-- !!! NEW: ATTACHMENT ICON !!! --}}
+                                    @if($request->requirements->count() > 0)
+                                        <i class="fas fa-paperclip attachment-icon" title="{{ $request->requirements->count() }} requirements uploaded"></i>
+                                    @endif
+                                </span>
+                                <small>₱{{ number_format($request->price ?? 0, 2) }}</small>
                             </div>
                         </td>
-                        <td>{{ $request->purpose }}</td>
-                        <td>{{ $request->created_at->format('Y-m-d') }}</td>
-                        <td>{!! getPriorityBadge($request->priority) !!}</td>
+                        {{-- <td>{{ $request->purpose }}</td> --}}
+                        <td>{{ $request->created_at->format('M d, Y') }}</td>
+                        {{-- <td>{!! getPriorityBadge($request->priority) !!}</td> --}}
                         <td>{!! getPaymentBadge($request->payment_status) !!}</td>
                         <td>{!! getStatusBadge($request->status) !!}</td>
                         <td class="table-actions">
-                            <a href="#"><i class="fas fa-eye"></i></a>
-                            <a href="#"><i class="fas fa-print"></i></a>
-                            <a href="#"><i class="fas fa-check-circle"></i></a>
-                            <button class="delete-action"><i class="fas fa-times-circle"></i></button>
+                            {{-- !!! UPDATED: ACTION BUTTONS !!! --}}
+                            <a href="{{ route('captain.document.show', $request->id) }}" class="manage-btn">
+                                <i class="fas fa-edit"></i> Manage
+                            </a>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9">
+                        <td colspan="7"> {{-- Updated colspan --}}
                             <div class="no-results-found" style="box-shadow: none; padding: 40px;">
                                 <i class="fas fa-file-import"></i>
                                 <p>No document requests found.</p>
@@ -838,7 +858,7 @@
             <div class="template-card-actions">
                 <a href="#"><i class="fas fa-eye"></i> Preview</a>
                 <a href="#"><i class="fas fa-download"></i> Download</a>
-                <a href="{{ route('captain.template.edit', $template->id) }}" class="edit-btn"><i class="fas fa-edit"></i> Edit</a>
+                <a href="{{-- {{ route('captain.template.edit', $template->id) }} --}}" class="edit-btn"><i class="fas fa-edit"></i> Edit</a>
             </div>
         </div>
         @empty
@@ -883,7 +903,7 @@
                     {{ $type->is_active ? 'Active' : 'Disabled' }}
                 </span>
                 <div class="actions">
-                    <a href="{{ route('captain.document-type.edit', $type->id) }}" class="edit-btn">
+                    <a href="{{-- {{ route('captain.document-type.edit', $type->id) }} --}}" class="edit-btn">
                         <i class="fas fa-edit"></i> Edit
                     </a>
                     <button class="delete-btn" onclick="showDeleteModal({{ $type->id }}, '{{ $type->name }}')">

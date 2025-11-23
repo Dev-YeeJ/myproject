@@ -7,7 +7,7 @@
 @section('nav-items')
     {{-- (Nav items remain unchanged) --}}
     <li class="nav-item">
-        <a href="{{ route('dashboard.captain') }}" class="nav-link">
+        <a href="{{ route('captain.dashboard') }}" class="nav-link">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>

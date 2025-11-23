@@ -7,35 +7,64 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 class Kernel extends HttpKernel
 {
     /**
-     * The application's HTTP middleware stack.
+     * The application's global HTTP middleware stack.
      *
-     * @var array
+     * These middleware are run during every request to your application.
+     *
+     * @var array<int, class-string|string>
      */
     protected $middleware = [
+        // \App\Http\Middleware\TrustHosts::class,
         \App\Http\Middleware\TrustProxies::class,
-        \App\Http\Middleware\RedirectIfAuthenticated::class,
-        \App\Http\Middleware\EncryptCookies::class,
-        \App\Http\Middleware\AddQueuedCookiesToResponse::class,
-        \App\Http\Middleware\StartSession::class,
-        \Illuminate\Session\Middleware\AuthenticateSession::class,
-        \App\Http\Middleware\SetCacheHeaders::class,
-        \App\Http\Middleware\CheckForMaintenanceMode::class,
+        \Illuminate\Http\Middleware\HandleCors::class, // <-- Restored
+        \App\Http\Middleware\PreventRequestsDuringMaintenance::class, // <-- Restored
+        \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class, // <-- Restored
         \App\Http\Middleware\TrimStrings::class,
-        \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class, // <-- Restored
+        \App\Http\Middleware\SetCacheHeaders::class,
     ];
 
     /**
-     * The application's route middleware aliases.
+     * The application's route middleware groups.
      *
-     * @var array
+     * @var array<string, array<int, class-string|string>>
+     */
+    protected $middlewareGroups = [
+        'web' => [
+            \App\Http\Middleware\EncryptCookies::class,
+            \App\Http\Middleware\AddQueuedCookiesToResponse::class,
+            \App\Http\Middleware\StartSession::class,
+            \Illuminate\Session\Middleware\AuthenticateSession::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            \App\Http\Middleware\VerifyCsrfToken::class, // <-- We need to create this
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ],
+
+        'api' => [
+            // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            'throttle:api',
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ],
+    ];
+
+    /**
+     * The application's route middleware.
+     *
+     * These middleware may be assigned to groups or used individually.
+     *
+     * @var array<string, class-string|string>
      */
     protected $middlewareAliases = [
         'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
-        'password.confirm' => \App\Http\Middleware\EnsurePasswordIsConfirmed::class,
-        'role' => \App\Http\Middleware\CheckRole::class,
+        'password.confirm' => \Illuminate\Auth\Middleware\EnsurePasswordIsConfirmed::class,
+        'role' => \App\Http\Middleware\CheckRole::class, // <-- Your custom role middleware
+        'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
+        'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
     ];
 }

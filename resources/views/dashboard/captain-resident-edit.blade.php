@@ -1,4 +1,4 @@
-{{-- resources/views/dashboards/captain-resident-edit.blade.php --}}
+{{-- resources/views/dashboard/captain-resident-edit.blade.php --}}
 
 @extends('layouts.dashboard-layout')
 
@@ -7,7 +7,7 @@
 @section('nav-items')
     {{-- (Nav items remain unchanged) --}}
     <li class="nav-item">
-        <a href="{{ route('dashboard.captain') }}" class="nav-link">
+        <a href="{{ route('captain.dashboard') }}" class="nav-link">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
@@ -368,7 +368,7 @@
 </style>
 
 <div class="details-container">
-    <a href="{{ route('captain.resident.show', $resident->id) }}" class="back-link">
+    <a href="{{ $resident->id ? route('captain.resident.show', $resident->id) : route('captain.resident-profiling') }}" class="back-link">
         <i class="fas fa-arrow-left"></i>
         <span>Back to Resident Details</span>
     </a>
@@ -388,7 +388,7 @@
                 </div>
             </div>
             <div class="header-actions">
-                <a href="{{ route('captain.resident.show', $resident->id) }}" class="btn-header btn-secondary">
+                <a href="{{ $resident->id ? route('captain.resident.show', $resident->id) : route('captain.resident-profiling') }}" class="btn-header btn-secondary">
                     <i class="fas fa-times"></i>
                     <span>Cancel</span>
                 </a>
@@ -445,7 +445,7 @@
                             <div class="form-group">
                                 <label for="date_of_birth" class="required">Date of Birth</label>
                                 <input type="date" id="date_of_birth" name="date_of_birth" class="form-control @error('date_of_birth') error @enderror" 
-                                       value="{{ old('date_of_birth', $resident->date_of_birth->format('Y-m-d')) }}" required>
+                                       value="{{ old('date_of_birth', $resident->date_of_birth ? $resident->date_of_birth->format('Y-m-d') : '') }}" required>
                                 @error('date_of_birth')
                                     <span class="error-message">{{ $message }}</span>
                                 @enderror
@@ -483,7 +483,7 @@
                     </div>
                 </div>
 
-                <div class="details-card">
+                <div class="details-card" style="margin-top: 25px;">
                     <div class="card-title">
                         <i class="fas fa-home"></i>
                         <span>Household & Contact</span>
@@ -538,8 +538,11 @@
 
                             <div class="form-group">
                                 <label for="email">Email Address</label>
-                                <input type="email" id="email" name="email" class="form-control" 
+                                <input type="email" id="email" name="email" class="form-control @error('email') error @enderror" 
                                        value="{{ old('email', $resident->email) }}" placeholder="example@email.com">
+                                @error('email')
+                                    <span class="error-message">{{ $message }}</span>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -641,6 +644,29 @@
                         </div>
                     </div>
                     
+                </div>
+                
+                {{-- NEW CARD: USER ACCOUNT DETAILS --}}
+                <div class="details-card" style="margin-top: 25px;">
+                    <div class="card-title">
+                        <i class="fas fa-user-shield" style="color: #6366F1;"></i> {{-- Indigo color for user account --}}
+                        <span>User Account</span>
+                    </div>
+                    <div class="card-content">
+                        @if($resident->user)
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" class="form-control" value="{{ $resident->user->username }}" disabled>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Account Status</label>
+                            <input type="text" class="form-control" value="{{ $resident->user->is_active ? 'Active' : 'Disabled' }}" disabled>
+                        </div>
+                        {{-- You could add a "Reset Password" button here in the future --}}
+                        @else
+                            <p style="color: #6B7280; text-align: center;">No user account is linked to this resident.</p>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>

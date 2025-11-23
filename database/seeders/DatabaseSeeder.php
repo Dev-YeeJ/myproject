@@ -101,8 +101,11 @@ class DatabaseSeeder extends Seeder
                 'is_active' => true,
             ]
         );
-
-         User::updateOrCreate(
+        
+        // --- THIS BLOCK IS NOW REMOVED ---
+        // The ResidentObserver will create this user automatically
+        /*
+        User::updateOrCreate(
             ['username' => 'resident1'],
             [
                 'password' => Hash::make('password123'),
@@ -114,6 +117,7 @@ class DatabaseSeeder extends Seeder
                 'is_active' => true,
             ]
         );
+        */
 
         // ==========================================
         // RESIDENT PROFILING DATA
@@ -150,7 +154,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
         
-        // --- NEW HOUSEHOLDS ---
         $household4 = Household::updateOrCreate(
             ['household_number' => 'HH-004'],
             [
@@ -271,8 +274,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // --- NEW RESIDENTS ---
-
         // Household 4: Bautista Family
         Resident::updateOrCreate(
             ['email' => 'rodrigo.bautista@example.com'],
@@ -370,6 +371,24 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // --- NEW: Add the 'resident1' (Jaime Yee) as a Resident ---
+        // The Observer will create his User account.
+        $res_jaime = Resident::updateOrCreate(
+            ['email' => 'resident1@calbueg.gov.ph'],
+            [
+                'first_name' => 'Jaime', 'middle_name' => '', 'last_name' => 'Yee', 'suffix' => '',
+                'date_of_birth' => '1990-01-01', 'age' => 35, 'gender' => 'Male', 'civil_status' => 'Single',
+                'household_id' => $household1->id, // Assigning to household 1
+                'household_status' => 'Member',
+                'address' => '123 Rizal St.', 'contact_number' => '09155371154',
+                'occupation' => 'Technician', 'monthly_income' => 20000,
+                'is_registered_voter' => true, 'precinct_number' => '0021B',
+                'is_pwd' => false, 'pwd_id_number' => null, 'disability_type' => null,
+                'is_indigenous' => false, 'is_senior_citizen' => false, 'is_4ps' => false, 'is_active' => true,
+            ]
+        );
+
+
         // --- Recalculate Household Totals & Status ---
         // This is important to run AFTER all residents are seeded
         $allHouseholds = Household::all();
@@ -425,8 +444,6 @@ class DatabaseSeeder extends Seeder
                 'low_stock_threshold' => 10, 'expiration_date' => '2025-11-30',
             ]
         );
-
-        // --- NEW MEDICINES ---
         Medicine::updateOrCreate(
             ['item_name' => 'Mefenamic Acid', 'dosage' => '500mg'],
             [
@@ -515,7 +532,7 @@ class DatabaseSeeder extends Seeder
             ['tracking_number' => 'BC-2024-001'],
             [
                 'resident_id' => $res1->id, // Mark Cruz
-                'document_type_id' => $docType1->id, 
+                'document_type' => $docType1->id, // FIX: 'document_type'
                 'purpose' => 'Employment Requirements',
                 'price' => 50, 'priority' => 'Normal', 'payment_status' => 'Unpaid', 'status' => 'Pending',
                 'created_at' => '2024-12-10 09:00:00',
@@ -525,7 +542,7 @@ class DatabaseSeeder extends Seeder
             ['tracking_number' => 'CR-2024-002'],
             [
                 'resident_id' => $res2->id, // Maria Cruz
-                'document_type_id' => $docType2->id,
+                'document_type' => $docType2->id, // FIX: 'document_type'
                 'purpose' => 'Bank Account Opening',
                 'price' => 50, 'priority' => 'Normal', 'payment_status' => 'Paid', 'status' => 'Ready for Pickup',
                 'created_at' => '2024-12-09 11:30:00',
@@ -535,7 +552,7 @@ class DatabaseSeeder extends Seeder
             ['tracking_number' => 'CI-2024-003'],
             [
                 'resident_id' => $res3->id, // Pedro Garcia
-                'document_type_id' => $docType3->id,
+                'document_type' => $docType3->id, // FIX: 'document_type'
                 'purpose' => 'Medical Assistance Application',
                 'price' => 0, 'priority' => 'Urgent', 'payment_status' => 'Waived', 'status' => 'Processing',
                 'created_at' => '2024-12-08 14:15:00',
@@ -545,7 +562,7 @@ class DatabaseSeeder extends Seeder
             ['tracking_number' => 'BP-2024-004'],
             [
                 'resident_id' => $res4->id, // Ana Reyes
-                'document_type_id' => $docType4->id,
+                'document_type' => $docType4->id, // FIX: 'document_type'
                 'purpose' => 'Sari-sari Store Operation',
                 'price' => 200, 'priority' => 'Normal', 'payment_status' => 'Paid', 'status' => 'Under Review',
                 'created_at' => '2024-12-07 10:00:00',
@@ -555,7 +572,7 @@ class DatabaseSeeder extends Seeder
             ['tracking_number' => 'CP-2024-005'],
             [
                 'resident_id' => $res5->id, // Carlos Cruz
-                'document_type_id' => $docType5->id,
+                'document_type' => $docType5->id, // FIX: 'document_type'
                 'purpose' => 'House Extension',
                 'price' => 500, 'priority' => 'Normal', 'payment_status' => 'Paid', 'status' => 'Completed',
                 'created_at' => '2024-12-01 16:45:00',

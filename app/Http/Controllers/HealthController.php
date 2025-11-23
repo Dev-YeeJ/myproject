@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Medicine;
 use App\Models\User;
+use App\Models\MedicineRequest; // --- IMPORT ADDED ---
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -19,7 +20,7 @@ class HealthController extends Controller
     }
 
     /**
-     * Display the health and social services page (health-health-services.blade.php)
+     * Display the health and social services page (Inventory Dashboard)
      */
     public function showHealthServices(Request $request)
     {
@@ -36,7 +37,8 @@ class HealthController extends Controller
             'low_stock_medicines' => $allMedicines->where('status', 'Low Stock')->count(),
             'expired_medicines' => $allMedicines->where('status', 'Expired')->count(),
             'total_categories' => $allMedicines->whereNotNull('category')->unique('category')->count(),
-            'pending_requests' => 0, // Placeholder
+            // Count pending requests for notification badge
+            'pending_requests' => MedicineRequest::where('status', 'Pending')->count(),
         ];
 
         // --- Get Medicine Data for Table (Filtered) ---
@@ -56,8 +58,8 @@ class HealthController extends Controller
             });
         }
 
-        // Get the filtered results
-        $medicines = $query->orderBy('item_name')->paginate(15); // <-- Added pagination
+        // Get the filtered results with pagination
+        $medicines = $query->orderBy('item_name')->paginate(15);
 
         // --- Get Category List for Dropdown ---
         $categories = Medicine::select('category')
@@ -78,7 +80,7 @@ class HealthController extends Controller
 
 
     // ============================================
-    // MEDICINE (HEALTH SERVICES) CRUD
+    // MEDICINE INVENTORY CRUD
     // ============================================
 
     /**
@@ -105,7 +107,25 @@ class HealthController extends Controller
             'expiration_date' => 'required|date',
         ]);
         
-        Medicine::create($validated);
+        // Determine initial status based on inputs
+        $status = 'In Stock';
+        if ($validated['quantity'] == 0) {
+            $status = 'Out of Stock';
+        } elseif ($validated['quantity'] <= $validated['low_stock_threshold']) {
+            $status = 'Low Stock';
+        }
+        // Note: Expiration check usually happens via a scheduled task or accessor, 
+        // but we can set it initially here if needed.
+        if (Carbon::parse($validated['expiration_date'])->isPast()) {
+            $status = 'Expired';
+        }
+
+        // Merge calculated status if your model fillable includes it, 
+        // otherwise handle it via Model Observer or Accessor.
+        // Assuming 'status' is a column:
+        $medicine = new Medicine($validated);
+        $medicine->status = $status; 
+        $medicine->save();
 
        return redirect()->route('health.health-services') 
                         ->with('success', 'Medicine added to inventory successfully!');
@@ -117,7 +137,6 @@ class HealthController extends Controller
     public function showMedicine(Medicine $medicine)
     {
         $user = Auth::user();
-        // Uses route-model binding to automatically find the medicine by ID
         return view('dashboard.health-medicine-show', compact('user', 'medicine'));
     }
 
@@ -127,7 +146,6 @@ class HealthController extends Controller
     public function editMedicine(Medicine $medicine)
     {
         $user = Auth::user();
-        // Uses route-model binding
         return view('dashboard.health-medicine-edit', compact('user', 'medicine'));
     }
 
@@ -136,7 +154,6 @@ class HealthController extends Controller
      */
     public function updateMedicine(Request $request, Medicine $medicine)
     {
-        // Use the same validation as store
         $validated = $request->validate([
             'item_name' => 'required|string|max:255',
             'brand_name' => 'nullable|string|max:255',
@@ -147,8 +164,19 @@ class HealthController extends Controller
             'expiration_date' => 'required|date',
         ]);
         
-        // Update the medicine
         $medicine->update($validated);
+
+        // Re-evaluate status after update
+        $status = 'In Stock';
+        if ($medicine->quantity == 0) {
+            $status = 'Out of Stock';
+        } elseif ($medicine->quantity <= $medicine->low_stock_threshold) {
+            $status = 'Low Stock';
+        }
+        if (Carbon::parse($medicine->expiration_date)->isPast()) {
+            $status = 'Expired';
+        }
+        $medicine->update(['status' => $status]);
 
         return redirect()->route('health.health-services') 
                          ->with('success', 'Medicine updated successfully!');
@@ -159,7 +187,6 @@ class HealthController extends Controller
      */
     public function destroyMedicine(Medicine $medicine)
     {
-        // Delete the medicine
         $medicine->delete();
 
         return redirect()->route('health.health-services') 
@@ -167,12 +194,78 @@ class HealthController extends Controller
     }
 
 
+    // ============================================
+    // MEDICINE REQUESTS MANAGEMENT
+    // ============================================
+
     /**
-     * Show form to manage medicine requests (placeholder)
+     * Show form to manage medicine requests
      */
-    public function showMedicineRequests()
+    public function showMedicineRequests(Request $request)
     {
         $user = Auth::user();
-        return view('dashboard.health-medicine-requests', compact('user'));
+        $status = $request->query('status', 'Pending');
+
+        $requests = MedicineRequest::with(['resident.user', 'medicine'])
+            ->where('status', $status)
+            ->orderBy('created_at', $status == 'Pending' ? 'asc' : 'desc')
+            ->paginate(10);
+
+        // Counts for tabs
+        $counts = [
+            'Pending' => MedicineRequest::where('status', 'Pending')->count(),
+            'Approved' => MedicineRequest::where('status', 'Approved')->count(),
+            'Rejected' => MedicineRequest::where('status', 'Rejected')->count(),
+        ];
+
+        return view('dashboard.health-medicine-requests', compact('user', 'requests', 'status', 'counts'));
+    }
+
+    /**
+     * Approve or Reject a request
+     */
+    public function updateRequestStatus(Request $request, $id)
+    {
+        $medicineRequest = MedicineRequest::findOrFail($id);
+        
+        // We validate remarks, but they might not be present in the request (e.g. Approve button)
+        $validated = $request->validate([
+            'status' => 'required|in:Approved,Rejected',
+            'remarks' => 'nullable|string|max:255',
+        ]);
+
+        // Prevent double processing
+        if ($medicineRequest->status !== 'Pending') {
+            return back()->with('error', 'This request has already been processed.');
+        }
+
+        // Handle Stock Deduction logic ONLY on Approval
+        if ($validated['status'] === 'Approved') {
+            $medicine = Medicine::find($medicineRequest->medicine_id);
+
+            // Safety check: ensure medicine exists and has enough stock
+            if (!$medicine || $medicine->quantity < $medicineRequest->quantity_requested) {
+                return back()->with('error', 'Insufficient stock to approve this request.');
+            }
+
+            // Deduct Stock
+            $medicine->decrement('quantity', $medicineRequest->quantity_requested);
+            
+            // Auto-update status based on new quantity
+            if ($medicine->quantity == 0) {
+                $medicine->update(['status' => 'Out of Stock']);
+            } elseif ($medicine->quantity <= $medicine->low_stock_threshold) {
+                $medicine->update(['status' => 'Low Stock']);
+            }
+        }
+
+        // Update the request record
+        // FIX: Use null coalescing operator (??) to handle missing remarks in Approval form
+        $medicineRequest->update([
+            'status' => $validated['status'],
+            'remarks' => $validated['remarks'] ?? null 
+        ]);
+
+        return back()->with('success', 'Request ' . $validated['status'] . ' successfully.');
     }
 }

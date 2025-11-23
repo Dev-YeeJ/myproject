@@ -20,11 +20,19 @@ class LoginController extends Controller
             'password' => 'required|string',
         ]);
 
-        if (Auth::attempt($credentials)) {
+        // ================================================================
+        // --- THIS IS THE FIX ---
+        // We must explicitly tell Auth::attempt to use the 'username' column,
+        // not the default 'email' column.
+        // ================================================================
+        if (Auth::attempt(['username' => $credentials['username'], 'password' => $credentials['password']])) {
+        // --- END OF FIX ---
+            
             $request->session()->regenerate();
             
             $user = Auth::user();
             
+            // Your role-based redirect logic is great!
             return $this->redirectBasedOnRole($user);
         }
 
@@ -38,32 +46,33 @@ class LoginController extends Controller
         $message = 'Welcome back, ' . $user->first_name . '!';
 
         if (method_exists($user, 'isBarangayCaptain') && $user->isBarangayCaptain()) {
-            return redirect()->route('dashboard.captain')->with('success', $message);
+            return redirect()->route('captain.dashboard')->with('success', $message);
         }
         
         if (method_exists($user, 'isSecretary') && $user->isSecretary()) {
-            return redirect()->route('dashboard.secretary')->with('success', $message);
+            return redirect()->route('secretary.dashboard')->with('success', $message);
         }
         
         if (method_exists($user, 'isTreasurer') && $user->isTreasurer()) {
-            return redirect()->route('dashboard.treasurer')->with('success', $message);
+            return redirect()->route('treasurer.dashboard')->with('success', $message);
         }
         
         if (method_exists($user, 'isKagawad') && $user->isKagawad()) {
-            return redirect()->route('dashboard.kagawad')->with('success', $message);
+            return redirect()->route('kagawad.dashboard')->with('success', $message);
         }
         
         if (method_exists($user, 'isHealthWorker') && $user->isHealthWorker()) {
-            return redirect()->route('dashboard.health')->with('success', $message);
+            return redirect()->route('health.dashboard')->with('success', $message);
         }
         
         if (method_exists($user, 'isTanod') && $user->isTanod()) {
-            return redirect()->route('dashboard.tanod')->with('success', $message);
+            return redirect()->route('tanod.dashboard')->with('success', $message);
         } 
         if (method_exists($user, 'isResident') && $user->isResident()) {
-            return redirect()->route('dashboard.resident')->with('success', $message);
+            return redirect()->route('resident.dashboard')->with('success', $message);
         }
         
+        // Fallback for any other role
         return redirect()->route('dashboard')->with('success', $message);
     }
 

@@ -1,4 +1,4 @@
-{{-- resources/views/dashboards/captain-resident-profiling.blade.php --}}
+{{-- resources/views/dashboard/captain-resident-profiling.blade.php --}}
 
 @extends('layouts.dashboard-layout')
 
@@ -6,7 +6,7 @@
 
 @section('nav-items')
     <li class="nav-item">
-        <a href="{{ route('dashboard.captain') }}" class="nav-link ">
+        <a href="{{ route('captain.dashboard') }}" class="nav-link ">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
@@ -191,6 +191,8 @@
     .icon-orange-bg { background: #FFA500; }
     .icon-green-bg { background: #10B981; }
     .icon-purple-bg { background: #A855F7; }
+    
+    /* --- REMOVED: Control Panel Card --- */
 
     .action-buttons {
         display: flex;
@@ -279,11 +281,14 @@
     }
     /* --- End View Toggle Buttons --- */
 
+    /* --- DELETED: Quick Filter Buttons --- */
+
 
     /* Search and Filter Section */
     .filters-section {
         display: flex;
         align-items: center;
+        flex-wrap: wrap; /* Allow filters to wrap */
         gap: 10px;
     }
 
@@ -304,8 +309,8 @@
     }
 
 
-    /* Resident Directory Header (Original) */
-    .directory-header { /* Renamed from .residents-section for generic use */
+    /* RESTORED: Directory Header */
+    .directory-header {
         background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
         color: white;
         padding: 20px 30px;
@@ -315,7 +320,7 @@
         align-items: center;
     }
 
-    .directory-title { /* Renamed from .residents-title for generic use */
+    .directory-title {
         display: flex;
         align-items: center;
         gap: 12px;
@@ -380,9 +385,9 @@
     }
 
     /* Table Container (for both directories) */
-    .table-container { /* Renamed from .residents-table-container for generic use */
+    .table-container {
         background: white;
-        border-radius: 0 0 12px 12px;
+        border-radius: 0 0 12px 12px; /* MODIFIED: Connects to blue bar */
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0,0,0,0.07);
     }
@@ -436,7 +441,6 @@
         color: #4B5563;
     }
 
-    /* Added missing badges from Household view for consistency */
     .badge-green {
         background: #D1FAE5;
         color: #065F46;
@@ -470,34 +474,16 @@
         transition: all 0.3s;
         border: none;
         background: transparent;
-        color: #6B7280; /* Default color for icons */
+        color: #6B7280;
     }
 
-    .action-icon.view {
-        color: #2B5CE6;
-    }
+    .action-icon.view { color: #2B5CE6; }
+    .action-icon.view:hover { background: #EFF6FF; }
+    .action-icon.edit { color: #10B981; }
+    .action-icon.edit:hover { background: #ECFDF5; }
+    .action-icon.delete { color: #EF4444; }
+    .action-icon.delete:hover { background: #FEE2E2; }
 
-    .action-icon.view:hover {
-        background: #EFF6FF;
-    }
-
-    .action-icon.edit {
-        color: #10B981;
-    }
-
-    .action-icon.edit:hover {
-        background: #ECFDF5;
-    }
-
-    .action-icon.delete {
-        color: #EF4444;
-    }
-
-    .action-icon.delete:hover {
-        background: #FEE2E2;
-    }
-
-    /* NEW: Household Info in table cell */
     .household-info-cell .name {
         font-weight: 600;
         color: #1F2937;
@@ -532,13 +518,11 @@
         padding: 20px;
         background: white;
         border-radius: 0 0 12px 12px;
-        /* Removed box-shadow to prevent double shadow on pagination */
     }
     
-    .no-results-found { /* Generic for both empty tables */
+    .no-results-found {
         text-align: center;
         padding: 60px;
-        /* Removed background, radius, shadow - handled by table-container */
     }
     .no-results-found i {
         font-size: 3rem; 
@@ -561,19 +545,16 @@
         .stats-row {
             grid-template-columns: 1fr;
         }
-
         .total-registered {
             position: static;
             margin-top: 20px;
             text-align: left;
         }
-
         .directory-header, .filters-section {
             flex-direction: column;
             align-items: flex-start;
             gap: 15px;
         }
-
         .search-input,
         .filter-select {
             width: 100%;
@@ -591,13 +572,11 @@
         height: 100%;
         background: rgba(0, 0, 0, 0.5);
     }
-
     .modal.show {
         display: flex;
         align-items: center;
         justify-content: center;
     }
-
     .modal-content {
         background: white;
         padding: 30px;
@@ -605,14 +584,12 @@
         max-width: 400px;
         width: 90%;
     }
-
     .modal-header {
         display: flex;
         align-items: center;
         gap: 12px;
         margin-bottom: 20px;
     }
-
     .modal-icon {
         width: 48px;
         height: 48px;
@@ -624,25 +601,21 @@
         justify-content: center;
         font-size: 1.5rem;
     }
-
     .modal-title {
         font-size: 1.3rem;
         font-weight: 700;
         color: #1F2937;
     }
-
     .modal-body {
         margin-bottom: 25px;
         color: #6B7280;
         line-height: 1.6;
     }
-
     .modal-actions {
         display: flex;
         gap: 12px;
         justify-content: flex-end;
     }
-
     .btn-cancel {
         padding: 10px 20px;
         background: #F3F4F6;
@@ -652,11 +625,7 @@
         font-weight: 600;
         cursor: pointer;
     }
-
-    .btn-cancel:hover {
-        background: #E5E7EB;
-    }
-
+    .btn-cancel:hover { background: #E5E7EB; }
     .btn-confirm-delete {
         padding: 10px 20px;
         background: #EF4444;
@@ -666,14 +635,12 @@
         font-weight: 600;
         cursor: pointer;
     }
-
-    .btn-confirm-delete:hover {
-        background: #DC2626;
-    }
+    .btn-confirm-delete:hover { background: #DC2626; }
 </style>
 
 {{-- Get the current view from the request, default to 'residents' --}}
 @php $view = request('view', 'residents'); @endphp
+@php $filter = request('filter'); @endphp {{-- Get the active quick filter --}}
 
 @if(session('success'))
 <div class="alert alert-success">
@@ -710,7 +677,6 @@
             <i class="fas fa-users"></i>
         </div>
     </div>
-
     <div class="stat-box">
         <div class="stat-content">
             <h3>{{ $totalHouseholds }}</h3>
@@ -724,7 +690,6 @@
             <i class="fas fa-home"></i>
         </div>
     </div>
-
     <div class="stat-box">
         <div class="stat-content">
             <h3>{{ $seniorCitizens }}</h3>
@@ -738,7 +703,6 @@
             <i class="fas fa-heart"></i>
         </div>
     </div>
-
     <div class="stat-box">
         <div class="stat-content">
             <h3>{{ $minors }}</h3>
@@ -754,6 +718,63 @@
     </div>
 </div>
 
+{{-- NEW: Second Stats Row --}}
+<div class="stats-row">
+    <div class="stat-box">
+        <div class="stat-content">
+            <h3>{{ $totalVoters }}</h3>
+            <p>Total Voters</p>
+            <div class="stat-badge blue">
+                <i class="fas fa-check-to-slot"></i>
+                <span>Registered</span>
+            </div>
+        </div>
+        <div class="stat-box-icon icon-blue-bg">
+            <i class="fas fa-check-to-slot"></i>
+        </div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-content">
+            <h3>{{ $totalPwd }}</h3>
+            <p>Total PWD</p>
+            <div class="stat-badge purple">
+                <i class="fas fa-wheelchair"></i>
+                <span>Tagged</span>
+            </div>
+        </div>
+        <div class="stat-box-icon icon-purple-bg">
+            <i class="fas fa-wheelchair"></i>
+        </div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-content">
+            <h3>{{ $total4ps }}</h3>
+            <p>Total 4Ps Beneficiaries</p>
+            <div class="stat-badge green">
+                <i class="fas fa-hand-holding-heart"></i>
+                <span>Beneficiaries</span>
+            </div>
+        </div>
+        <div class="stat-box-icon icon-green-bg">
+            <i class="fas fa-hand-holding-heart"></i>
+        </div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-content">
+            <h3>{{ $incompleteHouseholds }}</h3>
+            <p>Incomplete Households</p>
+            <div class="stat-badge orange">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>No Head Assigned</span>
+            </div>
+        </div>
+        <div class="stat-box-icon icon-orange-bg">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+    </div>
+</div>
+
+{{-- MODIFICATION: Reverted to old layout for buttons --}}
 <div class="action-buttons">
     <a href="{{ route('captain.resident.create') }}" class="btn-action btn-add">
         <i class="fas fa-user-plus"></i>
@@ -769,6 +790,7 @@
     </button>
 </div>
 
+{{-- MODIFICATION: Reverted to old layout for toggles --}}
 <div class="view-toggles">
     <a href="{{ route('captain.resident-profiling', ['view' => 'residents']) }}" class="btn-toggle {{ $view === 'residents' ? 'active' : '' }}">
         <i class="fas fa-users"></i>
@@ -780,8 +802,12 @@
     </a>
 </div>
 
+{{-- MODIFICATION: DELETED .control-panel-card wrapper --}}
+
+
 @if($view === 'households')
 
+    {{-- MODIFICATION: Re-added .directory-header --}}
     <div class="directory-header">
         <div class="directory-title">
             <i class="fas fa-home"></i>
@@ -790,7 +816,6 @@
         <form method="GET" action="{{ route('captain.resident-profiling') }}" class="filters-section">
             <input type="hidden" name="view" value="households">
             <input type="text" name="search" class="search-input" placeholder="🔍 Search by household or head name..." value="{{ request('search') }}">
-            {{-- Optionally add household-specific filters here, e.g., by Purok or Status --}}
             <select name="status" class="filter-select" onchange="this.form.submit()">
                 <option value="">All Status</option>
                 <option value="complete" {{ request('status') == 'complete' ? 'selected' : '' }}>Complete</option>
@@ -799,7 +824,8 @@
         </form>
     </div>
 
-    <div class="table-container">
+    {{-- MODIFICATION: Fixed border-radius --}}
+    <div class="table-container" style="border-radius: 0 0 12px 12px;">
         <table class="table">
             <thead>
                 <tr>
@@ -833,7 +859,6 @@
                         </span>
                     </td>
                     <td>
-                        {{-- UPDATED ACTION ICONS --}}
                         <div class="action-icons">
                             <a href="{{ route('captain.household.show', $household->id) }}" class="action-icon view" title="View Household Details">
                                 <i class="fas fa-eye"></i>
@@ -864,13 +889,14 @@
         </table>
         
         <div class="pagination-container">
-            {{ $households->withQueryString()->links() }}
+            {{ $households->withQueryString()->links('pagination::bootstrap-5') }}
         </div>
     </div>
     
 
 @else
 
+    {{-- MODIFICATION: Re-added .directory-header and added the new Category Dropdown --}}
     <div class="directory-header">
         <div class="directory-title">
             <i class="fas fa-users"></i>
@@ -879,6 +905,16 @@
         <form method="GET" action="{{ route('captain.resident-profiling') }}" class="filters-section">
             <input type="hidden" name="view" value="residents">
             <input type="text" name="search" class="search-input" placeholder="🔍 Search residents..." value="{{ request('search') }}">
+            
+            {{-- This is the new "Category" dropdown --}}
+            <select name="filter" class="filter-select" onchange="this.form.submit()">
+                <option value="">All Categories</option>
+                <option value="seniors" {{ $filter == 'seniors' ? 'selected' : '' }}>Seniors</option>
+                <option value="pwd" {{ $filter == 'pwd' ? 'selected' : '' }}>PWD</option>
+                <option value="4ps" {{ $filter == '4ps' ? 'selected' : '' }}>4Ps</option>
+                <option value="voters" {{ $filter == 'voters' ? 'selected' : '' }}>Voters</option>
+            </select>
+            
             <select name="status" class="filter-select" onchange="this.form.submit()">
                 <option value="">All Status</option>
                 <option value="Household Head" {{ request('status') == 'Household Head' ? 'selected' : '' }}>Household Head</option>
@@ -887,14 +923,15 @@
                 <option value="Member" {{ request('status') == 'Member' ? 'selected' : '' }}>Member</option>
             </select>
             <select name="gender" class="filter-select" onchange="this.form.submit()">
-                <option value="">All</option>
+                <option value="">All Genders</option>
                 <option value="Male" {{ request('gender') == 'Male' ? 'selected' : '' }}>Male</option>
                 <option value="Female" {{ request('gender') == 'Female' ? 'selected' : '' }}>Female</option>
             </select>
         </form>
     </div>
 
-    <div class="table-container">
+    {{-- MODIFICATION: Fixed border-radius --}}
+    <div class="table-container" style="border-radius: 0 0 12px 12px;">
         <table class="table">
             <thead>
                 <tr>
@@ -904,6 +941,7 @@
                     <th>Status</th>
                     <th>Address</th>
                     <th>Contact</th>
+                    <th>User Account</th> 
                     <th>Occupation</th>
                     <th>Actions</th>
                 </tr>
@@ -941,6 +979,21 @@
                             <span>{{ $resident->contact_number ?? 'N/A' }}</span>
                         </div>
                     </td>
+                    
+                    <td>
+                        @if($resident->user)
+                            <div class="contact-info">
+                                <i class="fas fa-user-check" style="color: #10B981;"></i>
+                                <span>{{ $resident->user->username }}</span>
+                            </div>
+                            <small style="color: #6B7280; margin-left: 20px;">({{ $resident->user->is_active ? 'Active' : 'Disabled' }})</small>
+                        @else
+                            <span class="badge badge-member">
+                                No Account
+                            </span>
+                        @endif
+                    </td>
+                    
                     <td>{{ $resident->occupation ?? 'N/A' }}</td>
                     <td>
                         <div class="action-icons">
@@ -958,7 +1011,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8">
+                    <td colspan="9">
                         <div class="no-results-found">
                             <i class="fas fa-users"></i>
                             <p>No residents found</p>
@@ -970,7 +1023,7 @@
         </table>
         
         <div class="pagination-container">
-            {{ $residents->withQueryString()->links() }}
+            {{ $residents->withQueryString()->links('pagination::bootstrap-5') }}
         </div>
     </div>
     
@@ -984,18 +1037,18 @@
             <div class="modal-icon">
                 <i class="fas fa-exclamation-triangle"></i>
             </div>
-            <div class="modal-title">Delete Resident</div>
+            <div class="modal-title">Remove Resident</div>
         </div>
         <div class="modal-body">
             <p>Are you sure you want to remove <strong id="residentName"></strong> from the system?</p>
-            <p>This action cannot be undone.</p>
+            <p>This will also deactivate their login account. The data will be kept for records.</p>
         </div>
         <div class="modal-actions">
             <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
             <form id="deleteForm" method="POST" style="display: inline;">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="btn-confirm-delete">Delete Resident</button>
+                <button type="submit" class="btn-confirm-delete">Remove Resident</button>
             </form>
         </div>
     </div>
@@ -1011,7 +1064,7 @@
         </div>
         <div class="modal-body">
             <p>Are you sure you want to remove <strong id="householdName"></strong>?</p>
-            <p>This will remove the household and **all associated residents**. This action is permanent.</p>
+            <p>This will remove the household and **deactivate all associated residents'** login accounts. This action is permanent.</p>
         </div>
         <div class="modal-actions">
             <button type="button" class="btn-cancel" onclick="closeDeleteHouseholdModal()">Cancel</button>

@@ -1,13 +1,12 @@
-{{-- resources/views/dashboards/captain-resident-view.blade.php --}}
+{{-- resources/views/dashboard/captain-resident-view.blade.php --}}
 
 @extends('layouts.dashboard-layout')
 
-@section('title', 'Resident Details')
+@section('title', 'Resident Details - ' . $resident->first_name . ' ' . $resident->last_name)
 
 @section('nav-items')
-    {{-- (Nav items remain unchanged) --}}
     <li class="nav-item">
-        <a href="{{ route('dashboard.captain') }}" class="nav-link">
+        <a href="{{ route('captain.dashboard') }}" class="nav-link">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
@@ -19,9 +18,9 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
+        <a href="{{ route('captain.document-services') }}" class="nav-link">
             <i class="far fa-file-alt"></i>
-            <span>Documents Services</span>
+            <span>Documents Services</span> 
         </a>
     </li>
     <li class="nav-item">
@@ -31,7 +30,7 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
+        <a href="{{ route('captain.health-services') }}" class="nav-link">
             <i class="fas fa-heart"></i>
             <span>Health & Social Services</span>
         </a>
@@ -143,6 +142,16 @@
         align-items: center;
         gap: 8px;
     }
+    
+    /* Style for the reset button */
+    .btn-header-danger {
+        border-color: #FFA500;
+        color: #FFA500;
+    }
+    .btn-header-danger:hover {
+        background: #FFA500;
+        color: #1E3A8A;
+    }
 
     .btn-header:hover {
         background: white;
@@ -151,7 +160,6 @@
 
     .details-grid {
         display: grid;
-        /* {{-- CHANGED: Switched to two equal columns for balance --}} */
         grid-template-columns: 1fr 1fr;
         gap: 25px;
         margin-bottom: 25px;
@@ -191,6 +199,10 @@
     .info-row.single {
         grid-template-columns: 1fr;
     }
+    
+    .info-row:last-child {
+        margin-bottom: 0; /* Remove margin from last row */
+    }
 
     .info-item {
         display: flex;
@@ -216,6 +228,34 @@
         color: #2B5CE6;
         font-weight: 600;
     }
+    
+    /* --- MODIFIED PASSWORD STYLES --- */
+    .password-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: #F9FAFB;
+        border-radius: 6px;
+        padding: 4px 8px;
+    }
+    .password-value {
+        color: #D946EF; /* Fuchsia */
+        font-weight: 700;
+        font-family: monospace;
+        font-size: 1.1rem;
+    }
+    .password-toggle {
+        cursor: pointer;
+        color: #6B7280;
+        font-size: 1rem;
+        margin-left: auto; /* Pushes it to the right */
+        padding: 5px;
+    }
+    .password-toggle:hover {
+        color: var(--primary-blue);
+    }
+    /* --- END OF MODIFIED STYLES --- */
+
 
     .badge-status {
         padding: 6px 14px;
@@ -226,71 +266,12 @@
         width: fit-content;
     }
 
-    .badge-male {
-        background: #DBEAFE;
-        color: #1E40AF;
-    }
-
-    .badge-female {
-        background: #FCE7F3;
-        color: #BE185D;
-    }
-
-    .badge-head {
-        background: #1E3A8A;
-        color: white;
-    }
-
-    .badge-married {
-        background: #FEF3C7;
-        color: #92400E;
-    }
-
-    .badge-single {
-        background: #F3F4F6;
-        color: #4B5563;
-    }
-
-    .stats-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-
-    .stat-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 15px;
-        background: #F9FAFB;
-        border-radius: 8px;
-    }
-
-    .stat-label {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        color: #6B7280;
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-
-    .stat-label i {
-        width: 32px;
-        height: 32px;
-        background: white;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #2B5CE6;
-    }
-
-    .stat-value {
-        font-weight: 700;
-        color: #1F2937;
-        font-size: 1.1rem;
-    }
+    .badge-male { background: #DBEAFE; color: #1E40AF; }
+    .badge-female { background: #FCE7F3; color: #BE185D; }
+    .badge-head { background: #1E3A8A; color: white; }
+    .badge-married { background: #FEF3C7; color: #92400E; }
+    .badge-single { background: #F3F4F6; color: #4B5563; }
+    .badge-green { background: #D1FAE5; color: #065F46; } /* Active */
 
     .checkbox-indicators {
         display: grid;
@@ -318,27 +299,12 @@
         flex-shrink: 0;
     }
 
-    .checkbox-icon.checked {
-        background: #10B981;
-        color: white;
-    }
-
-    .checkbox-icon.unchecked {
-        background: #E5E7EB;
-        color: #9CA3AF;
-    }
-
-    .checkbox-label {
-        font-weight: 600;
-        color: #374151;
-        font-size: 0.9rem;
-    }
-
+    .checkbox-icon.checked { background: #10B981; color: white; }
+    .checkbox-icon.unchecked { background: #E5E7EB; color: #9CA3AF; }
+    .checkbox-label { font-weight: 600; color: #374151; font-size: 0.9rem; }
     .checkbox-sub-label {
-        font-weight: 500;
-        color: #6B7280;
-        font-size: 0.85rem;
-        display: block;
+        font-weight: 500; color: #6B7280;
+        font-size: 0.85rem; display: block;
         margin-top: 2px;
     }
 
@@ -353,43 +319,38 @@
         transition: all 0.3s;
     }
 
-    .back-link:hover {
-        gap: 12px;
-        color: #1E3A8A;
-    }
+    .back-link:hover { gap: 12px; color: #1E3A8A; }
 
-    /* {{-- CHANGED: Updated breakpoint for stacking --}} */
     @media (max-width: 992px) {
-        .details-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .details-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 20px;
-        }
-
-        .header-actions {
-            width: 100%;
-        }
-
-        .btn-header {
-            flex: 1;
-            justify-content: center;
-        }
-
-        .info-row {
-            grid-template-columns: 1fr;
-        }
+        .details-grid { grid-template-columns: 1fr; }
+        .details-header { flex-direction: column; align-items: flex-start; gap: 20px; }
+        .header-actions { width: 100%; }
+        .btn-header { flex: 1; justify-content: center; }
+        .info-row { grid-template-columns: 1fr; }
     }
 </style>
 
 <div class="details-container">
-    <a href="{{ route('captain.resident-profiling') }}" class="back-link">
+
+    <a href="{{ route('captain.resident-profiling', ['view' => request('view', 'residents')]) }}" class="back-link">
         <i class="fas fa-arrow-left"></i>
         <span>Back to Residents</span>
     </a>
+
+    {{-- Display Success/Error messages for password reset --}}
+    @if(session('success'))
+    <div class="alert alert-success" style="background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; padding: 16px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+        <i class="fas fa-check-circle"></i>
+        <span>{{ session('success') }}</span>
+    </div>
+    @endif
+    @if(session('error'))
+    <div class="alert alert-danger" style="background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; padding: 16px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+        <i class="fas fa-times-circle"></i>
+        <span>{{ session('error') }}</span>
+    </div>
+    @endif
+
 
     <div class="details-header">
         <div class="header-left">
@@ -397,7 +358,7 @@
                 <i class="fas fa-user"></i>
             </div>
             <div class="header-info">
-                <h1>{{ $resident->first_name }} {{ $resident->middle_name }} {{ $resident->last_name }}{{ $resident->suffix ? ' ' . $resident->suffix : '' }}</h1>
+                <h1>{{ $resident->full_name }}</h1>
                 <div class="header-badges">
                     <span class="header-badge">{{ $resident->age }} years old</span>
                     <span class="header-badge">{{ $resident->gender }}</span>
@@ -419,10 +380,10 @@
         </div>
     </div>
 
-   
+    
     <div class="details-grid">
         
-      
+        {{-- LEFT COLUMN --}}
         <div>
             <div class="details-card" style="margin-bottom: 25px;">
                 <div class="card-title">
@@ -433,26 +394,19 @@
                 <div class="info-row">
                     <div class="info-item">
                         <div class="info-label">Full Name</div>
-                        <div class="info-value">{{ $resident->first_name }} {{ $resident->middle_name }} {{ $resident->last_name }}</div>
+                        <div class="info-value">{{ $resident->full_name }}</div>
                     </div>
                     <div class="info-item">
-                        <div class="info-label">Suffix</div>
-                        <div class="info-value">{{ $resident->suffix ?? 'N/A' }}</div>
+                        <div class="info-label">Date of Birth</div>
+                        <div class="info-value">{{ $resident->date_of_birth ? $resident->date_of_birth->format('F j, Y') : 'N/A' }}</div>
                     </div>
                 </div>
 
                 <div class="info-row">
-                    <div class="info-item">
-                        <div class="info-label">Date of Birth</div>
-                        <div class="info-value">{{ date('F j, Y', strtotime($resident->date_of_birth)) }}</div>
-                    </div>
                     <div class="info-item">
                         <div class="info-label">Age</div>
                         <div class="info-value">{{ $resident->age }} years old</div>
                     </div>
-                </div>
-
-                <div class="info-row">
                     <div class="info-item">
                         <div class="info-label">Gender</div>
                         <div class="info-value">
@@ -461,6 +415,9 @@
                             </span>
                         </div>
                     </div>
+                </div>
+
+                <div class="info-row single">
                     <div class="info-item">
                         <div class="info-label">Civil Status</div>
                         <div class="info-value">
@@ -513,10 +470,68 @@
                 </div>
                 @endif
             </div>
+            
+            {{-- MODIFIED: USER ACCOUNT CARD --}}
+            <div class="details-card">
+                <div class="card-title">
+                    <i class="fas fa-user-shield" style="color: #6366F1;"></i>
+                    <span>User Account</span>
+                </div>
+                @if($resident->user)
+                    <div class="info-row">
+                        <div class="info-item">
+                            <div class="info-label">Username</div>
+                            <div class="info-value">{{ $resident->user->username }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Account Status</div>
+                            <div class="info-value">
+                                <span class="badge-status {{ $resident->user->is_active ? 'badge-green' : 'badge-single' }}">
+                                    {{ $resident->user->is_active ? 'Active' : 'Disabled' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {{-- NEW: DEFAULT PASSWORD with TOGGLE --}}
+                    <div class="info-row single">
+                        <div class="info-item">
+                            <div class="info-label">Default Password</div>
+                            <div class="password-wrapper" title="This is the default password. The user may have changed it.">
+                                <span id="defaultPassword" 
+                                     class="password-value"
+                                     data-password="{{ $defaultPassword ?? 'N/A' }}">
+                                    &bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;
+                                </span>
+                                <i id="togglePassword" class="fas fa-eye password-toggle"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- NEW: RESET PASSWORD BUTTON --}}
+                    <form action="{{ route('captain.resident.reset-password', $resident->id) }}" method="POST" style="margin-top: 20px;">
+                        @csrf
+                        <button type="submit" class="btn-header btn-header-danger" style="width: 100%; justify-content: center;"
+                                onclick="return confirm('Are you sure you want to reset this resident\'s password to the default?');">
+                            <i class="fas fa-key"></i>
+                            <span>Reset Password</span>
+                        </button>
+                    </form>
+                    
+                @else
+                    <div class="info-row single">
+                        <div class="info-item">
+                            <div class="info-label">Login</div>
+                            <div class="info-value">No user account linked.</div>
+                        </div>
+                    </div>
+                @endif
+            </div>
+
         </div>
 
+        {{-- RIGHT COLUMN --}}
         <div>
-          
             <div class="details-card" style="margin-bottom: 25px;">
                 <div class="card-title">
                     <i class="fas fa-briefcase"></i>
@@ -606,5 +621,33 @@
         </div>
     </div>
 </div>
+
+{{-- NEW: JAVASCRIPT FOR PASSWORD TOGGLE --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordField = document.getElementById('defaultPassword');
+        
+        if (togglePassword && passwordField) {
+            togglePassword.addEventListener('click', function() {
+                // Get the real password from the data attribute
+                const realPassword = passwordField.getAttribute('data-password');
+                
+                // Check if password is currently hidden
+                if (passwordField.textContent.includes('•')) {
+                    // Show the password
+                    passwordField.textContent = realPassword;
+                    this.classList.remove('fa-eye');
+                    this.classList.add('fa-eye-slash');
+                } else {
+                    // Hide the password
+                    passwordField.textContent = '••••••••••';
+                    this.classList.remove('fa-eye-slash');
+                    this.classList.add('fa-eye');
+                }
+            });
+        }
+    });
+</script>
 
 @endsection

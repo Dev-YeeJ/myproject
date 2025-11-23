@@ -34,7 +34,10 @@ class DocumentRequest extends Model
     {
         return $this->belongsTo(Resident::class);
     }
-
+    public function requirements()
+{
+    return $this->hasMany(DocumentRequirement::class);
+}
     /**
      * Get the document type that this request is for.
      */

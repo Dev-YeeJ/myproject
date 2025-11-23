@@ -1,36 +1,46 @@
+{{-- resources/views/dashboards/resident-document-services.blade.php --}}
+
 @extends('layouts.dashboard-layout')
 
 @section('title', 'Document Services')
 
 @section('nav-items')
-    {{-- This is the RESIDENT navigation --}}
+    {{-- Active class on Dashboard link --}}
     <li class="nav-item">
-        <a href="{{ route('dashboard.resident') }}" class="nav-link">
+        <a href="{{ route('resident.dashboard') }}" class="nav-link active">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
     </li>
+
     <li class="nav-item">
-        {{-- This is the active page --}}
-        <a href="{{ route('resident.document-services') }}" class="nav-link active">
+        {{-- Link to the resident's document services page --}}
+        <a href="{{ route('resident.document-services') }}" class="nav-link">
             <i class="far fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
+    <a href="{{ route('resident.health-services') }}" class="nav-link {{ request()->routeIs('resident.health-services') ? 'active' : '' }}">
+        <i class="fas fa-heartbeat"></i>
+        <span>Health Services</span>
+    </a>
+</li>
+    
+    <li class="nav-item">
+        <a href="#" class="nav-link"> {{-- Add route later --}}
             <i class="fas fa-bell"></i>
             <span>Announcements</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
+        <a href="#" class="nav-link"> {{-- Add route later --}}
             <i class="fas fa-check-circle"></i>
             <span>SK Module</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
+        <a href="#" class="nav-link"> {{-- Add route later --}}
             <i class="fas fa-cog"></i>
             <span>Settings</span>
         </a>
@@ -232,8 +242,9 @@
     }
     .responsive-table td {
         padding: 16px 24px; font-size: 0.9rem;
-        color: #374151; border-bottom: 1px solid #F3F4F6;
-        vertical-align: top;
+        color: #374151;
+        border-bottom: 1px solid #F3F4F6;
+        vertical-align: top; /* Changed to top */
     }
     .responsive-table tbody tr:last-child td { border-bottom: none; }
     
@@ -255,6 +266,7 @@
     .badge-processing { background: #E0E7FF; color: #4338CA; }
     .badge-completed { background: #D1FAE5; color: #065F46; }
     .badge-cancelled { background: #F3F4F6; color: #6B7280; }
+    .badge-rejected { background: #FEE2E2; color: #991B1B; } /* --- NEW --- */
 
     .table-actions a, .table-actions button {
         color: #6B7280; text-decoration: none;
@@ -266,7 +278,29 @@
     .table-actions .view-btn:hover { background: #EFF6FF; }
     .table-actions .cancel-btn { color: #DC2626; }
     .table-actions .cancel-btn:hover { background: #FEE2E2; }
+    /* --- NEW --- */
+    .table-actions .download-btn {
+        color: #059669;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .table-actions .download-btn:hover { background: #ECFDF5; }
     
+    /* --- NEW --- */
+    .remarks-box {
+        font-size: 0.85rem;
+        font-style: italic;
+        background: #FDFDEA; /* Light yellow */
+        border: 1px solid #F0E9C3;
+        padding: 10px;
+        border-radius: 6px;
+        margin-top: 10px;
+    }
+    .remarks-box strong {
+        color: #B45309;
+    }
+
     /* Modal styles */
     .modal {
         display: none; position: fixed; z-index: 1000;
@@ -319,6 +353,12 @@
     <span>{{ session('success') }}</span>
 </div>
 @endif
+@if(session('error'))
+<div class="alert alert-danger" style="background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; padding: 16px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+    <i class="fas fa-times-circle"></i>
+    <span>{{ session('error') }}</span>
+</div>
+@endif
 
 {{-- Header section, adapted for Resident --}}
 <div class="profiling-header">
@@ -330,7 +370,6 @@
     </div>
     <div class="total-registered">
         <div class="total-registered-label">My Pending Requests</div>
-        {{-- Controller must pass $stats['my_pending_requests'] --}}
         <div class="total-registered-count">{{ $stats['my_pending_requests'] ?? 0 }}</div>
         <div class="total-registered-sublabel">Awaiting action</div>
     </div>
@@ -340,7 +379,6 @@
 <div class="stats-row">
     <div class="stat-box">
         <div class="stat-content">
-            {{-- Controller must pass $stats['my_pending_requests'] --}}
             <h3>{{ $stats['my_pending_requests'] ?? 0 }}</h3>
             <p>My Pending Requests</p>
             <div class="stat-badge purple">
@@ -354,7 +392,6 @@
     </div>
     <div class="stat-box">
         <div class="stat-content">
-            {{-- Controller must pass $stats['my_completed_requests'] --}}
             <h3>{{ $stats['my_completed_requests'] ?? 0 }}</h3>
             <p>My Completed Requests</p>
             <div class="stat-badge green">
@@ -368,7 +405,6 @@
     </div>
     <div class="stat-box">
         <div class="stat-content">
-             {{-- Controller must pass $stats['available_documents'] --}}
             <h3>{{ $stats['available_documents'] ?? 0 }}</h3>
             <p>Available Documents</p>
             <div class="stat-badge blue">
@@ -382,7 +418,6 @@
     </div>
     <div class="stat-box">
         <div class="stat-content">
-            {{-- Controller must pass $stats['total_requests'] --}}
             <h3>{{ $stats['total_requests'] ?? 0 }}</h3>
             <p>Total Requests Made</p>
             <div class="stat-badge orange">
@@ -431,7 +466,8 @@
         $map = [
             'Pending' => 'badge-pending', 'Ready for Pickup' => 'badge-pickup',
             'Processing' => 'badge-processing', 'Completed' => 'badge-completed',
-            'Cancelled' => 'badge-cancelled',
+            'Cancelled' => 'badge-cancelled', 'Rejected' => 'badge-rejected',
+            'Under Review' => 'badge-processing', // Use same as processing
         ];
         $class = $map[$status] ?? 'badge-pending';
         return "<span class='badge {$class}'>{$status}</span>";
@@ -492,7 +528,6 @@
         <div class="table-header">
             <div class="table-title">
                 My Request History
-                {{-- Controller must pass $documentRequests (only for this resident) --}}
                 <span class="title-count">{{ $documentRequests->total() }}</span>
             </div>
             <div class="table-filters">
@@ -505,6 +540,7 @@
                         <option value="Ready for Pickup" {{ request('status') === 'Ready for Pickup' ? 'selected' : '' }}>Ready for Pickup</option>
                         <option value="Completed" {{ request('status') === 'Completed' ? 'selected' : '' }}>Completed</option>
                         <option value="Cancelled" {{ request('status') === 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
+                        <option value="Rejected" {{ request('status') === 'Rejected' ? 'selected' : '' }}>Rejected</option>
                     </select>
                 </form>
             </div>
@@ -516,7 +552,6 @@
                     <tr>
                         <th>Tracking #</th>
                         <th>Document Type</th>
-                        <th>Purpose</th>
                         <th>Date Requested</th>
                         <th>Payment</th>
                         <th>Status</th>
@@ -528,15 +563,29 @@
                     <tr>
                         <td>
                             <a href="#" class="tracking-number">{{ $request->tracking_number }}</a>
+                            {{-- !!! NEW: REMARKS BOX !!! --}}
+                            @if($request->remarks)
+                            <div class="remarks-box">
+                                <strong>Captain's Remarks:</strong>
+                                <div>{{ $request->remarks }}</div>
+                            </div>
+                            @endif
                         </td>
                         <td>{{ $request->documentType->name ?? 'N/A' }}</td>
-                        <td>{{ $request->purpose }}</td>
                         <td>{{ $request->created_at->format('M d, Y') }}</td>
                         <td>{!! getPaymentBadge($request->payment_status) !!}</td>
                         <td>{!! getStatusBadge($request->status) !!}</td>
                         <td class="table-actions">
-                            <a href="#" class="view-btn"><i class="fas fa-eye"></i> View</a>
-                            @if($request->status === 'Pending')
+                            {{-- <a href="#" class="view-btn"><i class="fas fa-eye"></i> View</a> --}}
+
+                            {{-- !!! NEW: DOWNLOAD BUTTON !!! --}}
+                            @if($request->status === 'Completed' && $request->generated_file_path)
+                                <a href="{{ route('resident.document.download', $request->id) }}" class="download-btn">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            @endif
+                            
+                            @if(in_array($request->status, ['Pending', 'Processing']))
                                 <button class="cancel-btn" onclick="showCancelModal({{ $request->id }}, '{{ $request->tracking_number }}')">
                                     <i class="fas fa-times"></i> Cancel
                                 </button>
@@ -545,7 +594,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7">
+                        <td colspan="6">
                             <div class="no-results-found" style="box-shadow: none; padding: 40px;">
                                 <i class="fas fa-file-import"></i>
                                 <p>You have not made any document requests yet.</p>
@@ -582,7 +631,7 @@
             <button type="button" class="btn-cancel" onclick="closeCancelModal()">Close</button>
             <form id="cancelForm" method="POST" style="display: inline;">
                 @csrf
-                @method('DELETE') {{-- Or POST to a cancel route --}}
+                @method('DELETE')
                 <button type="submit" class="btn-confirm-delete">Yes, Cancel</button>
             </form>
         </div>

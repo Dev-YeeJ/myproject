@@ -22,6 +22,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'contact_number', // <-- ADD THIS
+        'is_active',      // <-- AND ADD THIS
     ];
 
     /**
@@ -45,6 +47,14 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+    
+    /**
+     * Get the resident profile associated with this user.
+     */
+    public function resident()
+    {
+        return $this->hasOne(Resident::class);
     }
 
     // ============================================
@@ -80,7 +90,8 @@ class User extends Authenticatable
     {
         return $this->role === 'tanod';
     }
-     public function isResident(): bool
+    
+    public function isResident(): bool
     {
         return $this->role === 'resident';
     }

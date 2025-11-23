@@ -3,9 +3,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory; // <-- ADDED
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB; 
+use App\Models\Household; // <-- ADDED
+use App\Models\User; // <-- ADDED
 
 class Resident extends Model
 {
@@ -17,6 +19,7 @@ class Resident extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'user_id', 
         'first_name',
         'middle_name',
         'last_name',
@@ -33,11 +36,11 @@ class Resident extends Model
         'occupation',
         'monthly_income',
         'is_registered_voter',
-        'precinct_number', // <-- ADDED
+        'precinct_number', 
         'is_indigenous',
         'is_pwd', 
-        'pwd_id_number', // <-- ADDED
-        'disability_type', // <-- ADDED
+        'pwd_id_number', 
+        'disability_type', 
         'is_senior_citizen', 
         'is_4ps', 
         'is_active', 
@@ -75,14 +78,22 @@ class Resident extends Model
     public function getFullNameAttribute()
     {
         $nameParts = [$this->first_name];
-        if ($this->middle_name) {
+        if (!empty($this->middle_name)) { // Use !empty to check for null or empty string
             $nameParts[] = $this->middle_name;
         }
         $nameParts[] = $this->last_name;
-        if ($this->suffix) {
+        if (!empty($this->suffix)) {
             $nameParts[] = $this->suffix;
         }
         return implode(' ', $nameParts);
+    }
+
+    /**
+     * Get the user account associated with this resident.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**
@@ -101,9 +112,6 @@ class Resident extends Model
         return $query->where('is_senior_citizen', true);
     }
 
-    /**
-     * Scope a query to only include 4Ps beneficiaries.
-     */
     public function scope4PsBeneficiaries($query)
     {
         return $query->where('is_4ps', true);
@@ -130,10 +138,7 @@ class Resident extends Model
      */
     public function scopeMinors($query)
     {
-        // Using the stored age column for simplicity
         return $query->where('age', '<', 18);
-        // Alternatively, calculate dynamically (potentially slower for large datasets):
-        // return $query->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < 18');
     }
 
     /**
