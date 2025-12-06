@@ -6,57 +6,34 @@
 
 @section('nav-items')
     <li class="nav-item">
-        <a href="{{ route('captain.dashboard') }}" class="nav-link ">
+        <a href="{{ route('secretary.dashboard') }}" class="nav-link ">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.resident-profiling') }}" class="nav-link">
+        <a href="{{ route('secretary.resident-profiling') }}" class="nav-link">
             <i class="fas fa-users"></i>
             <span>Resident Profiling</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.document-services') }}" class="nav-link active">
-            <i class="far fa-file-alt"></i>
+        <a href="{{ route('secretary.document-services') }}" class="nav-link active">
+            <i class="fas fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.financial-management') }}" class="nav-link">
+        <a href="{{ route('secretary.financial-management') }}" class="nav-link">
             <i class="fas fa-dollar-sign"></i>
             <span>Financial Management</span>
         </a>
     </li>
+    {{-- REPLACED: Search Residents with Announcements --}}
     <li class="nav-item">
-        <a href="{{ route('captain.health-services') }}" class="nav-link ">
-            <i class="fas fa-heart"></i>
-            <span>Health & Social Services</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>Incident & Blotter</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-flag"></i>
-            <span>Project Monitoring</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="{{ route('captain.announcements.index') }}" class="nav-link">
-            <i class="fas fa-bell"></i>
+        <a href="{{ route('secretary.announcements.index') }}" class="nav-link">
+            <i class="fas fa-bullhorn"></i>
             <span>Announcements</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-check-circle"></i>
-            <span>SK Module</span>
         </a>
     </li>
     <li class="nav-item">
@@ -398,7 +375,7 @@
                             <i class="fas fa-file-alt"></i>
                             <span>{{ $file->file_name }}</span>
                         </div>
-                        <a href="{{ route('captain.requirement.download', $file->id) }}" target="_blank">
+                        <a href="{{ route('secretary.requirement.download', $file->id) }}" target="_blank">
                             <i class="fas fa-download"></i> Download
                         </a>
                     </li>
@@ -418,7 +395,7 @@
             <p>Update status, verify payment, and upload final document.</p>
         </div>
         
-        <form action="{{ route('captain.document.update', $documentRequest->id) }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('secretary.document.update', $documentRequest->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -473,7 +450,7 @@
             <hr class="my-4">
 
             <div class="d-flex justify-content-between">
-                <a href="{{ route('captain.document-services', ['view' => 'requests']) }}" class="btn btn-secondary">
+                <a href="{{ route('secretary.document-services', ['view' => 'requests']) }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back
                 </a>
                 <button type="submit" class="btn btn-primary">

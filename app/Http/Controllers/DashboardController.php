@@ -296,7 +296,7 @@ class DashboardController extends Controller
          }
 
 
-        return view('dashboards.treasurer', compact('user', 'stats'));
+        return view('dashboard.treasurer', compact('user', 'stats'));
     }
 
     /**
@@ -436,7 +436,7 @@ class DashboardController extends Controller
         if (method_exists($user, 'isBarangayCaptain') && $user->isBarangayCaptain()) {
             return redirect()->route('captain.dashboard');
         }
-        if (method_exists($user, 'isSecretary') && $user->isSecretary()) {
+        if (method_exists($user, 'isSecvdvdretary') && $user->isSecretary()) {
             return redirect()->route('secretary.dashboard');
         }
         if (method_exists($user, 'isTreasurer') && $user->isTreasurer()) {
@@ -454,6 +454,9 @@ class DashboardController extends Controller
         if (method_exists($user, 'isResident') && $user->isResident()) {
             return redirect()->route('resident.dashboard');
         } 
+        if (method_exists($user, 'isSkofficial') && $user->isSkofficial()) {
+            return redirect()->route('sk.dashboard');
+        }
         
         Auth::logout();
         return redirect('/login')->with('error', 'Unable to determine user role or dashboard.');

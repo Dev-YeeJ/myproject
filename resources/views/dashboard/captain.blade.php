@@ -26,11 +26,11 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
-            <i class="fas fa-dollar-sign"></i>
-            <span>Financial Management</span>
-        </a>
-    </li>
+    <a href="{{ route('captain.financial-management') }}" class="nav-link {{ request()->routeIs('captain.financial*') ? 'active' : '' }}">
+        <i class="fas fa-dollar-sign"></i>
+        <span>Financial Management</span>
+    </a>
+</li>
     <li class="nav-item">
         {{-- UPDATED: Link to the new health services route --}}
         <a href="{{ route('captain.health-services') }}" class="nav-link">
@@ -51,11 +51,11 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
-            <i class="fas fa-bell"></i>
-            <span>Announcements</span>
-        </a>
-    </li>
+    <a href="{{ route('captain.announcements.index') }}" class="nav-link {{ request()->routeIs('captain.announcements.*') ? 'active' : '' }}">
+        <i class="fas fa-bell"></i>
+        <span>Announcements</span>
+    </a>
+</li>
     <li class="nav-item">
         <a href="#" class="nav-link"> {{-- Add route later --}}
             <i class="fas fa-check-circle"></i>

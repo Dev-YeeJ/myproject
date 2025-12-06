@@ -90,9 +90,15 @@ class User extends Authenticatable
     {
         return $this->role === 'tanod';
     }
+    public function isSkofficial(): bool
+    {
+        return $this->role === 'sk_official';
+    }
     
     public function isResident(): bool
     {
         return $this->role === 'resident';
     }
+
+   
 }

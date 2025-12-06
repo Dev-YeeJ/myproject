@@ -1,5 +1,4 @@
 <?php
-// database/seeders/DatabaseSeeder.php
 
 namespace Database\Seeders;
 
@@ -12,6 +11,7 @@ use App\Models\Medicine;
 use App\Models\DocumentRequest;
 use App\Models\DocumentType;
 use App\Models\Template;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
@@ -102,23 +102,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
         
-        // --- THIS BLOCK IS NOW REMOVED ---
-        // The ResidentObserver will create this user automatically
-        /*
-        User::updateOrCreate(
-            ['username' => 'resident1'],
-            [
-                'password' => Hash::make('password123'),
-                'first_name' => 'Jaime',
-                'last_name' => 'Yee',
-                'role' => 'resident',
-                'email' => 'resident1@calbueg.gov.ph',
-                'contact_number' => '09155371154',
-                'is_active' => true,
-            ]
-        );
-        */
-
         // ==========================================
         // RESIDENT PROFILING DATA
         // ==========================================
@@ -130,7 +113,7 @@ class DatabaseSeeder extends Seeder
                 'household_name' => 'Cruz Household',
                 'address' => '123 Rizal St.',
                 'purok' => 'Purok 1',
-                'status' => 'incomplete' // Will be updated by resident seeder
+                'status' => 'incomplete' 
             ]
         );
 
@@ -224,7 +207,7 @@ class DatabaseSeeder extends Seeder
                 'household_id' => $household1->id, 'household_status' => 'Child',
                 'address' => '123 Rizal St.', 'contact_number' => '09123456793',
                 'occupation' => 'Student', 'monthly_income' => null,
-                'is_registered_voter' => false, 'precinct_number' => null, // Just turned 18, not yet registered
+                'is_registered_voter' => false, 'precinct_number' => null,
                 'is_pwd' => false, 'pwd_id_number' => null, 'disability_type' => null,
                 'is_indigenous' => false, 'is_senior_citizen' => false, 'is_4ps' => true, 'is_active' => true,
             ]
@@ -371,14 +354,13 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // --- NEW: Add the 'resident1' (Jaime Yee) as a Resident ---
-        // The Observer will create his User account.
+        // Jaime Yee
         $res_jaime = Resident::updateOrCreate(
             ['email' => 'resident1@calbueg.gov.ph'],
             [
                 'first_name' => 'Jaime', 'middle_name' => '', 'last_name' => 'Yee', 'suffix' => '',
                 'date_of_birth' => '1990-01-01', 'age' => 35, 'gender' => 'Male', 'civil_status' => 'Single',
-                'household_id' => $household1->id, // Assigning to household 1
+                'household_id' => $household1->id, 
                 'household_status' => 'Member',
                 'address' => '123 Rizal St.', 'contact_number' => '09155371154',
                 'occupation' => 'Technician', 'monthly_income' => 20000,
@@ -390,7 +372,6 @@ class DatabaseSeeder extends Seeder
 
 
         // --- Recalculate Household Totals & Status ---
-        // This is important to run AFTER all residents are seeded
         $allHouseholds = Household::all();
         foreach ($allHouseholds as $household) {
             $household->updateTotalMembers();
@@ -499,84 +480,336 @@ class DatabaseSeeder extends Seeder
         // DOCUMENT SERVICES DATA
         // ==========================================
 
-        // --- 1. Seed Document Types ---
-        $docType1 = DocumentType::updateOrCreate(
-            ['name' => 'Barangay Clearance'],
-            ['price' => 50.00, 'requires_payment' => true, 'is_active' => true]
-        );
-        $docType2 = DocumentType::updateOrCreate(['name' => 'Certificate of Residency']);
-        $docType3 = DocumentType::updateOrCreate(['name' => 'Certificate of Indigency']);
-        $docType4 = DocumentType::updateOrCreate(['name' => 'Business Permit']);
-        $docType5 = DocumentType::updateOrCreate(['name' => 'Construction Permit']);
-
-        // --- 2. Seed Templates ---
-        Template::updateOrCreate(
-            ['document_type_id' => $docType1->id],
+        // 1. Barangay Business Clearance (Business Permit)
+        // Focuses on business details, not personal resident details.
+        $businessPermit = DocumentType::updateOrCreate(
+            ['name' => 'Barangay Business Clearance'],
             [
-                'name' => 'Standard Barangay Clearance Template',
-                'content' => 'This is to certify that [Resident Name] is a resident of...',
+                'description' => 'Clearance required for new or renewing business operations.',
+                'price' => 500.00,
+                'requires_payment' => true,
                 'is_active' => true,
-            ]
-        );
-        Template::updateOrCreate(
-            ['document_type_id' => $docType2->id],
-            [
-                'name' => 'Standard Certificate of Residency',
-                'content' => 'This certifies that [Resident Name] is a bonafide resident of...',
-                'is_active' => true,
+                'custom_fields' => [
+                    [
+                        'name' => 'transaction_type',
+                        'label' => 'Transaction Type',
+                        'type' => 'select',
+                        'options' => ['New Application', 'Renewal', 'Closure'],
+                        'required' => true
+                    ],
+                    [
+                        'name' => 'business_name',
+                        'label' => 'Registered Business Name',
+                        'type' => 'text',
+                        'required' => true
+                    ],
+                    [
+                        'name' => 'business_nature',
+                        'label' => 'Line of Business (e.g., Sari-sari Store, Computer Shop)',
+                        'type' => 'text',
+                        'required' => true
+                    ],
+                    [
+                        'name' => 'dti_sec_no',
+                        'label' => 'DTI / SEC Registration Number',
+                        'type' => 'text',
+                        'required' => false // Optional for some small businesses
+                    ],
+                    [
+                        'name' => 'business_address',
+                        'label' => 'Business Location/Address',
+                        'type' => 'textarea', // Might differ from resident's home address
+                        'required' => true
+                    ],
+                    [
+                        'name' => 'gross_sales',
+                        'label' => 'Gross Sales (Last Year) - For Assessment',
+                        'type' => 'number',
+                        'required' => false
+                    ]
+                ]
             ]
         );
 
-        // --- 3. Seed Document Requests ---
-        DocumentRequest::updateOrCreate(
-            ['tracking_number' => 'BC-2024-001'],
+        // 2. Barangay Clearance (General Purpose)
+        // Usually requires a Cedula (Community Tax Certificate).
+        $brgyClearance = DocumentType::updateOrCreate(
+            ['name' => 'Barangay Clearance (General)'],
             [
-                'resident_id' => $res1->id, // Mark Cruz
-                'document_type' => $docType1->id, // FIX: 'document_type'
-                'purpose' => 'Employment Requirements',
-                'price' => 50, 'priority' => 'Normal', 'payment_status' => 'Unpaid', 'status' => 'Pending',
-                'created_at' => '2024-12-10 09:00:00',
+                'description' => 'General purpose clearance for ID, employment, or postal ID.',
+                'price' => 100.00,
+                'requires_payment' => true,
+                'is_active' => true,
+                'custom_fields' => [
+                    [
+                        'name' => 'cedula_no',
+                        'label' => 'Community Tax Cert. (Cedula) No.',
+                        'type' => 'text',
+                        'required' => true
+                    ],
+                    [
+                        'name' => 'cedula_date',
+                        'label' => 'Date Issued (Cedula)',
+                        'type' => 'date',
+                        'required' => true
+                    ],
+                    [
+                        'name' => 'cedula_place',
+                        'label' => 'Place Issued (Cedula)',
+                        'type' => 'text',
+                        'required' => true
+                    ]
+                ]
             ]
         );
-        DocumentRequest::updateOrCreate(
-            ['tracking_number' => 'CR-2024-002'],
+
+        // 3. Certificate of Indigency
+        // Focuses on the *need* and the *agency* requiring it.
+        $indigency = DocumentType::updateOrCreate(
+            ['name' => 'Certificate of Indigency'],
             [
-                'resident_id' => $res2->id, // Maria Cruz
-                'document_type' => $docType2->id, // FIX: 'document_type'
-                'purpose' => 'Bank Account Opening',
-                'price' => 50, 'priority' => 'Normal', 'payment_status' => 'Paid', 'status' => 'Ready for Pickup',
-                'created_at' => '2024-12-09 11:30:00',
+                'description' => 'Proof of low-income status for financial, medical, or legal assistance.',
+                'price' => 0.00, // Usually free
+                'requires_payment' => false,
+                'is_active' => true,
+                'custom_fields' => [
+                    [
+                        'name' => 'requesting_agency',
+                        'label' => 'Requesting Agency (e.g., DSWD, PAO, PCSO, School)',
+                        'type' => 'text',
+                        'required' => true
+                    ],
+                    [
+                        'name' => 'assistance_type',
+                        'label' => 'Type of Assistance Needed',
+                        'type' => 'select',
+                        'options' => ['Financial Assistance', 'Medical Assistance', 'Educational Assistance', 'Burial Assistance', 'Legal Assistance'],
+                        'required' => true
+                    ],
+                    [
+                        'name' => 'beneficiary_name',
+                        'label' => 'Name of Patient/Beneficiary (If different from Requestor)',
+                        'type' => 'text',
+                        'required' => false
+                    ],
+                    [
+                        'name' => 'relation_to_beneficiary',
+                        'label' => 'Relation to Beneficiary',
+                        'type' => 'text',
+                        'required' => false
+                    ]
+                ]
             ]
         );
-        DocumentRequest::updateOrCreate(
-            ['tracking_number' => 'CI-2024-003'],
+
+        // 4. Certificate of Residency
+        // Confirms how long they have lived there. Profile address is already known.
+        $residency = DocumentType::updateOrCreate(
+            ['name' => 'Certificate of Residency'],
             [
-                'resident_id' => $res3->id, // Pedro Garcia
-                'document_type' => $docType3->id, // FIX: 'document_type'
-                'purpose' => 'Medical Assistance Application',
-                'price' => 0, 'priority' => 'Urgent', 'payment_status' => 'Waived', 'status' => 'Processing',
-                'created_at' => '2024-12-08 14:15:00',
+                'description' => 'Official proof of residence within the barangay.',
+                'price' => 50.00,
+                'requires_payment' => true,
+                'is_active' => true,
+                'custom_fields' => [
+                    [
+                        'name' => 'years_of_residency',
+                        'label' => 'Number of Years Residing in Barangay',
+                        'type' => 'number',
+                        'required' => true
+                    ],
+                    [
+                        'name' => 'previous_address',
+                        'label' => 'Previous Address (If residing less than 1 year)',
+                        'type' => 'text',
+                        'required' => false
+                    ]
+                ]
             ]
         );
-        DocumentRequest::updateOrCreate(
-            ['tracking_number' => 'BP-2024-004'],
+
+        // 5. Barangay Construction Permit
+        // Needs technical details about the structure.
+        $construction = DocumentType::updateOrCreate(
+            ['name' => 'Barangay Construction Clearance'],
             [
-                'resident_id' => $res4->id, // Ana Reyes
-                'document_type' => $docType4->id, // FIX: 'document_type'
-                'purpose' => 'Sari-sari Store Operation',
-                'price' => 200, 'priority' => 'Normal', 'payment_status' => 'Paid', 'status' => 'Under Review',
-                'created_at' => '2024-12-07 10:00:00',
+                'description' => 'Clearance for building, fencing, or renovation activities.',
+                'price' => 1000.00, // Often higher
+                'requires_payment' => true,
+                'is_active' => true,
+                'custom_fields' => [
+                    [
+                        'name' => 'scope_of_work',
+                        'label' => 'Scope of Work',
+                        'type' => 'select',
+                        'options' => ['New Construction', 'Renovation/Extension', 'Fencing', 'Demolition', 'Electrical Installation'],
+                        'required' => true
+                    ],
+                    [
+                        'name' => 'project_location',
+                        'label' => 'Exact Project Location/Address',
+                        'type' => 'text',
+                        'required' => true
+                    ],
+                    [
+                        'name' => 'floor_area',
+                        'label' => 'Total Floor Area (sqm)',
+                        'type' => 'number',
+                        'required' => true
+                    ],
+                    [
+                        'name' => 'estimated_cost',
+                        'label' => 'Estimated Project Cost (PHP)',
+                        'type' => 'number',
+                        'required' => true
+                    ],
+                    [
+                        'name' => 'lot_owner',
+                        'label' => 'Name of Lot Owner (If different from Applicant)',
+                        'type' => 'text',
+                        'required' => false
+                    ]
+                ]
             ]
         );
-        DocumentRequest::updateOrCreate(
-            ['tracking_number' => 'CP-2024-005'],
-            [
-                'resident_id' => $res5->id, // Carlos Cruz
-                'document_type' => $docType5->id, // FIX: 'document_type'
-                'purpose' => 'House Extension',
-                'price' => 500, 'priority' => 'Normal', 'payment_status' => 'Paid', 'status' => 'Completed',
-                'created_at' => '2024-12-01 16:45:00',
-            ]
-        );
+
+        // --- 3. Seed Templates ---
+        // Only if the document type exists
+        if ($brgyClearance) {
+            Template::updateOrCreate(
+                ['document_type_id' => $brgyClearance->id],
+                [
+                    'name' => 'Standard Barangay Clearance Template',
+                    'content' => 'This is to certify that [Resident Name] is a resident of...',
+                    'is_active' => true,
+                ]
+            );
+        }
+        
+        if ($residency) {
+            Template::updateOrCreate(
+                ['document_type_id' => $residency->id],
+                [
+                    'name' => 'Standard Certificate of Residency',
+                    'content' => 'This certifies that [Resident Name] is a bonafide resident of...',
+                    'is_active' => true,
+                ]
+            );
+        }
+
+        // --- 4. Seed Document Requests ---
+        // Only if the document type exists
+        if ($brgyClearance) {
+            DocumentRequest::updateOrCreate(
+                ['tracking_number' => 'BC-2024-001'],
+                [
+                    'resident_id' => $res1->id, // Mark Cruz
+                    'document_type' => $brgyClearance->id,
+                    'purpose' => 'Employment Requirements',
+                    'price' => $brgyClearance->price,
+                    'priority' => 'Normal',
+                    'payment_status' => 'Unpaid',
+                    'status' => 'Pending',
+                    'created_at' => '2024-12-10 09:00:00',
+                    'custom_data' => [
+                        'cedula_no' => '12345678',
+                        'cedula_date' => '2024-01-10',
+                        'cedula_place' => 'Malasiqui',
+                        'purpose_of_request' => 'Employment'
+                    ]
+                ]
+            );
+        }
+
+        if ($residency) {
+            DocumentRequest::updateOrCreate(
+                ['tracking_number' => 'CR-2024-002'],
+                [
+                    'resident_id' => $res2->id, // Maria Cruz
+                    'document_type' => $residency->id,
+                    'purpose' => 'Bank Account Opening',
+                    'price' => $residency->price,
+                    'priority' => 'Normal',
+                    'payment_status' => 'Paid',
+                    'status' => 'Ready for Pickup',
+                    'created_at' => '2024-12-09 11:30:00',
+                    'custom_data' => [
+                        'years_of_residency' => 5
+                    ]
+                ]
+            );
+        }
+
+        if ($indigency) {
+            DocumentRequest::updateOrCreate(
+                ['tracking_number' => 'CI-2024-003'],
+                [
+                    'resident_id' => $res3->id, // Pedro Garcia
+                    'document_type' => $indigency->id,
+                    'purpose' => 'Medical Assistance Application',
+                    'price' => 0, 
+                    'priority' => 'Urgent', 
+                    'payment_status' => 'Waived', 
+                    'status' => 'Processing',
+                    'created_at' => '2024-12-08 14:15:00',
+                    'custom_data' => [
+                        'requesting_agency' => 'DSWD',
+                        'assistance_type' => 'Medical Assistance'
+                    ]
+                ]
+            );
+        }
+
+        if ($businessPermit) {
+            DocumentRequest::updateOrCreate(
+                ['tracking_number' => 'BP-2024-004'],
+                [
+                    'resident_id' => $res4->id, // Ana Reyes
+                    'document_type' => $businessPermit->id,
+                    'purpose' => 'Sari-sari Store Operation',
+                    'price' => $businessPermit->price,
+                    'priority' => 'Normal',
+                    'payment_status' => 'Paid',
+                    'status' => 'Under Review',
+                    'created_at' => '2024-12-07 10:00:00',
+                    'custom_data' => [
+                        'business_name' => 'Ana Sari-Sari Store',
+                        'business_nature' => 'Retail',
+                        'transaction_type' => 'New Application',
+                        'business_address' => '789 Bonifacio St.'
+                    ]
+                ]
+            );
+        }
+
+        if ($construction) {
+            DocumentRequest::updateOrCreate(
+                ['tracking_number' => 'CP-2024-005'],
+                [
+                    'resident_id' => $res5->id, // Carlos Cruz
+                    'document_type' => $construction->id,
+                    'purpose' => 'House Extension',
+                    'price' => $construction->price,
+                    'priority' => 'Normal',
+                    'payment_status' => 'Paid',
+                    'status' => 'Completed',
+                    'created_at' => '2024-12-01 16:45:00',
+                    'custom_data' => [
+                        'scope_of_work' => 'Renovation/Extension',
+                        'project_location' => '123 Rizal St.',
+                        'floor_area' => 50,
+                        'estimated_cost' => 150000
+                    ]
+                ]
+            );
+            }
+       DB::table('settings')->insertOrIgnore([
+            ['key' => 'monthly_budget', 'value' => '150000', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'annual_budget', 'value' => '2000000', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'budget_infrastructure', 'value' => '400000', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'budget_health_programs', 'value' => '200000', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'budget_education', 'value' => '150000', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'budget_environmental', 'value' => '100000', 'created_at' => now(), 'updated_at' => now()],
+        ]);
     }
 }

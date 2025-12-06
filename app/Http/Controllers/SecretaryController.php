@@ -9,75 +9,58 @@ use App\Models\Household;
 use App\Models\DocumentRequest;
 use App\Models\DocumentType;
 use App\Models\Template;
+use App\Models\Announcements;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule; // <-- IMPORTED FOR UNIQUE EMAIL RULE
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
+use App\Models\FinancialTransaction;
+use App\Models\DocumentRequirement;
 
 class SecretaryController extends Controller
 {
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-    /**
-     * Display the resident profiling page with search and filters
-     */
+    // ============================================
+    // RESIDENT PROFILING
+    // ============================================
+
     public function residentProfiling(Request $request)
     {
         $user = Auth::user();
         $view = $request->input('view', 'residents');
         $search = $request->input('search');
-        $status = $request->input('status'); // Used for Resident household_status or Household status
-        $gender = $request->input('gender'); // Used for Resident gender
-        $filter = $request->input('filter'); // <-- NEW: For quick filters
+        $status = $request->input('status');
+        $gender = $request->input('gender');
+        $filter = $request->input('filter');
 
         $residents = null;
         $households = null;
 
         if ($view === 'residents') {
-            // Build query for residents using the Model Scope
-            // --- FIX: Eager load the 'user' relationship ---
             $query = Resident::with(['household', 'user']) 
                 ->where('is_active', true)
-                ->search($search) // Use the search scope from the Resident model
-                ->byHouseholdStatus($status) // Use the status scope
-                ->byGender($gender); // Use the gender scope
+                ->search($search)
+                ->byHouseholdStatus($status)
+                ->byGender($gender);
 
-            // --- NEW: Apply quick filters ---
             if ($filter) {
                 switch ($filter) {
-                    case 'seniors':
-                        $query->where('is_senior_citizen', true);
-                        break;
-                    case 'pwd':
-                        $query->where('is_pwd', true);
-                        break;
-                    case '4ps':
-                        $query->where('is_4ps', true);
-                        break;
-                    case 'voters':
-                        $query->where('is_registered_voter', true);
-                        break;
+                    case 'seniors': $query->where('is_senior_citizen', true); break;
+                    case 'pwd': $query->where('is_pwd', true); break;
+                    case '4ps': $query->where('is_4ps', true); break;
+                    case 'voters': $query->where('is_registered_voter', true); break;
                 }
             }
-            // --- END NEW ---
-
             $residents = $query->orderBy('last_name')->paginate(10);
-
         } else {
-            // Build query for households
             $query = Household::with(['head', 'activeResidents']);
-
-            // Apply search filter for households
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('household_name', 'like', "%{$search}%")
@@ -87,80 +70,39 @@ class SecretaryController extends Controller
                         });
                 });
             }
-
-            // Apply household status filter (Household's own status: complete/incomplete)
             if ($status && $status !== 'All Status' && in_array($status, ['complete', 'incomplete'])) {
                 $query->where('status', $status);
             }
-            // --- END NEW ---
-
-            // Sort by household_number
             $households = $query->orderBy('household_number')->paginate(5);
         }
 
-        // Get overall statistics
         $totalResidents = Resident::where('is_active', true)->count();
         $totalHouseholds = Household::count();
         $completeHouseholds = Household::where('status', 'complete')->count();
-
-        $seniorCitizens = Resident::where('is_senior_citizen', true)
-            ->where('is_active', true)
-            ->count();
-
-        $minors = Resident::where('age', '<', 18)
-            ->where('is_active', true)
-            ->count();
-        
-        // --- NEW STATS ---
+        $seniorCitizens = Resident::where('is_senior_citizen', true)->where('is_active', true)->count();
+        $minors = Resident::where('age', '<', 18)->where('is_active', true)->count();
         $totalPwd = Resident::where('is_active', true)->where('is_pwd', true)->count();
         $total4ps = Resident::where('is_active', true)->where('is_4ps', true)->count();
         $totalVoters = Resident::where('is_active', true)->where('is_registered_voter', true)->count();
         $incompleteHouseholds = $totalHouseholds - $completeHouseholds;
-        // --- END NEW STATS ---
 
         return view('dashboard.secretary-resident-profiling', compact(
-            'user',
-            'view',
-            'residents',
-            'households',
-            'totalResidents',
-            'totalHouseholds',
-            'completeHouseholds',
-            'seniorCitizens',
-            'minors',
-            'filter', // <-- PASS NEW FILTER
-            // --- PASS NEW STATS ---
-            'totalPwd',
-            'total4ps',
-            'totalVoters',
-            'incompleteHouseholds'
-            // --- END NEW STATS ---
+            'user', 'view', 'residents', 'households', 'totalResidents', 'totalHouseholds', 
+            'completeHouseholds', 'seniorCitizens', 'minors', 'filter', 
+            'totalPwd', 'total4ps', 'totalVoters', 'incompleteHouseholds'
         ));
-    } // <--- THIS WAS THE MISSING BRACE
+    }
 
-    /**
-     * Show form to add new resident
-     */
     public function createResident(Request $request)
     {
         $user = Auth::user();
         $households = Household::orderBy('household_number')->get();
         $selectedHousehold = $request->input('household_id', null);
-
-        return view('dashboard.secretary-resident-add', compact(
-            'user',
-            'households',
-            'selectedHousehold' 
-        ));
+        return view('dashboard.secretary-resident-add', compact('user', 'households', 'selectedHousehold'));
     }
 
-
-    /**
-     * Store new resident
-     */
     public function storeResident(Request $request)
     {
-        // Add '0' default for boolean fields if not present
         $request->merge([
             'is_registered_voter' => $request->input('is_registered_voter', 0),
             'is_indigenous' => $request->input('is_indigenous', 0),
@@ -184,10 +126,7 @@ class SecretaryController extends Controller
             'household_status' => 'required|in:Household Head,Spouse,Child,Member',
             'address' => 'required|string|max:255',
             'contact_number' => 'nullable|string|max:20',
-            
-            // Check for email uniqueness on BOTH tables
             'email' => 'nullable|email|max:255|unique:residents,email|unique:users,email',
-
             'occupation' => 'nullable|string|max:255',
             'monthly_income' => 'nullable|numeric|min:0',
             'is_registered_voter' => 'boolean',
@@ -199,14 +138,11 @@ class SecretaryController extends Controller
             'disability_type' => 'nullable|required_if:is_pwd,true|string|max:255',
         ]);
 
-        // Calculate age
         $birthDate = new \DateTime($validated['date_of_birth']);
         $today = new \DateTime();
         $age = $today->diff($birthDate)->y;
         $validated['age'] = $age;
         $validated['is_senior_citizen'] = $age >= 60;
-
-        // Set is_active to true
         $validated['is_active'] = true;
         
         if (!$validated['is_registered_voter']) $validated['precinct_number'] = null;
@@ -222,11 +158,8 @@ class SecretaryController extends Controller
                 ->update(['household_status' => 'Member']);
         }
 
-        // Create resident
-        // The ResidentObserver will automatically create a User
         $resident = Resident::create($validated); 
 
-        // Update household member count and status
         if ($resident->household_id) {
             $household = Household::find($resident->household_id);
             if ($household) {
@@ -239,35 +172,19 @@ class SecretaryController extends Controller
             ->with('success', 'Resident added successfully!');
     }
 
-    /**
-     * Show resident details
-     */
     public function showResident($id)
     {
         $user = Auth::user();
         $resident = Resident::with(['household', 'user'])->findOrFail($id);
-
-        // --- Calculate the default password to display it ---
         $defaultPassword = null;
         if ($resident->date_of_birth) {
-            // e.g., "angeles"
             $lastName = Str::slug($resident->last_name, '');
-            // e.g., "19900115"
             $birthdate = Carbon::parse($resident->date_of_birth)->format('Ymd');
             $defaultPassword = $lastName . $birthdate;
         }
-        // --- END ---
-
-        return view('dashboard.secretary-resident-view', compact(
-            'user', 
-            'resident', 
-            'defaultPassword' // <-- Pass the password to the view
-        ));
+        return view('dashboard.secretary-resident-view', compact('user', 'resident', 'defaultPassword'));
     }
 
-    /**
-     * Show edit form for resident
-     */
     public function editResident($id)
     {
         $user = Auth::user();
@@ -276,9 +193,6 @@ class SecretaryController extends Controller
         return view('dashboard.secretary-resident-edit', compact('user', 'resident', 'households'));
     }
 
-    /**
-     * Update resident
-     */
     public function updateResident(Request $request, $id)
     {
         $resident = Resident::findOrFail($id);
@@ -343,7 +257,6 @@ class SecretaryController extends Controller
                 ->update(['household_status' => 'Member']);
         }
 
-        // The ResidentObserver will automatically update the User
         $resident->update($validated);
         $newHouseholdId = $resident->household_id; 
 
@@ -363,24 +276,16 @@ class SecretaryController extends Controller
             }
         }
 
-        // Redirect back to the resident's view page
         return redirect()->route('secretary.resident.show', $resident->id)
             ->with('success', 'Resident updated successfully!');
     }
 
-    /**
-     * Delete resident (soft delete by setting is_active to false)
-     */
     public function destroyResident($id)
     {
         $resident = Resident::findOrFail($id);
         $householdId = $resident->household_id;
-
-        // Soft delete
         $resident->is_active = false;
         $resident->save(); 
-        // The ResidentObserver's 'updated' method will catch this
-        // and set the user->is_active to false.
 
         if ($householdId) {
             $household = Household::find($householdId);
@@ -391,25 +296,18 @@ class SecretaryController extends Controller
         }
 
         $view = request('view', 'residents');
-
         return redirect()->route('secretary.resident-profiling', ['view' => $view])
             ->with('success', 'Resident removed successfully!');
     }
 
-    /**
-     * Reset a resident's user password to the default.
-     */
     public function resetPassword(Resident $resident)
     {
         if ($resident->user) {
-            // Generate the default password: lastnameYYYYMMDD
             $lastName = Str::slug($resident->last_name, '');
             $birthdate = Carbon::parse($resident->date_of_birth)->format('Ymd');
             $defaultPassword = $lastName . $birthdate;
-
-            $resident->user->password = Hash::make($defaultPassword);
+            $resident->user->password = \Illuminate\Support\Facades\Hash::make($defaultPassword);
             $resident->user->save();
-            
             return redirect()->back()->with('success', "Password for {$resident->user->username} has been reset to '{$defaultPassword}'.");
         }
         return redirect()->back()->with('error', 'This resident does not have a linked user account.');
@@ -433,12 +331,7 @@ class SecretaryController extends Controller
             'address' => 'required|string|max:255',
             'purok' => 'nullable|string|max:100',
         ]);
-        
-        Household::create($validated + [
-            'total_members' => 0,
-            'status' => 'incomplete'
-        ]);
-
+        Household::create($validated + ['total_members' => 0, 'status' => 'incomplete']);
         return redirect()->route('secretary.resident-profiling', ['view' => 'households'])
             ->with('success', 'Household added successfully!');
     }
@@ -453,19 +346,14 @@ class SecretaryController extends Controller
     public function updateHousehold(Request $request, $id)
     {
         $household = Household::findOrFail($id);
-
         $validated = $request->validate([
             'household_name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
             'purok' => 'nullable|string|max:100',
         ]);
-
         $validated['total_members'] = Resident::where('household_id', $id)->where('is_active', true)->count();
-        
         $household->update($validated);
-        
         $household->updateHouseholdStatus();
-
         return redirect()->route('secretary.resident-profiling', ['view' => 'households'])
             ->with('success', 'Household updated successfully!');
     }
@@ -473,16 +361,8 @@ class SecretaryController extends Controller
     public function destroyHousehold($id)
     {
         $household = Household::findOrFail($id);
-
-        // Soft delete all active residents associated with this household
-        // The ResidentObserver will catch each 'update' and deactivate the user.
-        Resident::where('household_id', $id)
-            ->where('is_active', true)
-            ->update(['is_active' => false]);
-            
-        // Hard delete the household
+        Resident::where('household_id', $id)->where('is_active', true)->update(['is_active' => false]);
         $household->delete();
-
         return redirect()->route('secretary.resident-profiling', ['view' => 'households'])
             ->with('success', 'Household and all associated residents removed successfully!');
     }
@@ -493,117 +373,348 @@ class SecretaryController extends Controller
         $household = Household::with(['activeResidents', 'head'])->findOrFail($id);
         return view('dashboard.secretary-household-view', compact('user', 'household'));
     }
-    // ============================================
-    // DOCUMENT SERVICES (Settings)
-    // (No changes requested - Left as is)
-    // ============================================
 
-    public function documentServices(Request $request)
+    // ============================================
+    // DOCUMENT SERVICES 
+    // ============================================
+    
+   public function documentServices(Request $request)
     {
         $user = Auth::user();
-        $view = $request->input('view', 'types');
+        $view = $request->input('view', 'requests');
 
         $stats = [
             'total_types' => DocumentType::count(),
             'total_templates' => Template::count(),
             'paid_documents' => DocumentType::where('requires_payment', true)->count(),
             'active_types' => DocumentType::where('is_active', true)->count(),
+            'pending_requests' => DocumentRequest::whereIn('status', ['Pending', 'Processing', 'Under Review'])->count(),
             'requests_today' => DocumentRequest::whereDate('created_at', Carbon::today())->count(),
         ];
 
-        $typesQuery = DocumentType::query();
-        if ($request->filled('search_types')) {
-            $typesQuery->where('name', 'like', '%' . $request->search_types . '%');
-        }
-        $documentTypes = $typesQuery->orderBy('name')->paginate(10, ['*'], 'typesPage');
+        $documentRequests = null;
+        $documentTypes = null;
+        $templates = null;
 
-        $templatesQuery = Template::with('documentType');
-        if ($request->filled('search_templates')) {
-            $templatesQuery->where('name', 'like', '%' . $request->search_templates . '%');
-        }
-        $templates = $templatesQuery->orderBy('name')->paginate(10, ['*'], 'templatesPage');
+        if ($view === 'requests') {
+            $requestsQuery = DocumentRequest::with(['resident', 'documentType', 'requirements'])->orderBy('created_at', 'desc');
+
+            if ($request->filled('search')) {
+                 $search = $request->search;
+                 $requestsQuery->where(function ($q) use ($search) {
+                     $q->where('tracking_number', 'like', "%{$search}%")
+                        ->orWhere('purpose', 'like', "%{$search}%")
+                        ->orWhereHas('resident', function ($q_res) use ($search) {
+                            $q_res->where(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%");
+                        });
+                 });
+            }
+            if ($request->filled('status') && $request->status !== 'All') {
+                $requestsQuery->where('status', $request->status);
+            }
+            $documentRequests = $requestsQuery->paginate(10, ['*'], 'page')->appends($request->except('page'));
         
-        return view('dashboard.secretary-document-services', compact(
-            'user',
-            'stats',
-            'view',
-            'documentTypes',
-            'templates'
-        ));
-    }
-
-
-    // ============================================
-    // DOCUMENT REQUESTS (Processing)
-    // (No changes requested - Left as is)
-    // ============================================
-
-    public function documentRequests(Request $request)
-    {
-        $user = Auth::user();
-        $status = $request->input('status', 'Pending');
-        $search = $request->input('search');
-
-        $query = DocumentRequest::with(['resident', 'documentType'])
-            ->orderBy('created_at', 'desc');
-
-        if ($status !== 'All') {
-            $query->where('status', $status);
+        } elseif ($view === 'types') {
+            $typesQuery = DocumentType::query();
+            if ($request->filled('search_types')) {
+                $typesQuery->where('name', 'like', '%' . $request->search_types . '%');
+            }
+            $documentTypes = $typesQuery->orderBy('name')->paginate(9, ['*'], 'page')->appends($request->except('page'));
+        
+        } else { // $view === 'templates'
+            $templatesQuery = Template::with('documentType'); 
+            if ($request->filled('search_templates')) {
+                $templatesQuery->where('name', 'like', '%' . $request->search_templates . '%');
+            }
+            $templates = $templatesQuery->orderBy('name')->paginate(10, ['*'], 'page')->appends($request->except('page'));
         }
 
-        if ($search) {
-            $query->where(function($q) use ($search) {
-                $q->whereHas('resident', function($rq) use ($search) {
-                    $rq->where(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%");
-                })
-                ->orWhereHas('documentType', function($dq) use ($search) {
-                    $dq->where('name', 'like', "%{$search}%");
-                })
-                ->orWhere('tracking_number', 'like', "%{$search}%"); // Use tracking_number, not control_number
-            });
-        }
-
-        $requests = $query->paginate(15);
-
-        return view('dashboard.secretary-document-requests', compact(
-            'user',
-            'requests',
-            'status',
-            'search'
-        ));
+        return view('dashboard.secretary-document-services', compact('user', 'stats', 'view', 'documentRequests', 'documentTypes', 'templates'));
     }
 
     public function showDocumentRequest($id)
     {
         $user = Auth::user();
-        $request = DocumentRequest::with(['resident', 'documentType.template'])->findOrFail($id);
+        $documentRequest = DocumentRequest::with(['resident', 'documentType', 'requirements'])
+                                          ->findOrFail($id);
         
-        // ============================================
-        // MODIFIED: Corrected typo in variable name
-        // ============================================
-        $docRequest = $request; 
-
-        return view('dashboard.secretary-document-process', compact('user', 'docRequest'));
+        return view('dashboard.secretary-document-view', compact('user', 'documentRequest'));
     }
 
     public function updateDocumentRequest(Request $request, $id)
     {
-        $docRequest = DocumentRequest::findOrFail($id);
-        $action = $request->input('action');
+        $documentRequest = DocumentRequest::findOrFail($id);
 
-        if ($action === 'approve') {
-            $docRequest->status = 'Approved';
-            $docRequest->processed_by_id = Auth::id();
-            $docRequest->save();
-            return redirect()->route('secretary.document-requests')->with('success', 'Document approved successfully.');
-        } elseif ($action === 'deny') {
-            $docRequest->status = 'Denied';
-            $docRequest->remarks = $request->input('remarks');
-            $docRequest->processed_by_id = Auth::id();
-            $docRequest->save();
-            return redirect()->route('secretary.document-requests')->with('success', 'Document denied.');
+        $validated = $request->validate([
+            'status' => 'required|in:Pending,Processing,Under Review,Ready for Pickup,Completed,Rejected,Cancelled',
+            'payment_status' => 'required|in:Unpaid,Paid,Waived,Verification Pending',
+            'remarks' => 'nullable|string|max:1000',
+            'generated_file' => 'nullable|file|mimes:pdf,docx,doc|max:5120' // 5MB max
+        ]);
+
+        if ($request->hasFile('generated_file')) {
+            if ($documentRequest->generated_file_path && Storage::disk('public')->exists($documentRequest->generated_file_path)) {
+                Storage::disk('public')->delete($documentRequest->generated_file_path);
+            }
+            $filePath = $request->file('generated_file')->store('generated_documents', 'public');
+            $documentRequest->generated_file_path = $filePath;
         }
 
-        return redirect()->route('secretary.document-requests.show', $id)->with('error', 'Invalid action.');
+        $documentRequest->status = $validated['status'];
+        $documentRequest->payment_status = $validated['payment_status'];
+        $documentRequest->remarks = $validated['remarks'];
+        $documentRequest->save();
+
+        return redirect()->route('secretary.document.show', $id)
+                         ->with('success', 'Document request and payment status updated successfully.');
+    }
+
+    public function downloadRequirement($id)
+    {
+        $requirement = DocumentRequirement::findOrFail($id);
+        if (Storage::disk('public')->exists($requirement->file_path)) {
+            return Storage::disk('public')->download($requirement->file_path, $requirement->file_name);
+        }
+        return redirect()->back()->with('error', 'File not found.');
+    }
+
+    // ============================================
+    // ANNOUNCEMENT MANAGEMENT
+    // ============================================
+
+    public function announcements(Request $request)
+    {
+        $user = Auth::user();
+        $search = $request->input('search');
+        $query = Announcements::with('user')->latest();
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+
+        $announcements = $query->paginate(9);
+        return view('dashboard.secretary-announcements', compact('user', 'announcements', 'search'));
+    }
+
+    public function createAnnouncement()
+    {
+        $user = Auth::user();
+        return view('dashboard.secretary-announcements-create', compact('user'));
+    }
+
+    public function storeAnnouncement(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'audience' => 'required|in:All,Residents,Barangay Officials,SK Officials', 
+            'is_published' => 'boolean',
+        ]);
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('announcements', 'public');
+        }
+
+        Announcements::create([
+            'title' => $validated['title'],
+            'content' => $validated['content'],
+            'image_path' => $imagePath,
+            'audience' => $validated['audience'],
+            'is_published' => $request->has('is_published'),
+            'user_id' => Auth::id(),
+        ]);
+
+        return redirect()->route('secretary.announcements.index')
+            ->with('success', 'Announcement created successfully.');
+    }
+
+    public function editAnnouncement($id)
+    {
+        $user = Auth::user();
+        $announcement = Announcements::findOrFail($id);
+        return view('dashboard.secretary-announcements-edit', compact('user', 'announcement'));
+    }
+
+    public function updateAnnouncement(Request $request, $id)
+    {
+        $announcement = Announcements::findOrFail($id);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'audience' => 'required|in:All,Residents,Barangay Officials,SK Officials',
+        ]);
+
+        if ($request->hasFile('image')) {
+            if ($announcement->image_path && Storage::disk('public')->exists($announcement->image_path)) {
+                Storage::disk('public')->delete($announcement->image_path);
+            }
+            $announcement->image_path = $request->file('image')->store('announcements', 'public');
+        }
+
+        $announcement->title = $validated['title'];
+        $announcement->content = $validated['content'];
+        $announcement->audience = $validated['audience'];
+        $announcement->is_published = $request->has('is_published');
+        $announcement->save();
+
+        return redirect()->route('secretary.announcements.index')
+            ->with('success', 'Announcement updated successfully.');
+    }
+
+    public function destroyAnnouncement($id)
+    {
+        $announcement = Announcements::findOrFail($id);
+        if ($announcement->image_path && Storage::disk('public')->exists($announcement->image_path)) {
+            Storage::disk('public')->delete($announcement->image_path);
+        }
+        $announcement->delete();
+        return redirect()->route('secretary.announcements.index')
+            ->with('success', 'Announcement deleted successfully.');
+    }
+
+    // ============================================
+    // FINANCIAL MANAGEMENT
+    // ============================================
+
+    public function financialManagement(Request $request)
+    {
+        $user = Auth::user();
+
+        // 1. Fetch Budget Settings (Read Only)
+        $annualBudget = DB::table('settings')->where('key', 'annual_budget')->value('value') ?? 2000000;
+        
+        // 2. Calculate Totals
+        // Revenue (Manual + Docs)
+        $manualRevenue = FinancialTransaction::where('type', 'revenue')
+            ->where('status', 'approved')
+            ->sum('amount');
+        $documentRevenue = DocumentRequest::where('payment_status', 'Paid')->sum('price');
+        $totalRevenue = $manualRevenue + $documentRevenue;
+
+        // Expenses
+        $totalSpent = FinancialTransaction::where('type', 'expense')
+            ->where('status', 'approved')
+            ->sum('amount');
+        
+        $availableBudget = ($annualBudget + $totalRevenue) - $totalSpent;
+
+        // 3. Utilization Data for Charts
+        $expenseCategories = ['Infrastructure', 'Health Programs', 'Education', 'Environmental', 'Others'];
+        $utilization = [];
+
+        foreach ($expenseCategories as $cat) {
+            $spent = FinancialTransaction::where('type', 'expense')
+                ->where('status', 'approved')
+                ->where('category', $cat)
+                ->sum('amount');
+            
+            $settingKey = 'budget_' . strtolower(str_replace(' ', '_', $cat));
+            $limit = DB::table('settings')->where('key', $settingKey)->value('value') ?? 100000;
+
+            $utilization[] = [
+                'name' => $cat, 
+                'spent' => $spent, 
+                'limit' => $limit, 
+                'percentage' => ($limit > 0 ? ($spent/$limit)*100 : 0)
+            ];
+        }
+
+        // 4. Revenue Performance
+        $revenuePerformance = [];
+        $iraCollected = FinancialTransaction::where('category', 'Government IRA')->sum('amount');
+        $revenuePerformance[] = [
+            'name' => 'Government IRA',
+            'target' => 1500000, 
+            'collected' => $iraCollected,
+            'percentage' => ($iraCollected / 1500000) * 100
+        ];
+
+        // 5. Transaction List (Filter Logic)
+        $query = FinancialTransaction::latest();
+
+        if ($request->has('type') && $request->type != 'all') {
+            $query->where('type', $request->type);
+        }
+
+        $transactions = $query->paginate(10)->withQueryString();
+
+        return view('dashboard.secretary-financial', compact(
+            'user', 'transactions', 'annualBudget', 'totalRevenue', 
+            'totalSpent', 'availableBudget', 'utilization', 'revenuePerformance'
+        ));
+    }
+
+    public function storeFinancialTransaction(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'amount' => 'required|numeric|min:0',
+            'type' => 'required|in:revenue,expense',
+            'category' => 'required|string',
+            'transaction_date' => 'required|date',
+        ]);
+
+        // CRITICAL LOGIC FOR SECRETARY:
+        // Revenue = Approved immediately (Collecting cash).
+        // Expense = ALWAYS 'pending' (Must be approved by Treasurer/Captain).
+        $status = ($validated['type'] == 'revenue') ? 'approved' : 'pending';
+
+        FinancialTransaction::create([
+            'title' => $validated['title'],
+            'amount' => $validated['amount'],
+            'type' => $validated['type'],
+            'category' => $validated['category'],
+            'status' => $status,
+            'requested_by' => Auth::user()->first_name . ' ' . Auth::user()->last_name,
+            'transaction_date' => $validated['transaction_date'],
+        ]);
+
+        $msg = $validated['type'] == 'expense' 
+            ? 'Expense request submitted for approval.' 
+            : 'Revenue recorded successfully.';
+
+        return redirect()->back()->with('success', $msg);
+    }
+
+    public function exportFinancialReports(Request $request)
+    {
+        $type = $request->input('report_type', 'transactions');
+
+        if ($type === 'transactions') {
+            $data = FinancialTransaction::orderBy('transaction_date', 'desc')->get();
+            $filename = "secretary_report_" . date('Y-m-d') . ".csv";
+            
+            $headers = [
+                "Content-type" => "text/csv",
+                "Content-Disposition" => "attachment; filename=$filename",
+                "Pragma" => "no-cache",
+                "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+                "Expires" => "0"
+            ];
+
+            $columns = ['ID', 'Title', 'Type', 'Category', 'Amount', 'Status', 'Recorded By', 'Date'];
+
+            $callback = function() use ($data, $columns) {
+                $file = fopen('php://output', 'w');
+                fputcsv($file, $columns);
+                foreach($data as $row) {
+                    fputcsv($file, [
+                        $row->id, $row->title, $row->type, $row->category, 
+                        $row->amount, $row->status, $row->requested_by, $row->transaction_date
+                    ]);
+                }
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+        }
+        return redirect()->back()->with('error', 'Export type not supported.');
     }
 }

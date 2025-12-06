@@ -34,6 +34,7 @@ class CheckRole
             'health_worker' => $user->isHealthWorker(),
             'tanod' => $user->isTanod(),
             'resident' => $user->isResident(),
+            'sk_official' => $user->isSkofficial(),
             default => false,
         };
         

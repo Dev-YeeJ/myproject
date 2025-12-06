@@ -17,14 +17,26 @@ class DocumentRequest extends Model
      */
     protected $fillable = [
         'resident_id',
-        'document_type',
+        'document_type', // Foreign key column
         'tracking_number',
-        // 'document_type', // <-- This was a duplicate, I removed it
         'purpose',
         'price',
         'priority',
         'payment_status',
         'status',
+        'payment_method',
+        'payment_reference_number',
+        'payment_proof',
+        'custom_data', // Added: Stores the user's answers to dynamic fields
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'custom_data' => 'array', // Automatically cast JSON to array
     ];
 
     /**
@@ -34,10 +46,12 @@ class DocumentRequest extends Model
     {
         return $this->belongsTo(Resident::class);
     }
+
     public function requirements()
-{
-    return $this->hasMany(DocumentRequirement::class);
-}
+    {
+        return $this->hasMany(DocumentRequirement::class);
+    }
+
     /**
      * Get the document type that this request is for.
      */

@@ -71,6 +71,9 @@ class LoginController extends Controller
         if (method_exists($user, 'isResident') && $user->isResident()) {
             return redirect()->route('resident.dashboard')->with('success', $message);
         }
+        if (method_exists($user, 'isSkofficial') && $user->isSkofficial()) {
+            return redirect()->route('sk.dashboard')->with('success', $message);
+        }
         
         // Fallback for any other role
         return redirect()->route('dashboard')->with('success', $message);

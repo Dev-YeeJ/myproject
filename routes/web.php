@@ -11,16 +11,15 @@ use App\Http\Controllers\DocumentTypeController;
 use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\SecretaryController;
 use App\Http\Controllers\ResidentController;
+use App\Http\Controllers\TreasurerController;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes - Force Login First
+| Web Routes
 |--------------------------------------------------------------------------
 */
 
-// ============================================
-// ROOT ROUTE "/"
-// ============================================
+// ROOT
 Route::get('/', function () {
     if (Auth::check()) {
         return redirect()->route('dashboard');
@@ -28,33 +27,25 @@ Route::get('/', function () {
     return redirect()->route('login');
 })->name('home');
 
-
-// ============================================
-// GUEST ROUTES - Only for users NOT logged in
-// ============================================
+// GUEST
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 });
 
-
-// ============================================
-// AUTHENTICATED ROUTES - Only for logged-in users
-// ============================================
+// AUTHENTICATED
 Route::middleware('auth')->group(function () {
 
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // ============================================
-    // ROLE-SPECIFIC DASHBOARDS & ROUTES
+    // CAPTAIN ROUTES
     // ============================================
-
-    // --- Captain Routes ---
     Route::middleware(CheckRole::class . ':barangay_captain')->prefix('captain')->name('captain.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'captain'])->name('dashboard');
         
-        // Resident Profiling
+        // Resident
         Route::get('/resident-profiling', [CaptainController::class, 'residentProfiling'])->name('resident-profiling');
         Route::get('/resident/create', [CaptainController::class, 'createResident'])->name('resident.create');
         Route::post('/resident', [CaptainController::class, 'storeResident'])->name('resident.store');
@@ -64,7 +55,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/resident/{id}', [CaptainController::class, 'destroyResident'])->name('resident.destroy')->where('id', '[0-9]+');
         Route::post('/resident/{resident}/reset-password', [CaptainController::class, 'resetPassword'])->name('resident.reset-password');
 
-        // Household Management
+        // Household
         Route::get('/household/create', [CaptainController::class, 'createHousehold'])->name('household.create');
         Route::post('/household', [CaptainController::class, 'storeHousehold'])->name('household.store');
         Route::get('/household/{id}/edit', [CaptainController::class, 'editHousehold'])->name('household.edit')->where('id', '[0-9]+');
@@ -72,20 +63,18 @@ Route::middleware('auth')->group(function () {
         Route::delete('/household/{id}', [CaptainController::class, 'destroyHousehold'])->name('household.destroy')->where('id', '[0-9]+');
         Route::get('/household/{id}/show', [CaptainController::class, 'showHousehold'])->name('household.show');
 
-        // Health Services (View-Only)
+        // Health
         Route::get('/health-services', [CaptainController::class, 'healthAndSocialServices'])->name('health-services');
         Route::get('/medicine/create', [CaptainController::class, 'createMedicine'])->name('medicine.create');
         Route::post('/medicine', [CaptainController::class, 'storeMedicine'])->name('medicine.store');
                 
-        // Document Services
+        // Documents
         Route::get('/document-services', [CaptainController::class, 'documentServices'])->name('document-services');
-
-        // Document Request Management Routes
         Route::get('/document-request/{id}', [CaptainController::class, 'showDocumentRequest'])->name('document.show');
         Route::put('/document-request/{id}', [CaptainController::class, 'updateDocumentRequest'])->name('document.update');
         Route::get('/requirement/{id}/download', [CaptainController::class, 'downloadRequirement'])->name('requirement.download');
         
-        // Document Type & Template CRUD
+        // Doc Types & Templates
         Route::get('/document-type/create', [DocumentTypeController::class, 'create'])->name('document-type.create');
         Route::post('/document-type', [DocumentTypeController::class, 'store'])->name('document-type.store');
         Route::get('/document-type/{id}/edit', [DocumentTypeController::class, 'edit'])->name('document-type.edit');
@@ -96,13 +85,31 @@ Route::middleware('auth')->group(function () {
         Route::get('/template/{id}/edit', [TemplateController::class, 'edit'])->name('template.edit');
         Route::put('/template/{id}', [TemplateController::class, 'update'])->name('template.update');
         Route::delete('/template/{id}', [TemplateController::class, 'destroy'])->name('template.destroy');
+    
+        // Financial Management (CAPTAIN)
+        Route::get('/financial-management', [CaptainController::class, 'financialManagement'])->name('financial-management');
+        Route::post('/financial-transaction', [CaptainController::class, 'storeTransaction'])->name('financial.store');
+        Route::put('/financial-transaction/{id}/status', [CaptainController::class, 'updateTransactionStatus'])->name('financial.status');
+        
+        // ** FIX: Added Missing Budget Update Route **
+        Route::post('/financial/budget/update', [CaptainController::class, 'updateBudget'])->name('financial.budget.update');
+
+        // Announcements
+        Route::get('/announcements', [CaptainController::class, 'announcements'])->name('announcements.index');
+        Route::get('/announcements/create', [CaptainController::class, 'createAnnouncement'])->name('announcements.create');
+        Route::post('/announcements', [CaptainController::class, 'storeAnnouncement'])->name('announcements.store');
+        Route::get('/announcements/{id}/edit', [CaptainController::class, 'editAnnouncement'])->name('announcements.edit');
+        Route::put('/announcements/{id}', [CaptainController::class, 'updateAnnouncement'])->name('announcements.update');
+        Route::delete('/announcements/{id}', [CaptainController::class, 'destroyAnnouncement'])->name('announcements.destroy');
     });
 
-    // --- Secretary Routes ---
+    // ============================================
+    // SECRETARY ROUTES
+    // ============================================
     Route::middleware(CheckRole::class . ':secretary')->prefix('secretary')->name('secretary.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'secretary'])->name('dashboard');
         
-        // Resident Profiling
+        // Resident
         Route::get('/resident-profiling', [SecretaryController::class, 'residentProfiling'])->name('resident-profiling');
         Route::get('/resident/create', [SecretaryController::class, 'createResident'])->name('resident.create');
         Route::post('/resident', [SecretaryController::class, 'storeResident'])->name('resident.store');
@@ -112,62 +119,97 @@ Route::middleware('auth')->group(function () {
         Route::delete('/resident/{id}', [SecretaryController::class, 'destroyResident'])->name('resident.destroy')->where('id', '[0-9]+');
         Route::post('/resident/{resident}/reset-password', [SecretaryController::class, 'resetPassword'])->name('resident.reset-password');
             
-        // Household Management
+        // Household
         Route::get('/household/create', [SecretaryController::class, 'createHousehold'])->name('household.create');
         Route::get('/household/{id}/edit', [SecretaryController::class, 'editHousehold'])->name('household.edit')->where('id', '[0-9]+');
         Route::put('/household/{id}', [SecretaryController::class, 'updateHousehold'])->name('household.update')->where('id', '[0-9]+');
         Route::post('/household', [SecretaryController::class, 'storeHousehold'])->name('household.store');
         Route::delete('/household/{id}', [SecretaryController::class, 'destroyHousehold'])->name('household.destroy')->where('id', '[0-9]+');
         Route::get('/household/{id}/show', [SecretaryController::class, 'showHousehold'])->name('household.show');
+
+        // Documents
+        Route::get('/document-services', [SecretaryController::class, 'documentServices'])->name('document-services');
+        Route::get('/document-request/{id}', [SecretaryController::class, 'showDocumentRequest'])->name('document.show');
+        Route::put('/document-request/{id}', [SecretaryController::class, 'updateDocumentRequest'])->name('document.update');
+        Route::get('/requirement/{id}/download', [SecretaryController::class, 'downloadRequirement'])->name('requirement.download');
+        
+        // Doc Types & Templates
+        Route::get('/document-type/create', [DocumentTypeController::class, 'create'])->name('document-type.create');
+        Route::post('/document-type', [DocumentTypeController::class, 'store'])->name('document-type.store');
+        Route::get('/document-type/{id}/edit', [DocumentTypeController::class, 'edit'])->name('document-type.edit');
+        Route::put('/document-type/{id}', [DocumentTypeController::class, 'update'])->name('document-type.update');
+        Route::delete('/document-type/{id}', [DocumentTypeController::class, 'destroy'])->name('document-type.destroy');
+        Route::get('/template/create', [TemplateController::class, 'create'])->name('template.create');
+        Route::post('/template', [TemplateController::class, 'store'])->name('template.store');
+        Route::get('/template/{id}/edit', [TemplateController::class, 'edit'])->name('template.edit');
+        Route::put('/template/{id}', [TemplateController::class, 'update'])->name('template.update');
+        Route::delete('/template/{id}', [TemplateController::class, 'destroy'])->name('template.destroy');
+
+        // Financial Management (SECRETARY)
+        // ** FIX: Renamed route to 'financial' to match blade **
+        Route::get('/financial-management', [SecretaryController::class, 'financialManagement'])->name('financial-management');
+        Route::post('/financial-transaction', [SecretaryController::class, 'storeFinancialTransaction'])->name('financial.store');
+        Route::put('/financial-transaction/{id}/status', [SecretaryController::class, 'updateTransactionStatus'])->name('financial.status');
+        Route::get('/financial/export', [SecretaryController::class, 'exportFinancialReports'])->name('financial.export'); 
+
+        // Announcements
+        Route::get('/announcements', [SecretaryController::class, 'announcements'])->name('announcements.index');
+        Route::get('/announcements/create', [SecretaryController::class, 'createAnnouncement'])->name('announcements.create');
+        Route::post('/announcements', [SecretaryController::class, 'storeAnnouncement'])->name('announcements.store');
+        Route::get('/announcements/{id}/edit', [SecretaryController::class, 'editAnnouncement'])->name('announcements.edit');
+        Route::put('/announcements/{id}', [SecretaryController::class, 'updateAnnouncement'])->name('announcements.update');
+        Route::delete('/announcements/{id}', [SecretaryController::class, 'destroyAnnouncement'])->name('announcements.destroy');
     });
 
-    // --- Health Worker (BHW) Routes ---
+    // ============================================
+    // TREASURER ROUTES
+    // ============================================
+    Route::middleware(CheckRole::class . ':treasurer')->prefix('treasurer')->name('treasurer.')->group(function () {
+        
+        Route::get('/dashboard', [TreasurerController::class, 'index'])->name('dashboard');
+        
+        Route::get('/financial-management', [TreasurerController::class, 'financialManagement'])->name('financial');
+        
+        Route::post('/transaction', [TreasurerController::class, 'storeTransaction'])->name('transaction.store');
+        Route::put('/transaction/{id}', [TreasurerController::class, 'updateTransaction'])->name('transaction.update');
+        Route::delete('/transaction/{id}', [TreasurerController::class, 'destroyTransaction'])->name('transaction.destroy');
+
+        Route::put('/transaction/{id}/status', [TreasurerController::class, 'updateTransactionStatus'])->name('transaction.updateStatus');
+        Route::post('/budget/update', [TreasurerController::class, 'updateBudget'])->name('budget.update');
+        Route::get('/export', [TreasurerController::class, 'exportReports'])->name('export');
+
+        Route::get('/announcements', [TreasurerController::class, 'announcements'])->name('announcements.index');
+    });
+
+    // ============================================
+    // HEALTH & RESIDENT ROUTES (Omitted for brevity, keep existing)
+    // ============================================
     Route::middleware(CheckRole::class . ':health_worker')->prefix('health')->name('health.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'health'])->name('dashboard');
-        
-        // Medicine Inventory CRUD
         Route::get('/health-services', [HealthController::class, 'showHealthServices'])->name('health-services');
         Route::get('/medicine/create', [HealthController::class, 'createMedicine'])->name('medicine.create');
         Route::post('/medicine', [HealthController::class, 'storeMedicine'])->name('medicine.store');
-        
-        // --- CRITICAL: Request Management MUST BE BEFORE Wildcard Routes ---
         Route::get('/medicine/requests', [HealthController::class, 'showMedicineRequests'])->name('medicine.requests');
         Route::put('/medicine/requests/{id}', [HealthController::class, 'updateRequestStatus'])->name('medicine.request.update');
-
-        // Medicine Specific Routes (Wildcards)
         Route::get('/medicine/{medicine}', [HealthController::class, 'showMedicine'])->name('medicine.show');
         Route::get('/medicine/{medicine}/edit', [HealthController::class, 'editMedicine'])->name('medicine.edit');
         Route::put('/medicine/{medicine}', [HealthController::class, 'updateMedicine'])->name('medicine.update');
         Route::delete('/medicine/{medicine}', [HealthController::class, 'destroyMedicine'])->name('medicine.destroy'); 
     });
 
-    // --- Resident Routes ---
     Route::middleware(CheckRole::class . ':resident')->prefix('resident')->name('resident.')->group(function () {
         Route::get('/dashboard', [ResidentController::class, 'dashboard'])->name('dashboard');
-        
-        // Document Services
         Route::get('/document-services', [ResidentController::class, 'showDocumentServices'])->name('document-services');
         Route::get('/document/create', [ResidentController::class, 'createDocumentRequest'])->name('document.create');
         Route::post('/document/store', [ResidentController::class, 'storeDocumentRequest'])->name('document.store');
         Route::delete('/document-request/{id}/cancel', [ResidentController::class, 'cancelDocumentRequest'])->name('document.cancel');
         Route::get('/document-request/{id}/download', [ResidentController::class, 'downloadGeneratedDocument'])->name('document.download');
-        
-        // Health & Social Services
         Route::get('/health-services', [ResidentController::class, 'showHealthServices'])->name('health-services');
         Route::post('/health-services/request', [ResidentController::class, 'storeMedicineRequest'])->name('health.request.store');
+        Route::get('/announcements', [ResidentController::class, 'announcements'])->name('announcements.index');
     });
 
-    // --- Other Role Dashboards ---
-    Route::get('/dashboard/treasurer', [DashboardController::class, 'treasurer'])
-        ->name('dashboard.treasurer')
-        ->middleware(CheckRole::class . ':treasurer');
-
-    Route::get('/dashboard/kagawad', [DashboardController::class, 'kagawad'])
-        ->name('dashboard.kagawad')
-        ->middleware(CheckRole::class . ':kagawad');
-
-    Route::get('/dashboard/tanod', [DashboardController::class, 'tanod'])
-        ->name('dashboard.tanod')
-        ->middleware(CheckRole::class . ':tanod');
-
+    Route::get('/dashboard/treasurer', [DashboardController::class, 'treasurer'])->name('dashboard.treasurer')->middleware(CheckRole::class . ':treasurer');
+    Route::get('/dashboard/kagawad', [DashboardController::class, 'kagawad'])->name('dashboard.kagawad')->middleware(CheckRole::class . ':kagawad');
+    Route::get('/dashboard/tanod', [DashboardController::class, 'tanod'])->name('dashboard.tanod')->middleware(CheckRole::class . ':tanod');
 });

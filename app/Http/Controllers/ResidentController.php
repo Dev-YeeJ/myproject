@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Announcements;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\DocumentType;
 use App\Models\DocumentRequest;
 use App\Models\Resident; 
-use App\Models\Medicine; // Import Medicine
-use App\Models\MedicineRequest; // Import MedicineRequest
+use App\Models\Medicine; 
+use App\Models\MedicineRequest; 
 use App\Models\DocumentRequirement;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,10 +18,6 @@ use Carbon\Carbon;
 
 class ResidentController extends Controller
 {
-    /**
-     * Create a new controller instance.
-     * All methods require authentication.
-     */
     public function __construct()
     {
         $this->middleware('auth');
@@ -41,20 +38,55 @@ class ResidentController extends Controller
             $householdMembers = $user->resident->household->total_members;
         }
 
+        // --- Announcement Stats ---
+        $announcementsQuery = Announcements::forUser($user);
+        
+        // "New" = Posted in the last 7 days
+        $newCount = (clone $announcementsQuery)
+            ->where('created_at', '>=', Carbon::now()->subDays(7))
+            ->count();
+            
+        // Total available to this user
+        $totalAvailable = $announcementsQuery->count();
+
         $stats = [
-            'my_pending_documents' => $myRequests->clone()->whereIn('status', ['Pending', 'Processing'])->count(),
+            // Updated to include 'Verification Pending' in the pending count
+            'my_pending_documents' => $myRequests->clone()->whereIn('status', ['Pending', 'Processing', 'Verification Pending'])->count(),
             'my_completed_documents' => $myRequests->clone()->where('status', 'Completed')->count(),
             'my_household_members' => $householdMembers, 
-            'new_announcements' => 0, // Placeholder
-            'unread_announcements' => 0, // Placeholder
+            'new_announcements' => $newCount, 
+            'unread_announcements' => $totalAvailable, 
         ];
 
         return view('dashboard.resident', compact('user', 'stats'));
     }
 
     /**
-     * Display the document services page.
+     * Display announcements relevant to the resident.
      */
+    public function announcements(Request $request)
+    {
+        $user = Auth::user();
+        $search = $request->input('search');
+
+        $query = Announcements::forUser($user)->latest();
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+
+        $announcements = $query->paginate(9);
+
+        return view('dashboard.resident-announcements', compact('user', 'announcements', 'search'));
+    }
+
+    // ============================================
+    // DOCUMENT SERVICES
+    // ============================================
+
     public function showDocumentServices(Request $request)
     {
         $user = Auth::user();
@@ -66,7 +98,7 @@ class ResidentController extends Controller
         $allMyRequests = DocumentRequest::where('resident_id', $residentId);
 
         $stats = [
-            'my_pending_requests' => $allMyRequests->clone()->whereIn('status', ['Pending', 'Processing', 'Ready for Pickup'])->count(),
+            'my_pending_requests' => $allMyRequests->clone()->whereIn('status', ['Pending', 'Processing', 'Ready for Pickup', 'Verification Pending'])->count(),
             'my_completed_requests' => $allMyRequests->clone()->where('status', 'Completed')->count(),
             'available_documents' => DocumentType::where('is_active', true)->count(),
             'total_requests' => $allMyRequests->clone()->count(),
@@ -81,8 +113,8 @@ class ResidentController extends Controller
                                          ->paginate(9, ['*'], 'page')
                                          ->appends($request->except('page'));
 
-        } else { // $view === 'history'
-            
+        } else { 
+            // View = History
             $query = DocumentRequest::where('resident_id', $residentId)
                                     ->with(['documentType', 'requirements']) 
                                     ->orderBy('created_at', 'desc');
@@ -96,69 +128,103 @@ class ResidentController extends Controller
         }
 
         return view('dashboard.resident-document-services', compact(
-            'user',
-            'stats',
-            'view',
-            'documentTypes',
-            'documentRequests'
+            'user', 'stats', 'view', 'documentTypes', 'documentRequests'
         ));
     }
 
-    /**
-     * Show the form for creating a new document request.
-     */
     public function createDocumentRequest(Request $request)
     {
         $user = Auth::user();
         $selectedType = $request->query('type_id');
-        
         $documentTypes = DocumentType::where('is_active', true)->orderBy('name')->get();
 
-        return view('dashboard.resident-document-create', compact(
-            'user', 
-            'documentTypes', 
-            'selectedType'
-        ));
+        return view('dashboard.resident-document-create', compact('user', 'documentTypes', 'selectedType'));
     }
 
     /**
-     * Store a new document request.
+     * Store the document request with Payment Logic.
      */
-    public function storeDocumentRequest(Request $request)
+   public function storeDocumentRequest(Request $request)
     {
         $user = Auth::user();
-        
         $residentId = $user->resident ? $user->resident->id : null;
+        
         if (!$residentId) {
             return redirect()->back()->with('error', 'Could not find your resident profile.');
         }
-        
-        $validated = $request->validate([
+
+        $docType = DocumentType::find($request->document_type_id);
+        if (!$docType) {
+            return redirect()->back()->with('error', 'Invalid document type.');
+        }
+
+        // 1. Basic Validation
+        $rules = [
             'document_type_id' => 'required|exists:document_types,id',
             'purpose' => 'required|string|max:255',
-            'requirements' => 'present|array', 
-            'requirements.*' => 'file|mimes:pdf,jpg,png,jpeg|max:2048'
-        ]);
+            'requirements' => 'present|array',
+            'requirements.*' => 'file|mimes:pdf,jpg,png,jpeg|max:2048',
+            // Payment Validation
+            'payment_method' => $docType->price > 0 ? 'required|in:Cash,Online' : 'nullable',
+            'payment_reference_number' => 'required_if:payment_method,Online|nullable|string|max:50',
+            'payment_proof' => 'required_if:payment_method,Online|nullable|image|max:2048',
+        ];
 
-        $docType = DocumentType::find($validated['document_type_id']);
+        // 2. Dynamic Field Validation
+        // If the document type has custom fields required, add them to validation
+        if (!empty($docType->custom_fields)) {
+            foreach ($docType->custom_fields as $field) {
+                if (isset($field['required']) && $field['required']) {
+                    // keys are sent as custom_data[field_name]
+                    $rules["custom_data.{$field['name']}"] = 'required'; 
+                }
+            }
+        }
+
+        $validated = $request->validate($rules);
 
         DB::beginTransaction();
         try {
+            // ... (Payment Logic - Keep existing logic here) ...
+            $paymentStatus = 'Unpaid';
+            $paymentMethod = null;
+            $referenceNumber = null;
+            $proofPath = null;
+
+            if ($docType->price == 0) {
+                $paymentStatus = 'Waived'; 
+                $paymentMethod = 'Free';
+            } else {
+                $paymentMethod = $validated['payment_method'];
+                if ($paymentMethod === 'Online') {
+                    $paymentStatus = 'Verification Pending'; 
+                    $referenceNumber = $validated['payment_reference_number'];
+                    if ($request->hasFile('payment_proof')) {
+                        $proofPath = $request->file('payment_proof')->store('payment_proofs', 'public');
+                    }
+                }
+            }
+
+            // 3. Create Request with Custom Data
             $documentRequest = DocumentRequest::create([
                 'resident_id' => $residentId,
                 'document_type' => $validated['document_type_id'],
                 'purpose' => $validated['purpose'],
                 'tracking_number' => 'BRGY-' . time() . '-' . $residentId, 
                 'status' => 'Pending',
-                'payment_status' => $docType->price > 0 ? 'Unpaid' : 'Waived',
                 'priority' => 'Normal',
                 'price' => $docType->price,
+                'payment_status' => $paymentStatus,
+                'payment_method' => $paymentMethod,
+                'payment_reference_number' => $referenceNumber,
+                'payment_proof' => $proofPath,
+                'custom_data' => $request->input('custom_data'), // <--- SAVE THE DYNAMIC INPUTS
             ]);
 
+            // ... (Requirements Upload Logic - Keep existing logic) ...
             if ($request->hasFile('requirements')) {
                 foreach ($request->file('requirements') as $file) {
                     $filePath = $file->store('requirements', 'public');
-                    
                     DocumentRequirement::create([
                         'document_request_id' => $documentRequest->id,
                         'file_name' => $file->getClientOriginalName(),
@@ -168,24 +234,14 @@ class ResidentController extends Controller
             }
             
             DB::commit();
-
             return redirect()->route('resident.document-services', ['view' => 'history'])
                              ->with('success', 'Your document request has been submitted successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Document request failed: ' . $e->getMessage());
-
-            return redirect()->back()
-                             ->with('error', 'An error occurred while submitting your request. Please try again.')
-                             ->withInput();
+            return redirect()->back()->with('error', 'Error: ' . $e->getMessage())->withInput();
         }
     }
-
-
-    /**
-     * Cancel a pending document request.
-     */
     public function cancelDocumentRequest(Request $request, $id)
     {
         $user = Auth::user();
@@ -195,10 +251,10 @@ class ResidentController extends Controller
                                           ->where('resident_id', $residentId)
                                           ->firstOrFail();
 
-        if (in_array($documentRequest->status, ['Pending', 'Processing'])) {
+        // Allow cancellation if in early stages
+        if (in_array($documentRequest->status, ['Pending', 'Processing', 'Verification Pending'])) {
             $documentRequest->status = 'Cancelled';
             $documentRequest->save();
-            
             return redirect()->route('resident.document-services', ['view' => 'history'])
                              ->with('success', 'Request ' . $documentRequest->tracking_number . ' has been cancelled.');
         }
@@ -207,9 +263,6 @@ class ResidentController extends Controller
                          ->with('error', 'This request is already being processed and cannot be cancelled.');
     }
 
-    /**
-     * Allow resident to download the file generated by the captain.
-     */
     public function downloadGeneratedDocument($id)
     {
         $user = Auth::user();
@@ -227,21 +280,16 @@ class ResidentController extends Controller
     }
 
     // ============================================
-    // HEALTH SERVICES (Medicine Requests)
+    // HEALTH SERVICES
     // ============================================
 
-    /**
-     * Display Health Services for Resident
-     */
     public function showHealthServices(Request $request)
     {
         $user = Auth::user();
         $residentId = $user->resident ? $user->resident->id : null;
         $view = $request->input('view', 'available');
 
-        // Stats
         $myRequests = MedicineRequest::where('resident_id', $residentId);
-        // Note: We use clone() to avoid modifying the query builder for subsequent counts
         $stats = [
             'pending' => (clone $myRequests)->where('status', 'Pending')->count(),
             'approved' => (clone $myRequests)->where('status', 'Approved')->count(),
@@ -249,42 +297,29 @@ class ResidentController extends Controller
         ];
 
         $medicines = null;
-        $myRequestsPagination = null; // Renamed variable to avoid conflict
+        $myRequestsPagination = null; 
 
         if ($view === 'available') {
-            // FIX: Use whereDate on expiration_date instead of status column
             $medicines = Medicine::where('quantity', '>', 0)
-                                 ->whereDate('expiration_date', '>=', Carbon::now()) // Only show items not expired
+                                 ->whereDate('expiration_date', '>=', Carbon::now())
                                  ->orderBy('item_name')
                                  ->paginate(12);
         } else {
-            // Show history
             $myRequestsPagination = MedicineRequest::with('medicine')
-                                         ->where('resident_id', $residentId)
-                                         ->orderBy('created_at', 'desc')
-                                         ->paginate(10);
+                                                   ->where('resident_id', $residentId)
+                                                   ->orderBy('created_at', 'desc')
+                                                   ->paginate(10);
         }
 
-        return view('dashboard.resident-health-services', compact(
-            'user', 
-            'stats', 
-            'view', 
-            'medicines', 
-            'myRequestsPagination' // Pass this to the view
-        ));
+        return view('dashboard.resident-health-services', compact('user', 'stats', 'view', 'medicines', 'myRequestsPagination'));
     }
 
-    /**
-     * Store a medicine request from a resident
-     */
     public function storeMedicineRequest(Request $request)
     {
         $user = Auth::user();
         $residentId = $user->resident ? $user->resident->id : null;
 
-        if (!$residentId) {
-            return back()->with('error', 'Resident profile not found.');
-        }
+        if (!$residentId) return back()->with('error', 'Resident profile not found.');
 
         $validated = $request->validate([
             'medicine_id' => 'required|exists:medicines,id',
@@ -292,7 +327,6 @@ class ResidentController extends Controller
             'purpose' => 'nullable|string|max:255', 
         ]);
 
-        // Check stock availability
         $medicine = Medicine::find($validated['medicine_id']);
         
         if ($medicine->quantity < $validated['quantity_requested']) {

@@ -6,57 +6,34 @@
 
 @section('nav-items')
     <li class="nav-item">
-        <a href="{{ route('captain.dashboard') }}" class="nav-link ">
+        <a href="{{ route('secretary.dashboard') }}" class="nav-link ">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.resident-profiling') }}" class="nav-link">
+        <a href="{{ route('secretary.resident-profiling') }}" class="nav-link">
             <i class="fas fa-users"></i>
             <span>Resident Profiling</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.document-services') }}" class="nav-link active">
-            <i class="far fa-file-alt"></i>
+        <a href="{{ route('secretary.document-services') }}" class="nav-link active">
+            <i class="fas fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.financial-management') }}" class="nav-link">
+        <a href="{{ route('secretary.financial-management') }}" class="nav-link">
             <i class="fas fa-dollar-sign"></i>
             <span>Financial Management</span>
         </a>
     </li>
+    {{-- REPLACED: Search Residents with Announcements --}}
     <li class="nav-item">
-        <a href="{{ route('captain.health-services') }}" class="nav-link ">
-            <i class="fas fa-heart"></i>
-            <span>Health & Social Services</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>Incident & Blotter</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-flag"></i>
-            <span>Project Monitoring</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="{{ route('captain.announcements.index') }}" class="nav-link">
-            <i class="fas fa-bell"></i>
+        <a href="{{ route('secretary.announcements.index') }}" class="nav-link">
+            <i class="fas fa-bullhorn"></i>
             <span>Announcements</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-check-circle"></i>
-            <span>SK Module</span>
         </a>
     </li>
     <li class="nav-item">
@@ -663,11 +640,11 @@
 
 {{-- Action buttons --}}
 <div class="action-buttons">
-    <a href="{{-- {{ route('captain.document-type.create') }} --}}" class="btn-action btn-add">
+    <a href="{{-- {{ route('secretary.document-type.create') }} --}}" class="btn-action btn-add">
         <i class="fas fa-plus"></i>
         <span>Add Document Type</span>
     </a>
-    <a href="{{-- {{ route('captain.template.create') }} --}}" class="btn-action btn-add-household">
+    <a href="{{-- {{ route('secretary.template.create') }} --}}" class="btn-action btn-add-household">
         <i class="fas fa-plus"></i>
         <span>Add Template</span>
     </a>
@@ -675,15 +652,15 @@
 
 {{-- View Toggles --}}
 <div class="view-toggles">
-    <a href="{{ route('captain.document-services', ['view' => 'requests']) }}" class="btn-toggle {{ $view === 'requests' ? 'active' : '' }}">
+    <a href="{{ route('secretary.document-services', ['view' => 'requests']) }}" class="btn-toggle {{ $view === 'requests' ? 'active' : '' }}">
         <i class="fas fa-file-import"></i>
         <span>Document Requests</span>
     </a>
-    <a href="{{ route('captain.document-services', ['view' => 'types']) }}" class="btn-toggle {{ $view === 'types' ? 'active' : '' }}">
+    <a href="{{ route('secretary.document-services', ['view' => 'types']) }}" class="btn-toggle {{ $view === 'types' ? 'active' : '' }}">
         <i class="fas fa-file-alt"></i>
         <span>Document Types</span>
     </a>
-    <a href="{{ route('captain.document-services', ['view' => 'templates']) }}" class="btn-toggle {{ $view === 'templates' ? 'active' : '' }}">
+    <a href="{{ route('secretary.document-services', ['view' => 'templates']) }}" class="btn-toggle {{ $view === 'templates' ? 'active' : '' }}">
         <i class="fas fa-print"></i>
         <span>Templates</span>
     </a>
@@ -727,7 +704,7 @@
                 <span class="title-count">{{ $documentRequests->total() }}</span>
             </div>
             <div class="table-filters">
-                <form action="{{ route('captain.document-services') }}" method="GET">
+                <form action="{{ route('secretary.document-services') }}" method="GET">
                     <input type="hidden" name="view" value="requests">
                     <div class="search-input">
                         <i class="fas fa-search"></i>
@@ -763,7 +740,7 @@
                     @forelse($documentRequests as $request)
                     <tr>
                         <td>
-                            <a href="{{ route('captain.document.show', $request->id) }}" class="tracking-number">{{ $request->tracking_number }}</a>
+                            <a href="{{ route('secretary.document.show', $request->id) }}" class="tracking-number">{{ $request->tracking_number }}</a>
                         </td>
                         <td>
                             <div class="requestor-info">
@@ -808,7 +785,7 @@
                                 </a>
                             @endif
 
-                            <a href="{{ route('captain.document.show', $request->id) }}" class="manage-btn">
+                            <a href="{{ route('secretary.document.show', $request->id) }}" class="manage-btn">
                                 <i class="fas fa-edit"></i> Manage
                             </a>
                         </td>
@@ -861,7 +838,7 @@
             <div class="template-card-actions">
                 <a href="#"><i class="fas fa-eye"></i> Preview</a>
                 <a href="#"><i class="fas fa-download"></i> Download</a>
-                <a href="{{-- {{ route('captain.template.edit', $template->id) }} --}}" class="edit-btn"><i class="fas fa-edit"></i> Edit</a>
+                <a href="{{-- {{ route('secretary.template.edit', $template->id) }} --}}" class="edit-btn"><i class="fas fa-edit"></i> Edit</a>
             </div>
         </div>
         @empty

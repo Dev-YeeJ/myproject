@@ -456,7 +456,11 @@
 @php
     function getPaymentBadge($status) {
         $map = [
-            'Unpaid' => 'badge-unpaid', 'Paid' => 'badge-paid', 'Waived' => 'badge-waived',
+            'Unpaid' => 'badge-unpaid', 
+            'Paid' => 'badge-paid', 
+            'Waived' => 'badge-waived',
+            // Added Verification Pending mapped to processing (Indigo)
+            'Verification Pending' => 'badge-processing', 
         ];
         $class = $map[$status] ?? 'badge-unpaid';
         return "<span class='badge {$class}'>{$status}</span>";
@@ -573,7 +577,23 @@
                         </td>
                         <td>{{ $request->documentType->name ?? 'N/A' }}</td>
                         <td>{{ $request->created_at->format('M d, Y') }}</td>
-                        <td>{!! getPaymentBadge($request->payment_status) !!}</td>
+                        <td>
+                            {{-- Payment Status Badge --}}
+                            {!! getPaymentBadge($request->payment_status) !!}
+                            
+                            {{-- Payment Method Indicator --}}
+                            @if($request->payment_method)
+                                <div style="font-size: 0.75rem; color: #6B7280; margin-top: 4px;">
+                                    @if($request->payment_method === 'Online')
+                                        <i class="fas fa-mobile-alt"></i> Online
+                                    @elseif($request->payment_method === 'Cash')
+                                        <i class="fas fa-coins"></i> Cash
+                                    @else
+                                        {{ $request->payment_method }}
+                                    @endif
+                                </div>
+                            @endif
+                        </td>
                         <td>{!! getStatusBadge($request->status) !!}</td>
                         <td class="table-actions">
                             {{-- <a href="#" class="view-btn"><i class="fas fa-eye"></i> View</a> --}}

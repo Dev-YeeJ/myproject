@@ -1,8 +1,8 @@
 <?php
-// app/Http/Controllers/CaptainController.php
 
 namespace App\Http\Controllers;
 
+use App\Models\Announcements;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Resident;
@@ -11,7 +11,7 @@ use App\Models\Medicine;
 use App\Models\DocumentRequest;
 use App\Models\DocumentType;
 use App\Models\Template;
-use App\Models\DocumentRequirement; // <-- Added this
+use App\Models\DocumentRequirement;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon; 
 use Illuminate\Support\Facades\DB;
@@ -19,7 +19,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash; 
 use Illuminate\Support\Str; 
-use Illuminate\Support\Facades\Storage; // <-- Added this
+use Illuminate\Support\Facades\Storage;
+use App\Models\FinancialTransaction;
 
 class CaptainController extends Controller
 {
@@ -41,48 +42,33 @@ class CaptainController extends Controller
         $user = Auth::user();
         $view = $request->input('view', 'residents');
         $search = $request->input('search');
-        $status = $request->input('status'); // Used for Resident household_status or Household status
-        $gender = $request->input('gender'); // Used for Resident gender
-        $filter = $request->input('filter'); // <-- NEW: For quick filters
+        $status = $request->input('status'); 
+        $gender = $request->input('gender'); 
+        $filter = $request->input('filter'); 
 
         $residents = null;
         $households = null;
 
         if ($view === 'residents') {
-            // Build query for residents using the Model Scope
-            // --- FIX: Eager load the 'user' relationship ---
             $query = Resident::with(['household', 'user']) 
                 ->where('is_active', true)
-                ->search($search) // Use the search scope from the Resident model
-                ->byHouseholdStatus($status) // Use the status scope
-                ->byGender($gender); // Use the gender scope
+                ->search($search) 
+                ->byHouseholdStatus($status) 
+                ->byGender($gender); 
 
-            // --- NEW: Apply quick filters ---
             if ($filter) {
                 switch ($filter) {
-                    case 'seniors':
-                        $query->where('is_senior_citizen', true);
-                        break;
-                    case 'pwd':
-                        $query->where('is_pwd', true);
-                        break;
-                    case '4ps':
-                        $query->where('is_4ps', true);
-                        break;
-                    case 'voters':
-                        $query->where('is_registered_voter', true);
-                        break;
+                    case 'seniors': $query->where('is_senior_citizen', true); break;
+                    case 'pwd': $query->where('is_pwd', true); break;
+                    case '4ps': $query->where('is_4ps', true); break;
+                    case 'voters': $query->where('is_registered_voter', true); break;
                 }
             }
-            // --- END NEW ---
-
             $residents = $query->orderBy('last_name')->paginate(10);
 
         } else {
-            // Build query for households
             $query = Household::with(['head', 'activeResidents']);
 
-            // Apply search filter for households
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('household_name', 'like', "%{$search}%")
@@ -93,79 +79,41 @@ class CaptainController extends Controller
                 });
             }
 
-            // Apply household status filter (Household's own status: complete/incomplete)
             if ($status && $status !== 'All Status' && in_array($status, ['complete', 'incomplete'])) {
                 $query->where('status', $status);
             }
-            // --- END NEW ---
 
-            // Sort by household_number
             $households = $query->orderBy('household_number')->paginate(5);
         }
 
-        // Get overall statistics
         $totalResidents = Resident::where('is_active', true)->count();
         $totalHouseholds = Household::count();
         $completeHouseholds = Household::where('status', 'complete')->count();
-
-        $seniorCitizens = Resident::where('is_senior_citizen', true)
-            ->where('is_active', true)
-            ->count();
-
-        $minors = Resident::where('age', '<', 18)
-            ->where('is_active', true)
-            ->count();
-        
-        // --- NEW STATS ---
+        $seniorCitizens = Resident::where('is_senior_citizen', true)->where('is_active', true)->count();
+        $minors = Resident::where('age', '<', 18)->where('is_active', true)->count();
         $totalPwd = Resident::where('is_active', true)->where('is_pwd', true)->count();
         $total4ps = Resident::where('is_active', true)->where('is_4ps', true)->count();
         $totalVoters = Resident::where('is_active', true)->where('is_registered_voter', true)->count();
         $incompleteHouseholds = $totalHouseholds - $completeHouseholds;
-        // --- END NEW STATS ---
 
         return view('dashboard.captain-resident-profiling', compact(
-            'user',
-            'view',
-            'residents',
-            'households',
-            'totalResidents',
-            'totalHouseholds',
-            'completeHouseholds',
-            'seniorCitizens',
-            'minors',
-            'filter', // <-- PASS NEW FILTER
-            // --- PASS NEW STATS ---
-            'totalPwd',
-            'total4ps',
-            'totalVoters',
-            'incompleteHouseholds'
-            // --- END NEW STATS ---
+            'user', 'view', 'residents', 'households', 'totalResidents', 'totalHouseholds',
+            'completeHouseholds', 'seniorCitizens', 'minors', 'filter', 'totalPwd',
+            'total4ps', 'totalVoters', 'incompleteHouseholds'
         ));
-    } // <--- THIS WAS THE MISSING BRACE
+    }
 
-    /**
-     * Show form to add new resident
-     */
     public function createResident(Request $request)
     {
         $user = Auth::user();
         $households = Household::orderBy('household_number')->get();
         $selectedHousehold = $request->input('household_id', null);
 
-        return view('dashboard.captain-resident-add', compact(
-            'user',
-            'households',
-            'selectedHousehold' 
-        ));
+        return view('dashboard.captain-resident-add', compact('user', 'households', 'selectedHousehold'));
     }
 
-
-    /**
-     * Store new resident
-     */
     public function storeResident(Request $request)
     {
-        // Add '0' default for boolean fields if not present
         $request->merge([
             'is_registered_voter' => $request->input('is_registered_voter', 0),
             'is_indigenous' => $request->input('is_indigenous', 0),
@@ -189,10 +137,7 @@ class CaptainController extends Controller
             'household_status' => 'required|in:Household Head,Spouse,Child,Member',
             'address' => 'required|string|max:255',
             'contact_number' => 'nullable|string|max:20',
-            
-            // Check for email uniqueness on BOTH tables
             'email' => 'nullable|email|max:255|unique:residents,email|unique:users,email',
-
             'occupation' => 'nullable|string|max:255',
             'monthly_income' => 'nullable|numeric|min:0',
             'is_registered_voter' => 'boolean',
@@ -204,14 +149,11 @@ class CaptainController extends Controller
             'disability_type' => 'nullable|required_if:is_pwd,true|string|max:255',
         ]);
 
-        // Calculate age
         $birthDate = new \DateTime($validated['date_of_birth']);
         $today = new \DateTime();
         $age = $today->diff($birthDate)->y;
         $validated['age'] = $age;
         $validated['is_senior_citizen'] = $age >= 60;
-
-        // Set is_active to true
         $validated['is_active'] = true;
         
         if (!$validated['is_registered_voter']) $validated['precinct_number'] = null;
@@ -227,11 +169,8 @@ class CaptainController extends Controller
                 ->update(['household_status' => 'Member']);
         }
 
-        // Create resident
-        // The ResidentObserver will automatically create a User
         $resident = Resident::create($validated); 
 
-        // Update household member count and status
         if ($resident->household_id) {
             $household = Household::find($resident->household_id);
             if ($household) {
@@ -244,35 +183,21 @@ class CaptainController extends Controller
             ->with('success', 'Resident added successfully!');
     }
 
-    /**
-     * Show resident details
-     */
     public function showResident($id)
     {
         $user = Auth::user();
         $resident = Resident::with(['household', 'user'])->findOrFail($id);
 
-        // --- Calculate the default password to display it ---
         $defaultPassword = null;
         if ($resident->date_of_birth) {
-            // e.g., "angeles"
             $lastName = Str::slug($resident->last_name, '');
-            // e.g., "19900115"
             $birthdate = Carbon::parse($resident->date_of_birth)->format('Ymd');
             $defaultPassword = $lastName . $birthdate;
         }
-        // --- END ---
 
-        return view('dashboard.captain-resident-view', compact(
-            'user', 
-            'resident', 
-            'defaultPassword' // <-- Pass the password to the view
-        ));
+        return view('dashboard.captain-resident-view', compact('user', 'resident', 'defaultPassword'));
     }
 
-    /**
-     * Show edit form for resident
-     */
     public function editResident($id)
     {
         $user = Auth::user();
@@ -281,9 +206,6 @@ class CaptainController extends Controller
         return view('dashboard.captain-resident-edit', compact('user', 'resident', 'households'));
     }
 
-    /**
-     * Update resident
-     */
     public function updateResident(Request $request, $id)
     {
         $resident = Resident::findOrFail($id);
@@ -312,11 +234,7 @@ class CaptainController extends Controller
             'household_status' => 'required|in:Household Head,Spouse,Child,Member',
             'address' => 'required|string|max:255',
             'contact_number' => 'nullable|string|max:20',
-            'email' => [
-                'nullable', 'email', 'max:255', 
-                Rule::unique('residents')->ignore($id),
-                Rule::unique('users')->ignore($resident->user_id)
-            ],
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('residents')->ignore($id), Rule::unique('users')->ignore($resident->user_id)],
             'occupation' => 'nullable|string|max:255',
             'monthly_income' => 'nullable|numeric|min:0',
             'is_registered_voter' => 'boolean',
@@ -348,7 +266,6 @@ class CaptainController extends Controller
                 ->update(['household_status' => 'Member']);
         }
 
-        // The ResidentObserver will automatically update the User
         $resident->update($validated);
         $newHouseholdId = $resident->household_id; 
 
@@ -368,24 +285,16 @@ class CaptainController extends Controller
             }
         }
 
-        // Redirect back to the resident's view page
         return redirect()->route('captain.resident.show', $resident->id)
             ->with('success', 'Resident updated successfully!');
     }
 
-    /**
-     * Delete resident (soft delete by setting is_active to false)
-     */
     public function destroyResident($id)
     {
         $resident = Resident::findOrFail($id);
         $householdId = $resident->household_id;
-
-        // Soft delete
         $resident->is_active = false;
         $resident->save(); 
-        // The ResidentObserver's 'updated' method will catch this
-        // and set the user->is_active to false.
 
         if ($householdId) {
             $household = Household::find($householdId);
@@ -394,20 +303,13 @@ class CaptainController extends Controller
                 $household->updateHouseholdStatus();
             }
         }
-
         $view = request('view', 'residents');
-
-        return redirect()->route('captain.resident-profiling', ['view' => $view])
-            ->with('success', 'Resident removed successfully!');
+        return redirect()->route('captain.resident-profiling', ['view' => $view])->with('success', 'Resident removed successfully!');
     }
 
-    /**
-     * Reset a resident's user password to the default.
-     */
     public function resetPassword(Resident $resident)
     {
         if ($resident->user) {
-            // Generate the default password: lastnameYYYYMMDD
             $lastName = Str::slug($resident->last_name, '');
             $birthdate = Carbon::parse($resident->date_of_birth)->format('Ymd');
             $defaultPassword = $lastName . $birthdate;
@@ -444,8 +346,7 @@ class CaptainController extends Controller
             'status' => 'incomplete'
         ]);
 
-        return redirect()->route('captain.resident-profiling', ['view' => 'households'])
-            ->with('success', 'Household added successfully!');
+        return redirect()->route('captain.resident-profiling', ['view' => 'households'])->with('success', 'Household added successfully!');
     }
 
     public function editHousehold($id)
@@ -466,30 +367,18 @@ class CaptainController extends Controller
         ]);
 
         $validated['total_members'] = Resident::where('household_id', $id)->where('is_active', true)->count();
-        
         $household->update($validated);
-        
         $household->updateHouseholdStatus();
 
-        return redirect()->route('captain.resident-profiling', ['view' => 'households'])
-            ->with('success', 'Household updated successfully!');
+        return redirect()->route('captain.resident-profiling', ['view' => 'households'])->with('success', 'Household updated successfully!');
     }
 
     public function destroyHousehold($id)
     {
         $household = Household::findOrFail($id);
-
-        // Soft delete all active residents associated with this household
-        // The ResidentObserver will catch each 'update' and deactivate the user.
-        Resident::where('household_id', $id)
-            ->where('is_active', true)
-            ->update(['is_active' => false]);
-            
-        // Hard delete the household
+        Resident::where('household_id', $id)->where('is_active', true)->update(['is_active' => false]);
         $household->delete();
-
-        return redirect()->route('captain.resident-profiling', ['view' => 'households'])
-            ->with('success', 'Household and all associated residents removed successfully!');
+        return redirect()->route('captain.resident-profiling', ['view' => 'households'])->with('success', 'Household and all associated residents removed successfully!');
     }
     
     public function showHousehold($id)
@@ -517,20 +406,10 @@ class CaptainController extends Controller
         return view('dashboard.captain-health-services', compact('user', 'stats', 'medicines'));
     }
 
-    /*
-    // Medicine CRUD is disabled for Captain
-    public function createMedicine() { ... }
-    public function storeMedicine(Request $request) { ... }
-    */
-    
     // ============================================
     // DOCUMENT SERVICES 
     // ============================================
     
-    /**
-     * --- UPDATED ---
-     * Display the main document services page (lists requests, types, or templates)
-     */
     public function documentServices(Request $request)
     {
         $user = Auth::user();
@@ -550,21 +429,16 @@ class CaptainController extends Controller
         $templates = null;
 
         if ($view === 'requests') {
-            // --- UPDATED --- Eager load all relationships
-            $requestsQuery = DocumentRequest::with([
-                'resident', 
-                'documentType', 
-                'requirements' // Eager load the uploaded requirements
-            ])->orderBy('created_at', 'desc');
+            $requestsQuery = DocumentRequest::with(['resident', 'documentType', 'requirements'])->orderBy('created_at', 'desc');
 
             if ($request->filled('search')) {
                  $search = $request->search;
                  $requestsQuery->where(function ($q) use ($search) {
                      $q->where('tracking_number', 'like', "%{$search}%")
-                       ->orWhere('purpose', 'like', "%{$search}%")
-                       ->orWhereHas('resident', function ($q_res) use ($search) {
-                           $q_res->where(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%");
-                       });
+                        ->orWhere('purpose', 'like', "%{$search}%")
+                        ->orWhereHas('resident', function ($q_res) use ($search) {
+                            $q_res->where(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%");
+                        });
                  });
             }
             if ($request->filled('status') && $request->status !== 'All') {
@@ -587,31 +461,20 @@ class CaptainController extends Controller
             $templates = $templatesQuery->orderBy('name')->paginate(10, ['*'], 'page')->appends($request->except('page'));
         }
 
-        return view('dashboard.captain-document-services', compact(
-            'user', 'stats', 'view',
-            'documentRequests', 'documentTypes', 'templates'
-        ));
+        return view('dashboard.captain-document-services', compact('user', 'stats', 'view', 'documentRequests', 'documentTypes', 'templates'));
     }
 
-    /**
-     * --- NEW METHOD ---
-     * Show the details of a single document request for processing.
-     * You will need to create a new blade file for this:
-     * resources/views/dashboard/captain-document-view.blade.php
-     */
     public function showDocumentRequest($id)
     {
         $user = Auth::user();
         $documentRequest = DocumentRequest::with(['resident', 'documentType', 'requirements'])
                                           ->findOrFail($id);
         
-        // This view should contain a form that submits to 'captain.document.update'
         return view('dashboard.captain-document-view', compact('user', 'documentRequest'));
     }
 
     /**
-     * --- NEW METHOD ---
-     * Update a document request's status, remarks, and upload the generated file.
+     * UPDATE DOCUMENT REQUEST (Updated for Payment Status)
      */
     public function updateDocumentRequest(Request $request, $id)
     {
@@ -619,57 +482,274 @@ class CaptainController extends Controller
 
         $validated = $request->validate([
             'status' => 'required|in:Pending,Processing,Under Review,Ready for Pickup,Completed,Rejected,Cancelled',
+            'payment_status' => 'required|in:Unpaid,Paid,Waived,Verification Pending',
             'remarks' => 'nullable|string|max:1000',
             'generated_file' => 'nullable|file|mimes:pdf,docx,doc|max:5120' // 5MB max
         ]);
 
-        // Handle the generated file upload
         if ($request->hasFile('generated_file')) {
-            // Delete the old file if it exists
             if ($documentRequest->generated_file_path && Storage::disk('public')->exists($documentRequest->generated_file_path)) {
                 Storage::disk('public')->delete($documentRequest->generated_file_path);
             }
-            
-            // Store the new file
             $filePath = $request->file('generated_file')->store('generated_documents', 'public');
             $documentRequest->generated_file_path = $filePath;
         }
 
-        // Update status and remarks
         $documentRequest->status = $validated['status'];
+        $documentRequest->payment_status = $validated['payment_status'];
         $documentRequest->remarks = $validated['remarks'];
         $documentRequest->save();
 
-        // You can add logic here to send a notification to the resident
-
         return redirect()->route('captain.document.show', $id)
-                         ->with('success', 'Document request has been updated successfully.');
+                         ->with('success', 'Document request and payment status updated successfully.');
     }
 
-    /**
-     * --- NEW METHOD ---
-     * Allow the captain to download a specific requirement file uploaded by the resident.
-     */
     public function downloadRequirement($id)
     {
         $requirement = DocumentRequirement::findOrFail($id);
-
-        // Check if file exists
         if (Storage::disk('public')->exists($requirement->file_path)) {
-            
-            // Return the download response, using the original file name
             return Storage::disk('public')->download($requirement->file_path, $requirement->file_name);
-        
         }
-
         return redirect()->back()->with('error', 'File not found.');
     }
 
-    // You would also add your CRUD methods for DocumentType and Template here
-    // e.g. public function createDocumentType() { ... }
-    // e.g. public function storeDocumentType() { ... }
-    // e.g. public function editDocumentType($id) { ... }
-    // e.g. public function updateDocumentType(Request $request, $id) { ... }
-    // e.g. public function destroyDocumentType($id) { ... }
-    // ... and so on for Templates ...
+    // ============================================
+    // ANNOUNCEMENT MANAGEMENT
+    // ============================================
+
+    public function announcements(Request $request)
+    {
+        $user = Auth::user();
+        $search = $request->input('search');
+        $query = Announcements::with('user')->latest();
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+        $announcements = $query->paginate(9);
+        return view('dashboard.captain-announcements', compact('user', 'announcements', 'search'));
+    }
+
+    public function createAnnouncement()
+    {
+        $user = Auth::user();
+        return view('dashboard.captain-announcements-create', compact('user'));
+    }
+
+    public function storeAnnouncement(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'audience' => 'required|in:All,Residents,Barangay Officials,SK Officials', 
+            'is_published' => 'boolean',
+        ]);
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('announcements', 'public');
+        }
+
+        Announcements::create([
+            'title' => $validated['title'],
+            'content' => $validated['content'],
+            'image_path' => $imagePath,
+            'audience' => $validated['audience'], 
+            'is_published' => $request->has('is_published'),
+            'user_id' => Auth::id(),
+        ]);
+
+        return redirect()->route('captain.announcements.index')->with('success', 'Announcement created successfully.');
+    }
+
+    public function editAnnouncement($id)
+    {
+        $user = Auth::user();
+        $announcement = Announcements::findOrFail($id);
+        return view('dashboard.captain-announcements-edit', compact('user', 'announcement'));
+    }
+
+    public function updateAnnouncement(Request $request, $id)
+    {
+        $announcement = Announcements::findOrFail($id);
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'audience' => 'required|in:All,Residents,Barangay Officials,SK Officials',
+        ]);
+
+        if ($request->hasFile('image')) {
+            if ($announcement->image_path && Storage::disk('public')->exists($announcement->image_path)) {
+                Storage::disk('public')->delete($announcement->image_path);
+            }
+            $announcement->image_path = $request->file('image')->store('announcements', 'public');
+        }
+
+        $announcement->title = $validated['title'];
+        $announcement->content = $validated['content'];
+        $announcement->audience = $validated['audience'];
+        $announcement->is_published = $request->has('is_published');
+        $announcement->save();
+
+        return redirect()->route('captain.announcements.index')->with('success', 'Announcement updated successfully.');
+    }
+
+    public function destroyAnnouncement($id)
+    {
+        $announcement = Announcements::findOrFail($id);
+        if ($announcement->image_path && Storage::disk('public')->exists($announcement->image_path)) {
+            Storage::disk('public')->delete($announcement->image_path);
+        }
+        $announcement->delete();
+        return redirect()->route('captain.announcements.index')->with('success', 'Announcement deleted successfully.');
+    }
+
+    // ============================================
+    // UPDATED: FINANCIAL MANAGEMENT (EXECUTIVE OVERSIGHT)
+    // ============================================
+
+    public function financialManagement(Request $request)
+    {
+        $user = Auth::user();
+
+        // 1. Fetch Pending Requests (Inbox)
+        $pendingRequests = FinancialTransaction::where('type', 'expense')
+            ->where('status', 'pending')
+            ->latest()
+            ->get();
+
+        // 2. Fetch History (Read Only)
+        $query = FinancialTransaction::latest();
+        if ($request->has('type') && $request->type != 'all') {
+            $query->where('type', $request->type);
+        }
+        $transactions = $query->paginate(10)->withQueryString();
+
+        // 3. Financial Stats (Budget & Totals)
+        $annualBudget = DB::table('settings')->where('key', 'annual_budget')->value('value') ?? 2000000;
+
+        // Revenue
+        $manualRevenue = FinancialTransaction::where('type', 'revenue')->where('status', 'approved')->sum('amount');
+        $documentRevenue = DocumentRequest::where('payment_status', 'Paid')->sum('price');
+        $totalRevenue = $manualRevenue + $documentRevenue;
+
+        // Expenses
+        $totalSpent = FinancialTransaction::where('type', 'expense')->where('status', 'approved')->sum('amount');
+        $availableBudget = ($annualBudget + $totalRevenue) - $totalSpent;
+
+        // 4. Category Utilization
+        $expenseCategories = ['Infrastructure', 'Health Programs', 'Education', 'Environmental', 'Emergency Fund'];
+        $utilization = [];
+
+        foreach ($expenseCategories as $cat) {
+            $spent = FinancialTransaction::where('type', 'expense')
+                ->where('status', 'approved')
+                ->where('category', $cat)
+                ->sum('amount');
+            
+            $settingKey = 'budget_' . strtolower(str_replace(' ', '_', $cat));
+            $limit = DB::table('settings')->where('key', $settingKey)->value('value') ?? 100000;
+
+            $utilization[] = [
+                'name' => $cat, 
+                'spent' => $spent, 
+                'limit' => $limit, 
+                'percentage' => ($limit > 0 ? ($spent/$limit)*100 : 0)
+            ];
+        }
+
+        // 5. Revenue Performance
+        $revenueSources = ['Barangay Clearance', 'Business Permits', 'Community Tax', 'Government IRA'];
+        $revenuePerformance = [];
+        $revenueTargets = [
+            'Barangay Clearance' => 15000, 'Business Permits' => 25000, 'Community Tax' => 8000, 'Government IRA' => 150000
+        ];
+
+        foreach($revenueSources as $src) {
+            $collected = FinancialTransaction::where('type', 'revenue')->where('category', $src)->sum('amount');
+            $target = $revenueTargets[$src] ?? 10000;
+            $percentage = ($target > 0) ? ($collected / $target) * 100 : 0;
+            $revenuePerformance[] = [
+                'name' => $src, 'collected' => $collected, 'target' => $target, 'percentage' => $percentage
+            ];
+        }
+
+        return view('dashboard.captain-financial', compact(
+            'user', 'transactions', 'pendingRequests',
+            'annualBudget', 'totalRevenue', 'totalSpent', 'availableBudget',
+            'utilization', 'revenuePerformance'
+        ));
+    }
+
+    public function storeTransaction(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'amount' => 'required|numeric|min:0',
+            'type' => 'required|in:revenue,expense',
+            'category' => 'required|string',
+            'requested_by' => 'nullable|string',
+        ]);
+
+        // If Captain enters data, it is automatically approved.
+        $status = 'approved';
+
+        FinancialTransaction::create([
+            'title' => $validated['title'],
+            'amount' => $validated['amount'],
+            'type' => $validated['type'],
+            'category' => $validated['category'],
+            'status' => $status,
+            'requested_by' => $validated['requested_by'] ?? Auth::user()->name,
+            'transaction_date' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Transaction recorded successfully.');
+    }
+
+    public function updateTransactionStatus(Request $request, $id)
+    {
+        $transaction = FinancialTransaction::findOrFail($id);
+        $status = $request->input('status'); 
+        
+        if(in_array($status, ['approved', 'rejected'])) {
+            $transaction->status = $status;
+            $transaction->save();
+            return redirect()->back()->with('success', 'Request ' . ucfirst($status) . '.');
+        }
+
+        return redirect()->back()->with('error', 'Invalid status.');
+    }
+
+    // NEW: Budget Adjustment Logic
+    public function updateBudget(Request $request)
+    {
+        $validated = $request->validate([
+            'annual_budget' => 'required|numeric|min:0',
+        ]);
+
+        // Update Total Budget
+        DB::table('settings')->updateOrInsert(
+            ['key' => 'annual_budget'],
+            ['value' => $validated['annual_budget'], 'created_at' => now(), 'updated_at' => now()]
+        );
+
+        // Update Specific Categories
+        $categories = ['infrastructure', 'health_programs', 'education', 'environmental', 'emergency_fund'];
+        foreach($categories as $cat) {
+            $inputName = 'budget_'.$cat;
+            if($request->has($inputName)) {
+                DB::table('settings')->updateOrInsert(
+                    ['key' => $inputName],
+                    ['value' => $request->input($inputName), 'created_at' => now(), 'updated_at' => now()]
+                );
+            }
+        }
+
+        return redirect()->back()->with('success', 'Fiscal Budget updated successfully.');
+    }
 }

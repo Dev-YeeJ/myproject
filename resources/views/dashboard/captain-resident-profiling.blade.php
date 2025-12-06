@@ -48,7 +48,7 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
+        <a href="{{ route('captain.announcements.index') }}" class="nav-link">
             <i class="fas fa-bell"></i>
             <span>Announcements</span>
         </a>
