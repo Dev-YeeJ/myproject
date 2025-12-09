@@ -12,6 +12,7 @@ use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\SecretaryController;
 use App\Http\Controllers\ResidentController;
 use App\Http\Controllers\TreasurerController;
+use App\Http\Controllers\KagawadController; // Added Kagawad Controller import
 
 /*
 |--------------------------------------------------------------------------
@@ -65,14 +66,13 @@ Route::middleware('auth')->group(function () {
 
         // Health
         Route::get('/health-services', [CaptainController::class, 'healthAndSocialServices'])->name('health-services');
-        Route::get('/medicine/create', [CaptainController::class, 'createMedicine'])->name('medicine.create');
-        Route::post('/medicine', [CaptainController::class, 'storeMedicine'])->name('medicine.store');
-                
+        
         // Documents
         Route::get('/document-services', [CaptainController::class, 'documentServices'])->name('document-services');
         Route::get('/document-request/{id}', [CaptainController::class, 'showDocumentRequest'])->name('document.show');
         Route::put('/document-request/{id}', [CaptainController::class, 'updateDocumentRequest'])->name('document.update');
         Route::get('/requirement/{id}/download', [CaptainController::class, 'downloadRequirement'])->name('requirement.download');
+        Route::get('/financial/sync-documents', [CaptainController::class, 'syncDocumentTransactions'])->name('financial.sync');
         
         // Doc Types & Templates
         Route::get('/document-type/create', [DocumentTypeController::class, 'create'])->name('document-type.create');
@@ -86,13 +86,20 @@ Route::middleware('auth')->group(function () {
         Route::put('/template/{id}', [TemplateController::class, 'update'])->name('template.update');
         Route::delete('/template/{id}', [TemplateController::class, 'destroy'])->name('template.destroy');
     
-        // Financial Management (CAPTAIN)
-        Route::get('/financial-management', [CaptainController::class, 'financialManagement'])->name('financial-management');
-        Route::post('/financial-transaction', [CaptainController::class, 'storeTransaction'])->name('financial.store');
-        Route::put('/financial-transaction/{id}/status', [CaptainController::class, 'updateTransactionStatus'])->name('financial.status');
-        
-        // ** FIX: Added Missing Budget Update Route **
-        Route::post('/financial/budget/update', [CaptainController::class, 'updateBudget'])->name('financial.budget.update');
+        // Financial Management
+        Route::get('/financial-management', [CaptainController::class, 'financialManagement'])->name('financial');
+        Route::post('/transaction', [CaptainController::class, 'storeTransaction'])->name('transaction.store');
+        Route::put('/transaction/{id}', [CaptainController::class, 'updateTransaction'])->name('transaction.update');
+        Route::delete('/transaction/{id}', [CaptainController::class, 'destroyTransaction'])->name('transaction.destroy');
+        Route::put('/transaction/{id}/status', [CaptainController::class, 'updateTransactionStatus'])->name('transaction.updateStatus');
+        Route::post('/budget/update', [CaptainController::class, 'updateBudget'])->name('budget.update');
+        Route::get('/financial/export', [CaptainController::class, 'exportReports'])->name('export');
+
+        // Project Monitoring
+        Route::get('/project-monitoring', [CaptainController::class, 'projectMonitoring'])->name('project.monitoring');
+        Route::post('/project', [CaptainController::class, 'storeProject'])->name('project.store');
+        Route::put('/project/{id}', [CaptainController::class, 'updateProjectProgress'])->name('project.update');
+        Route::delete('/project/{id}', [CaptainController::class, 'destroyProject'])->name('project.destroy');
 
         // Announcements
         Route::get('/announcements', [CaptainController::class, 'announcements'])->name('announcements.index');
@@ -101,6 +108,24 @@ Route::middleware('auth')->group(function () {
         Route::get('/announcements/{id}/edit', [CaptainController::class, 'editAnnouncement'])->name('announcements.edit');
         Route::put('/announcements/{id}', [CaptainController::class, 'updateAnnouncement'])->name('announcements.update');
         Route::delete('/announcements/{id}', [CaptainController::class, 'destroyAnnouncement'])->name('announcements.destroy');
+
+        // ============================================
+        // INCIDENT & BLOTTER MANAGEMENT (UPDATED)
+        // ============================================
+        // View Table
+        Route::get('/incident-blotter', [CaptainController::class, 'incidentAndBlotter'])->name('incident.index');
+        
+        // Create
+        Route::post('/incident-blotter/store', [CaptainController::class, 'storeIncident'])->name('incident.store');
+        
+        // Process (Workflow: Status/Hearing)
+        Route::put('/incident/{id}/process', [CaptainController::class, 'processIncident'])->name('incident.process');
+        
+        // Edit Details (Correction)
+        Route::put('/incident/{id}/update', [CaptainController::class, 'updateIncidentDetails'])->name('incident.update_details');
+        
+        // Delete Record
+        Route::delete('/incident/{id}', [CaptainController::class, 'destroyIncident'])->name('incident.destroy');
     });
 
     // ============================================
@@ -146,7 +171,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('/template/{id}', [TemplateController::class, 'destroy'])->name('template.destroy');
 
         // Financial Management (SECRETARY)
-        // ** FIX: Renamed route to 'financial' to match blade **
         Route::get('/financial-management', [SecretaryController::class, 'financialManagement'])->name('financial-management');
         Route::post('/financial-transaction', [SecretaryController::class, 'storeFinancialTransaction'])->name('financial.store');
         Route::put('/financial-transaction/{id}/status', [SecretaryController::class, 'updateTransactionStatus'])->name('financial.status');
@@ -182,7 +206,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // ============================================
-    // HEALTH & RESIDENT ROUTES (Omitted for brevity, keep existing)
+    // HEALTH & RESIDENT ROUTES
     // ============================================
     Route::middleware(CheckRole::class . ':health_worker')->prefix('health')->name('health.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'health'])->name('dashboard');
@@ -207,9 +231,21 @@ Route::middleware('auth')->group(function () {
         Route::get('/health-services', [ResidentController::class, 'showHealthServices'])->name('health-services');
         Route::post('/health-services/request', [ResidentController::class, 'storeMedicineRequest'])->name('health.request.store');
         Route::get('/announcements', [ResidentController::class, 'announcements'])->name('announcements.index');
+        
+        // Incident Routes (Resident)
+        Route::get('/incidents', [ResidentController::class, 'showIncidents'])->name('incidents.index');
+        Route::post('/incidents', [ResidentController::class, 'storeIncident'])->name('incidents.store');
+        Route::put('/incidents/{id}', [ResidentController::class, 'updateIncident'])->name('incidents.update');
+        Route::put('/incidents/{id}/cancel', [ResidentController::class, 'cancelIncident'])->name('incidents.cancel');
     });
 
     Route::get('/dashboard/treasurer', [DashboardController::class, 'treasurer'])->name('dashboard.treasurer')->middleware(CheckRole::class . ':treasurer');
     Route::get('/dashboard/kagawad', [DashboardController::class, 'kagawad'])->name('dashboard.kagawad')->middleware(CheckRole::class . ':kagawad');
     Route::get('/dashboard/tanod', [DashboardController::class, 'tanod'])->name('dashboard.tanod')->middleware(CheckRole::class . ':tanod');
+});
+
+// Kagawad Routes
+Route::middleware(['auth', CheckRole::class . ':kagawad'])->prefix('kagawad')->name('kagawad.')->group(function () {
+    Route::get('/dashboard', [KagawadController::class, 'index'])->name('dashboard');
+    Route::get('/residents', [KagawadController::class, 'residents'])->name('residents');
 });

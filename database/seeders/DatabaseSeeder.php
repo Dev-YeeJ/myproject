@@ -37,18 +37,34 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        User::updateOrCreate(
-            ['username' => 'kagawad1'],
-            [
-                'password' => Hash::make('password123'),
-                'first_name' => 'Maria',
-                'last_name' => 'Santos',
-                'role' => 'kagawad',
-                'email' => 'kagawad1@calbueg.gov.ph',
-                'contact_number' => '09181234567',
-                'is_active' => true,
-            ]
-        );
+        // ==========================================
+        // 7 KAGAWAD MEMBERS
+        // ==========================================
+        
+        $kagawads = [
+            ['id' => 1, 'first' => 'Maria', 'last' => 'Santos'],
+            ['id' => 2, 'first' => 'Pedro', 'last' => 'Reyes'],
+            ['id' => 3, 'first' => 'Lita', 'last' => 'Bautista'],
+            ['id' => 4, 'first' => 'Ramon', 'last' => 'Garcia'],
+            ['id' => 5, 'first' => 'Teresa', 'last' => 'Ocampo'],
+            ['id' => 6, 'first' => 'Jose', 'last' => 'Manalo'],
+            ['id' => 7, 'first' => 'Anita', 'last' => 'Mercado'],
+        ];
+
+        foreach ($kagawads as $kagawad) {
+            User::updateOrCreate(
+                ['username' => 'kagawad' . $kagawad['id']], // Checks for username: kagawad1, kagawad2...
+                [
+                    'password' => Hash::make('password123'),
+                    'first_name' => $kagawad['first'],
+                    'last_name' => $kagawad['last'],
+                    'role' => 'kagawad',
+                    'email' => 'kagawad' . $kagawad['id'] . '@calbueg.gov.ph',
+                    'contact_number' => '0918123456' . $kagawad['id'], // Generates unique number
+                    'is_active' => true,
+                ]
+            );
+        }
 
         User::updateOrCreate(
             ['username' => 'secretary'],

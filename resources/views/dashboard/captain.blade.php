@@ -26,7 +26,7 @@
         </a>
     </li>
     <li class="nav-item">
-    <a href="{{ route('captain.financial-management') }}" class="nav-link {{ request()->routeIs('captain.financial*') ? 'active' : '' }}">
+    <a href="{{ route('captain.financial') }}" class="nav-link {{ request()->routeIs('captain.financial*') ? 'active' : '' }}">
         <i class="fas fa-dollar-sign"></i>
         <span>Financial Management</span>
     </a>
@@ -39,13 +39,13 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>Incident & Blotter</span>
-        </a>
-    </li>
+    <a href="{{ route('captain.incident.index') }}" class="nav-link {{ request()->routeIs('captain.incident.*') ? 'active' : '' }}">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Incident & Blotter</span>
+    </a>
+</li>
     <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
+        <a href="{{ route('captain.project.monitoring') }}" class="nav-link"> {{-- Add route later --}}
             <i class="fas fa-flag"></i>
             <span>Project Monitoring</span>
         </a>

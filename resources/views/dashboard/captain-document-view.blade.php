@@ -24,7 +24,7 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.financial-management') }}" class="nav-link">
+        <a href="{{ route('captain.financial') }}" class="nav-link">
             <i class="fas fa-dollar-sign"></i>
             <span>Financial Management</span>
         </a>

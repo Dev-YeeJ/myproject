@@ -568,25 +568,44 @@
     </div>
 </div>
 
-{{-- 4. Budget Modal (Simple Edit) --}}
+{{-- 4. Budget Modal (Updated: Dynamic Allocations) --}}
 <div id="budgetModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
-    <div style="background:white; width:400px; margin: 100px auto; padding:25px; border-radius:16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+    <div style="background:white; width:450px; margin: 60px auto; padding:25px; border-radius:16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 85vh; overflow-y: auto;">
         <h3 style="margin-top: 0; margin-bottom: 20px; color: #111827;">Update Budget Allocations</h3>
-        <p style="color: #666; font-size: 0.9rem;">Adjust the annual budget limits for each category.</p>
+        <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Adjust the annual budget and limits per category.</p>
         
         <form action="{{ route('treasurer.budget.update') }}" method="POST">
             @csrf
-            <div style="margin-bottom:15px;">
-                <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px;">Total Annual Budget</label>
-                <input type="number" name="annual_budget" class="form-control" value="{{ $annualBudget }}" required style="width:100%; padding:10px; border:1px solid #D1D5DB; border-radius:8px;">
+            
+            {{-- Global Budget --}}
+            <div style="margin-bottom:20px; padding-bottom: 20px; border-bottom: 1px solid #E5E7EB;">
+                <label style="display: block; font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; color: #111827;">Total Annual Budget</label>
+                <div style="display: flex; align-items: center;">
+                    <span style="background: #F3F4F6; padding: 10px; border: 1px solid #D1D5DB; border-right: none; border-radius: 8px 0 0 8px; color: #6B7280;">₱</span>
+                    <input type="number" name="annual_budget" class="form-control" value="{{ $annualBudget }}" required style="width:100%; padding:10px; border:1px solid #D1D5DB; border-radius: 0 8px 8px 0;">
+                </div>
             </div>
-            <div style="margin-bottom:15px;">
-                <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px;">Infrastructure Allocation</label>
-                <input type="number" name="infrastructure_budget" class="form-control" value="400000" style="width:100%; padding:10px; border:1px solid #D1D5DB; border-radius:8px;">
+
+            {{-- Dynamic Category Inputs --}}
+            <h4 style="font-size: 0.9rem; font-weight: 700; color: #4B5563; margin-bottom: 15px;">Category Limits</h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                @foreach($utilization as $item)
+                    @php
+                        $inputName = 'budget_' . strtolower(str_replace(' ', '_', $item['name']));
+                    @endphp
+                    <div>
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: #374151;">{{ $item['name'] }}</label>
+                        <input type="number" name="{{ $inputName }}" class="form-control" 
+                               value="{{ $item['limit'] }}" 
+                               style="width:100%; padding:8px; border:1px solid #D1D5DB; border-radius:6px; font-size: 0.9rem;">
+                    </div>
+                @endforeach
             </div>
-             <div style="text-align:right; margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+
+            <div style="text-align:right; margin-top: 25px; display: flex; gap: 10px; justify-content: flex-end; padding-top: 15px; border-top: 1px solid #E5E7EB;">
                 <button type="button" onclick="closeModal('budgetModal')" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="submit" class="btn btn-primary">Save Allocations</button>
             </div>
         </form>
     </div>

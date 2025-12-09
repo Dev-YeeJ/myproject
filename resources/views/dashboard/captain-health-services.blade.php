@@ -24,14 +24,13 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.financial-management') }}" class="nav-link"> {{-- Add route later --}}
+        <a href="{{ route('captain.financial') }}" class="nav-link"> {{-- Add route later --}}
             <i class="fas fa-dollar-sign"></i>
             <span>Financial Management</span>
         </a>
     </li>
-    <li class="nav-item">
-        {{-- UPDATED: Link to the new health services route --}}
-        <a href="{{ route('captain.health-services') }}" class="nav-link active">
+     <li class="nav-item">
+        <a href="{{ route('captain.health-services') }}" class="nav-link active ">
             <i class="fas fa-heart"></i>
             <span>Health & Social Services</span>
         </a>

@@ -2,8 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Announcements;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Carbon\Carbon;
+
+// Models
 use App\Models\User;
 use App\Models\Resident;
 use App\Models\Household;
@@ -12,31 +20,22 @@ use App\Models\DocumentRequest;
 use App\Models\DocumentType;
 use App\Models\Template;
 use App\Models\DocumentRequirement;
-use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon; 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log; 
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Hash; 
-use Illuminate\Support\Str; 
-use Illuminate\Support\Facades\Storage;
+use App\Models\Announcements;
 use App\Models\FinancialTransaction;
+use App\Models\Project;
+use App\Models\BlotterRecord;
 
 class CaptainController extends Controller
 {
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-    /**
-     * Display the resident profiling page with search and filters
-     */
+    // ============================================
+    // 1. RESIDENT PROFILING
+    // ============================================
+
     public function residentProfiling(Request $request)
     {
         $user = Auth::user();
@@ -323,7 +322,7 @@ class CaptainController extends Controller
     }
 
     // ============================================
-    // HOUSEHOLD MANAGEMENT
+    // 2. HOUSEHOLD MANAGEMENT
     // ============================================
 
     public function createHousehold()
@@ -389,7 +388,7 @@ class CaptainController extends Controller
     }
 
     // ============================================
-    // HEALTH & SOCIAL SERVICES
+    // 3. HEALTH & SOCIAL SERVICES
     // ============================================
     
     public function healthAndSocialServices(Request $request)
@@ -406,8 +405,34 @@ class CaptainController extends Controller
         return view('dashboard.captain-health-services', compact('user', 'stats', 'medicines'));
     }
 
+    public function createMedicine()
+    {
+        $user = Auth::user();
+        return view('dashboard.captain-medicine-create', compact('user'));
+    }
+
+    public function storeMedicine(Request $request)
+    {
+        $validated = $request->validate([
+            'item_name' => 'required|string|max:255',
+            'category' => 'required|string',
+            'stock_quantity' => 'required|integer|min:0',
+            'expiration_date' => 'required|date',
+            'description' => 'nullable|string',
+        ]);
+
+        $status = 'In Stock';
+        if ($validated['stock_quantity'] <= 10) $status = 'Low Stock';
+        if ($validated['stock_quantity'] == 0) $status = 'Out of Stock';
+        if (Carbon::parse($validated['expiration_date'])->isPast()) $status = 'Expired';
+
+        Medicine::create($validated + ['status' => $status]);
+
+        return redirect()->route('captain.health-services')->with('success', 'Medicine added successfully.');
+    }
+
     // ============================================
-    // DOCUMENT SERVICES 
+    // 4. DOCUMENT SERVICES 
     // ============================================
     
     public function documentServices(Request $request)
@@ -453,7 +478,7 @@ class CaptainController extends Controller
             }
             $documentTypes = $typesQuery->orderBy('name')->paginate(9, ['*'], 'page')->appends($request->except('page'));
         
-        } else { // $view === 'templates'
+        } else { 
             $templatesQuery = Template::with('documentType'); 
             if ($request->filled('search_templates')) {
                 $templatesQuery->where('name', 'like', '%' . $request->search_templates . '%');
@@ -467,24 +492,21 @@ class CaptainController extends Controller
     public function showDocumentRequest($id)
     {
         $user = Auth::user();
-        $documentRequest = DocumentRequest::with(['resident', 'documentType', 'requirements'])
-                                          ->findOrFail($id);
-        
+        $documentRequest = DocumentRequest::with(['resident', 'documentType', 'requirements'])->findOrFail($id);
         return view('dashboard.captain-document-view', compact('user', 'documentRequest'));
     }
 
-    /**
-     * UPDATE DOCUMENT REQUEST (Updated for Payment Status)
-     */
     public function updateDocumentRequest(Request $request, $id)
     {
-        $documentRequest = DocumentRequest::findOrFail($id);
+        $documentRequest = DocumentRequest::with('documentType', 'resident')->findOrFail($id);
+
+        $oldPaymentStatus = $documentRequest->payment_status;
 
         $validated = $request->validate([
             'status' => 'required|in:Pending,Processing,Under Review,Ready for Pickup,Completed,Rejected,Cancelled',
             'payment_status' => 'required|in:Unpaid,Paid,Waived,Verification Pending',
             'remarks' => 'nullable|string|max:1000',
-            'generated_file' => 'nullable|file|mimes:pdf,docx,doc|max:5120' // 5MB max
+            'generated_file' => 'nullable|file|mimes:pdf,docx,doc|max:5120'
         ]);
 
         if ($request->hasFile('generated_file')) {
@@ -500,8 +522,24 @@ class CaptainController extends Controller
         $documentRequest->remarks = $validated['remarks'];
         $documentRequest->save();
 
+        if ($validated['payment_status'] === 'Paid' && $oldPaymentStatus !== 'Paid' && $documentRequest->price > 0) {
+            $residentName = $documentRequest->resident ? $documentRequest->resident->first_name . ' ' . $documentRequest->resident->last_name : 'Unknown';
+            $docName = $documentRequest->documentType ? $documentRequest->documentType->name : 'Document';
+            $transactionTitle = "Payment: [{$documentRequest->tracking_number}] $docName - $residentName";
+
+            FinancialTransaction::create([
+                'title'            => $transactionTitle,
+                'amount'           => $documentRequest->price,
+                'type'             => 'revenue',
+                'category'         => 'Document Services',
+                'status'           => 'approved',
+                'transaction_date' => now(),
+                'requested_by'     => Auth::user()->first_name . ' ' . Auth::user()->last_name,
+            ]);
+        }
+
         return redirect()->route('captain.document.show', $id)
-                         ->with('success', 'Document request and payment status updated successfully.');
+                          ->with('success', 'Document request updated. Financial transaction recorded if paid.');
     }
 
     public function downloadRequirement($id)
@@ -514,7 +552,7 @@ class CaptainController extends Controller
     }
 
     // ============================================
-    // ANNOUNCEMENT MANAGEMENT
+    // 5. ANNOUNCEMENT MANAGEMENT
     // ============================================
 
     public function announcements(Request $request)
@@ -609,79 +647,75 @@ class CaptainController extends Controller
     }
 
     // ============================================
-    // UPDATED: FINANCIAL MANAGEMENT (EXECUTIVE OVERSIGHT)
+    // 6. FINANCIAL MANAGEMENT
     // ============================================
 
     public function financialManagement(Request $request)
     {
         $user = Auth::user();
-
-        // 1. Fetch Pending Requests (Inbox)
-        $pendingRequests = FinancialTransaction::where('type', 'expense')
-            ->where('status', 'pending')
-            ->latest()
-            ->get();
-
-        // 2. Fetch History (Read Only)
-        $query = FinancialTransaction::latest();
+        $activeProjects = Project::where('status', '!=', 'Completed')->orderBy('title')->get();
+        $pendingRequests = FinancialTransaction::where('type', 'expense')->where('status', 'pending')->latest()->get();
+        
+        $query = FinancialTransaction::with('project')->latest(); 
+        if ($request->has('month') && $request->month != '') {
+            $query->whereMonth('transaction_date', Carbon::parse($request->month)->month);
+            $query->whereYear('transaction_date', Carbon::parse($request->month)->year);
+        }
         if ($request->has('type') && $request->type != 'all') {
             $query->where('type', $request->type);
         }
         $transactions = $query->paginate(10)->withQueryString();
 
-        // 3. Financial Stats (Budget & Totals)
         $annualBudget = DB::table('settings')->where('key', 'annual_budget')->value('value') ?? 2000000;
+        
+        $totalRevenue = FinancialTransaction::where('type', 'revenue')
+            ->where('status', 'approved')
+            ->sum('amount');
 
-        // Revenue
-        $manualRevenue = FinancialTransaction::where('type', 'revenue')->where('status', 'approved')->sum('amount');
-        $documentRevenue = DocumentRequest::where('payment_status', 'Paid')->sum('price');
-        $totalRevenue = $manualRevenue + $documentRevenue;
+        $targets = [
+            'Government IRA'    => 1500000, 
+            'Community Tax'     => 20000, 
+            'Document Services' => 15000,
+            'Donations'         => 50000, 
+            'Other Fees'        => 10000
+        ];
 
-        // Expenses
+        $revenuePerformance = [];
+        foreach($targets as $category => $target) {
+            $collected = FinancialTransaction::where('type', 'revenue')
+                ->where('status', 'approved')
+                ->where('category', $category)
+                ->sum('amount');
+            
+            $revenuePerformance[] = [
+                'name' => $category,
+                'collected' => $collected,
+                'target' => $target,
+                'percentage' => ($target > 0 ? ($collected / $target) * 100 : 0)
+            ];
+        }
+
         $totalSpent = FinancialTransaction::where('type', 'expense')->where('status', 'approved')->sum('amount');
         $availableBudget = ($annualBudget + $totalRevenue) - $totalSpent;
 
-        // 4. Category Utilization
-        $expenseCategories = ['Infrastructure', 'Health Programs', 'Education', 'Environmental', 'Emergency Fund'];
+        $expenseCategories = [
+            'Infrastructure', 'Health Programs', 'Education', 'Environmental', 
+            'Social Services', 'Emergency Fund', 'Office Supplies', 'Utilities', 'Honorarium', 'Others'
+        ];
         $utilization = [];
-
         foreach ($expenseCategories as $cat) {
-            $spent = FinancialTransaction::where('type', 'expense')
-                ->where('status', 'approved')
-                ->where('category', $cat)
-                ->sum('amount');
-            
+            $spent = FinancialTransaction::where('type', 'expense')->where('status', 'approved')->where('category', $cat)->sum('amount');
             $settingKey = 'budget_' . strtolower(str_replace(' ', '_', $cat));
             $limit = DB::table('settings')->where('key', $settingKey)->value('value') ?? 100000;
-
             $utilization[] = [
-                'name' => $cat, 
-                'spent' => $spent, 
-                'limit' => $limit, 
+                'name' => $cat, 'spent' => $spent, 'limit' => $limit, 
                 'percentage' => ($limit > 0 ? ($spent/$limit)*100 : 0)
             ];
         }
 
-        // 5. Revenue Performance
-        $revenueSources = ['Barangay Clearance', 'Business Permits', 'Community Tax', 'Government IRA'];
-        $revenuePerformance = [];
-        $revenueTargets = [
-            'Barangay Clearance' => 15000, 'Business Permits' => 25000, 'Community Tax' => 8000, 'Government IRA' => 150000
-        ];
-
-        foreach($revenueSources as $src) {
-            $collected = FinancialTransaction::where('type', 'revenue')->where('category', $src)->sum('amount');
-            $target = $revenueTargets[$src] ?? 10000;
-            $percentage = ($target > 0) ? ($collected / $target) * 100 : 0;
-            $revenuePerformance[] = [
-                'name' => $src, 'collected' => $collected, 'target' => $target, 'percentage' => $percentage
-            ];
-        }
-
-        return view('dashboard.captain-financial', compact(
-            'user', 'transactions', 'pendingRequests',
-            'annualBudget', 'totalRevenue', 'totalSpent', 'availableBudget',
-            'utilization', 'revenuePerformance'
+        return view('dashboard.captain-financial-management', compact(
+            'user', 'transactions', 'pendingRequests', 'annualBudget', 'totalRevenue', 
+            'totalSpent', 'availableBudget', 'utilization', 'revenuePerformance', 'activeProjects'
         ));
     }
 
@@ -692,23 +726,64 @@ class CaptainController extends Controller
             'amount' => 'required|numeric|min:0',
             'type' => 'required|in:revenue,expense',
             'category' => 'required|string',
-            'requested_by' => 'nullable|string',
+            'transaction_date' => 'required|date',
+            'project_id' => 'nullable|exists:projects,id',
         ]);
 
-        // If Captain enters data, it is automatically approved.
         $status = 'approved';
 
-        FinancialTransaction::create([
+        $transaction = FinancialTransaction::create([
             'title' => $validated['title'],
             'amount' => $validated['amount'],
             'type' => $validated['type'],
             'category' => $validated['category'],
             'status' => $status,
-            'requested_by' => $validated['requested_by'] ?? Auth::user()->name,
-            'transaction_date' => now(),
+            'requested_by' => Auth::user()->first_name . ' ' . Auth::user()->last_name,
+            'transaction_date' => $validated['transaction_date'],
+            'project_id' => $validated['project_id'] ?? null,
         ]);
 
-        return redirect()->back()->with('success', 'Transaction recorded successfully.');
+        if ($validated['project_id']) {
+            $this->recalculateProjectSpend($validated['project_id']);
+        }
+
+        return redirect()->back()->with('success', 'Transaction recorded and approved.');
+    }
+
+    public function updateTransaction(Request $request, $id)
+    {
+        $transaction = FinancialTransaction::findOrFail($id);
+        $oldProjectId = $transaction->project_id;
+
+        $validated = $request->validate([
+            'title' => 'required|string',
+            'amount' => 'required|numeric',
+            'category' => 'required|string',
+            'transaction_date' => 'required|date',
+            'project_id' => 'nullable|exists:projects,id',
+        ]);
+
+        $transaction->update($validated);
+
+        if ($oldProjectId && $oldProjectId != $transaction->project_id) {
+            $this->recalculateProjectSpend($oldProjectId);
+        }
+        if ($transaction->project_id) {
+            $this->recalculateProjectSpend($transaction->project_id);
+        }
+
+        return redirect()->back()->with('success', 'Transaction updated.');
+    }
+
+    public function destroyTransaction($id)
+    {
+        $transaction = FinancialTransaction::findOrFail($id);
+        $projectId = $transaction->project_id;
+        $transaction->delete();
+
+        if ($projectId) $this->recalculateProjectSpend($projectId);
+
+        return redirect()->back()->with('success', 'Transaction deleted.');
     }
 
     public function updateTransactionStatus(Request $request, $id)
@@ -719,37 +794,257 @@ class CaptainController extends Controller
         if(in_array($status, ['approved', 'rejected'])) {
             $transaction->status = $status;
             $transaction->save();
-            return redirect()->back()->with('success', 'Request ' . ucfirst($status) . '.');
+            
+            if ($transaction->project_id) $this->recalculateProjectSpend($transaction->project_id);
+            
+            return redirect()->back()->with('success', 'Status updated.');
         }
-
         return redirect()->back()->with('error', 'Invalid status.');
     }
 
-    // NEW: Budget Adjustment Logic
     public function updateBudget(Request $request)
     {
-        $validated = $request->validate([
-            'annual_budget' => 'required|numeric|min:0',
-        ]);
+        $validated = $request->validate(['annual_budget' => 'required|numeric']);
+        DB::table('settings')->updateOrInsert(['key' => 'annual_budget'], ['value' => $validated['annual_budget']]);
 
-        // Update Total Budget
-        DB::table('settings')->updateOrInsert(
-            ['key' => 'annual_budget'],
-            ['value' => $validated['annual_budget'], 'created_at' => now(), 'updated_at' => now()]
-        );
-
-        // Update Specific Categories
-        $categories = ['infrastructure', 'health_programs', 'education', 'environmental', 'emergency_fund'];
+        $categories = [
+            'Infrastructure', 'Health Programs', 'Education', 'Environmental', 
+            'Social Services', 'Emergency Fund', 'Office Supplies', 'Utilities', 'Honorarium', 'Others'
+        ];
         foreach($categories as $cat) {
-            $inputName = 'budget_'.$cat;
-            if($request->has($inputName)) {
-                DB::table('settings')->updateOrInsert(
-                    ['key' => $inputName],
-                    ['value' => $request->input($inputName), 'created_at' => now(), 'updated_at' => now()]
-                );
+            $key = 'budget_' . strtolower(str_replace(' ', '_', $cat));
+            if($request->has($key)) {
+                DB::table('settings')->updateOrInsert(['key' => $key], ['value' => $request->input($key)]);
             }
         }
+        return redirect()->back()->with('success', 'Budgets updated.');
+    }
 
-        return redirect()->back()->with('success', 'Fiscal Budget updated successfully.');
+    // ============================================
+    // 7. PROJECT MONITORING
+    // ============================================
+
+    public function projectMonitoring(Request $request)
+    {
+        $user = Auth::user();
+        $selectedCategory = $request->input('category', 'All Projects');
+
+        $baseQuery = Project::query();
+        if ($selectedCategory != 'All Projects') {
+            $baseQuery->where('category', $selectedCategory);
+        }
+
+        $stats = [
+            'total_projects'    => (clone $baseQuery)->count(),
+            'active_projects'   => (clone $baseQuery)->where('status', 'In Progress')->count(),
+            'total_budget'      => (clone $baseQuery)->sum('budget'),
+            'total_spent'       => (clone $baseQuery)->sum('amount_spent'),
+            'completed_projects'=> (clone $baseQuery)->where('status', 'Completed')->count(),
+        ];
+
+        if ($request->has('search') && $request->search != '') {
+            $baseQuery->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        $projects = $baseQuery->latest()->paginate(6)->withQueryString();
+
+        return view('dashboard.captain-project-monitoring', compact('user', 'stats', 'projects', 'selectedCategory'));
+    }
+
+    public function storeProject(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'category' => 'required|string',
+            'budget' => 'required|numeric|min:0',
+            'start_date' => 'required|date',
+            'end_date' => 'nullable|date',
+            'description' => 'required|string',
+        ]);
+
+        Project::create([
+            'title' => $validated['title'],
+            'category' => $validated['category'],
+            'budget' => $validated['budget'],
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'] ?? null,
+            'description' => $validated['description'],
+            'status' => 'Planning', 
+            'progress' => 0,
+            'amount_spent' => 0 
+        ]);
+
+        return redirect()->back()->with('success', 'Project created.');
+    }
+
+    public function updateProjectProgress(Request $request, $id)
+    {
+        $project = Project::findOrFail($id);
+        $project->update($request->only(['status', 'progress']));
+        return redirect()->back()->with('success', 'Project updated.');
+    }
+
+    public function destroyProject($id)
+    {
+        $project = Project::findOrFail($id);
+        $project->delete();
+        return redirect()->back()->with('success', 'Project deleted.');
+    }
+
+    private function recalculateProjectSpend($projectId)
+    {
+        $project = Project::find($projectId);
+        if ($project) {
+            $totalSpent = FinancialTransaction::where('project_id', $projectId)
+                ->where('type', 'expense')
+                ->where('status', 'approved')
+                ->sum('amount');
+            
+            $project->amount_spent = $totalSpent;
+            $project->save();
+        }
+    }
+
+    // ============================================
+    // 8. INCIDENT & BLOTTER MANAGEMENT (FULL)
+    // ============================================
+
+    public function incidentAndBlotter(Request $request)
+    {
+        $user = Auth::user();
+        $search = $request->input('search');
+        $statusFilter = $request->input('status');
+
+        $query = BlotterRecord::query();
+
+        // Search Logic
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('case_number', 'like', "%{$search}%")
+                  ->orWhere('complainant', 'like', "%{$search}%")
+                  ->orWhere('respondent', 'like', "%{$search}%")
+                  ->orWhere('incident_type', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter Logic
+        if ($statusFilter && $statusFilter !== 'All') {
+            $query->where('status', $statusFilter);
+        }
+
+        // Statistics
+        $stats = [
+            'total_cases'    => BlotterRecord::count(),
+            'high_priority'  => BlotterRecord::where('priority', 'High')->where('status', '!=', 'Resolved')->count(),
+            'hearings_set'   => BlotterRecord::where('status', 'Scheduled for Hearing')->count(),
+            'resolved_cases' => BlotterRecord::where('status', 'Resolved')->count(),
+        ];
+
+        // Sorting
+        $records = $query->orderByRaw("FIELD(status, 'Open', 'Scheduled for Hearing', 'Under Investigation', 'For Mediation', 'Resolved', 'Dismissed')")
+                         ->orderBy('priority', 'desc')
+                         ->orderBy('date_reported', 'desc')
+                         ->paginate(10)
+                         ->withQueryString();
+
+        return view('dashboard.captain-incident-blotter', compact('user', 'stats', 'records', 'search', 'statusFilter'));
+    }
+
+    public function storeIncident(Request $request)
+    {
+        $validated = $request->validate([
+            'date_reported' => 'required|date',
+            'incident_type' => 'required|string',
+            'complainant'   => 'required|string',
+            'respondent'    => 'nullable|string',
+            'location'      => 'required|string',
+            'priority'      => 'required|in:Low,Medium,High',
+            'narrative'     => 'required|string',
+        ]);
+
+        $validated['case_number'] = BlotterRecord::generateCaseNumber();
+        $validated['status'] = 'Open'; 
+        $validated['actions_taken'] = "[" . now()->format('M d, Y h:i A') . "] Case manually filed by Captain.";
+
+        BlotterRecord::create($validated);
+
+        return redirect()->back()->with('success', 'Incident logged successfully. Case #: ' . $validated['case_number']);
+    }
+
+    /**
+     * PROCESS: Handle Status Updates, Hearings, and Resolutions
+     */
+    public function processIncident(Request $request, $id)
+    {
+        $record = BlotterRecord::findOrFail($id);
+        
+        $request->validate([
+            'action_type' => 'required|in:status_update,schedule_hearing,resolve_case',
+            'remarks' => 'required|string'
+        ]);
+
+        $timestamp = now()->format('M d, Y h:i A');
+        $newLog = "";
+        $newStatus = $record->status;
+
+        switch ($request->action_type) {
+            case 'schedule_hearing':
+                $newStatus = 'Scheduled for Hearing';
+                $newLog = "[$timestamp] STATUS: Scheduled for Hearing. DETAILS: " . $request->remarks;
+                break;
+
+            case 'resolve_case':
+                $newStatus = 'Resolved';
+                $newLog = "[$timestamp] STATUS: Case Resolved. REMARKS: " . $request->remarks;
+                break;
+
+            case 'status_update':
+                $newStatus = $request->new_status ?? $record->status;
+                $newLog = "[$timestamp] STATUS: Updated to $newStatus. UPDATE: " . $request->remarks;
+                break;
+        }
+
+        // Append to history
+        $updatedHistory = $record->actions_taken . "\n" . $newLog;
+
+        $record->update([
+            'status' => $newStatus,
+            'actions_taken' => $updatedHistory
+        ]);
+        
+        return redirect()->back()->with('success', 'Case workflow updated successfully.');
+    }
+
+    /**
+     * EDIT: Handle corrections to data (Typos, wrong location, etc.)
+     */
+    public function updateIncidentDetails(Request $request, $id)
+    {
+        $record = BlotterRecord::findOrFail($id);
+
+        $validated = $request->validate([
+            'complainant' => 'required|string',
+            'respondent' => 'nullable|string',
+            'incident_type' => 'required|string',
+            'location' => 'required|string',
+            'date_reported' => 'required|date',
+            'priority' => 'required|in:Low,Medium,High',
+            'narrative' => 'required|string',
+        ]);
+
+        $record->update($validated);
+
+        return redirect()->back()->with('success', 'Incident details updated.');
+    }
+
+    /**
+     * DESTROY: Delete a record
+     */
+    public function destroyIncident($id)
+    {
+        $record = BlotterRecord::findOrFail($id);
+        $record->delete();
+
+        return redirect()->back()->with('success', 'Incident record deleted successfully.');
     }
 }

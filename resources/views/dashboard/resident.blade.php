@@ -17,19 +17,26 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('resident.health-services') }}" class="nav-link">
-            <i class="fas fa-heartbeat"></i>
-            <span>Health Services</span>
-        </a>
-    </li>
-    
-    {{-- UPDATED: Link to Announcements --}}
-    <li class="nav-item">
-        <a href="{{ route('resident.announcements.index') }}" class="nav-link">
-            <i class="fas fa-bullhorn"></i>
-            <span>Announcements</span>
-        </a>
-    </li>
+    <a href="{{ route('resident.health-services') }}" class="nav-link">
+        <i class="fas fa-heartbeat"></i>
+        <span>Health Services</span>
+    </a>
+</li>
+
+{{-- NEW LINK HERE --}}
+<li class="nav-item">
+    <a href="{{ route('resident.incidents.index') }}" class="nav-link {{ request()->routeIs('resident.incidents.*') ? 'active' : '' }}">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Incident Reports</span>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a href="{{ route('resident.announcements.index') }}" class="nav-link">
+        <i class="fas fa-bullhorn"></i>
+        <span>Announcements</span>
+    </a>
+</li>
 
     <li class="nav-item">
         <a href="#" class="nav-link"> {{-- Placeholder for SK Module --}}

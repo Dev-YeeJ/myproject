@@ -52,7 +52,6 @@ class TreasurerController extends Controller
     {
         $user = Auth::user();
         
-        // ** FIX: Variable defined here **
         $pendingRequests = FinancialTransaction::where('type', 'expense')->where('status', 'pending')->latest()->get();
 
         $query = FinancialTransaction::latest();
@@ -74,14 +73,25 @@ class TreasurerController extends Controller
         $totalSpent = FinancialTransaction::where('type', 'expense')->where('status', 'approved')->sum('amount');
         $availableBudget = ($annualBudget + $totalRevenue) - $totalSpent;
 
+        // Defined categories
         $expenseCategories = ['Infrastructure', 'Health Programs', 'Education', 'Environmental', 'Others'];
         $utilization = [];
 
         foreach ($expenseCategories as $cat) {
             $spent = FinancialTransaction::where('type', 'expense')->where('status', 'approved')->where('category', $cat)->sum('amount');
+            
+            // Generate key (e.g., budget_infrastructure, budget_health_programs)
             $settingKey = 'budget_' . strtolower(str_replace(' ', '_', $cat));
+            
+            // Get limit from settings or default to 100,000
             $limit = DB::table('settings')->where('key', $settingKey)->value('value') ?? 100000;
-            $utilization[] = ['name' => $cat, 'spent' => $spent, 'limit' => $limit, 'percentage' => ($limit > 0 ? ($spent/$limit)*100 : 0)];
+            
+            $utilization[] = [
+                'name' => $cat, 
+                'spent' => $spent, 
+                'limit' => $limit, 
+                'percentage' => ($limit > 0 ? ($spent/$limit)*100 : 0)
+            ];
         }
 
         $revenuePerformance = [];
@@ -95,7 +105,6 @@ class TreasurerController extends Controller
             $revenuePerformance[] = ['name' => $type->name, 'collected' => $collected, 'target' => $target, 'percentage' => ($target > 0 ? ($collected / $target) * 100 : 0)];
         }
         
-        // ** FIX: Variable passed here **
         return view('dashboard.treasurer-financial-management', compact(
             'user', 'transactions', 'pendingRequests', 'annualBudget', 'totalRevenue', 
             'totalSpent', 'availableBudget', 'utilization', 'revenuePerformance'
@@ -159,24 +168,35 @@ class TreasurerController extends Controller
         return redirect()->back()->with('error', 'Invalid status provided.');
     }
 
+    // UPDATED: Now handles all categories dynamically
     public function updateBudget(Request $request)
     {
         $validated = $request->validate([
             'annual_budget' => 'required|numeric|min:0',
-            'infrastructure_budget' => 'nullable|numeric|min:0',
         ]);
 
+        // 1. Update Annual Total
         DB::table('settings')->updateOrInsert(
             ['key' => 'annual_budget'],
             ['value' => $validated['annual_budget'], 'created_at' => now(), 'updated_at' => now()]
         );
 
-        if($request->has('infrastructure_budget')) {
-            DB::table('settings')->updateOrInsert(
-                ['key' => 'budget_infrastructure'],
-                ['value' => $request->input('infrastructure_budget'), 'created_at' => now(), 'updated_at' => now()]
-            );
+        // 2. Update Category Limits
+        // Must match the list in financialManagement()
+        $categories = ['Infrastructure', 'Health Programs', 'Education', 'Environmental', 'Others'];
+
+        foreach ($categories as $cat) {
+            // Convert "Health Programs" -> "budget_health_programs"
+            $keyName = 'budget_' . strtolower(str_replace(' ', '_', $cat));
+
+            if($request->has($keyName)) {
+                DB::table('settings')->updateOrInsert(
+                    ['key' => $keyName],
+                    ['value' => $request->input($keyName), 'created_at' => now(), 'updated_at' => now()]
+                );
+            }
         }
+        
         return redirect()->back()->with('success', 'Budget allocations updated successfully.');
     }
 
