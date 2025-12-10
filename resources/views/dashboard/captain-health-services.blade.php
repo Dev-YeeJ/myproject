@@ -1,11 +1,10 @@
 @extends('layouts.dashboard-layout')
 
-@section('title', 'Health & Social Services (View-Only)')
+@section('title', 'Health & Social Services')
 
 @section('nav-items')
-    {{-- Active class on Dashboard link --}}
     <li class="nav-item">
-        <a href="{{ route('captain.dashboard') }}" class="nav-link ">
+        <a href="{{ route('captain.dashboard') }}" class="nav-link">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
@@ -17,50 +16,49 @@
         </a>
     </li>
     <li class="nav-item">
-        {{-- UPDATED: Link to the new document services route --}}
         <a href="{{ route('captain.document-services') }}" class="nav-link">
             <i class="far fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.financial') }}" class="nav-link"> {{-- Add route later --}}
+        <a href="{{ route('captain.financial') }}" class="nav-link">
             <i class="fas fa-dollar-sign"></i>
             <span>Financial Management</span>
         </a>
     </li>
-     <li class="nav-item">
-        <a href="{{ route('captain.health-services') }}" class="nav-link active ">
+    <li class="nav-item">
+        <a href="{{ route('captain.health-services') }}" class="nav-link active">
             <i class="fas fa-heart"></i>
             <span>Health & Social Services</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
+        <a href="{{ route('captain.incident.index') }}" class="nav-link">
             <i class="fas fa-exclamation-triangle"></i>
             <span>Incident & Blotter</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
+        <a href="{{ route('captain.project.monitoring') }}" class="nav-link">
             <i class="fas fa-flag"></i>
             <span>Project Monitoring</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
+        <a href="{{ route('captain.announcements.index') }}" class="nav-link">
             <i class="fas fa-bell"></i>
             <span>Announcements</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
+        <a href="#" class="nav-link">
             <i class="fas fa-check-circle"></i>
             <span>SK Module</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
+        <a href="#" class="nav-link">
             <i class="fas fa-cog"></i>
             <span>Settings</span>
         </a>
@@ -68,257 +66,209 @@
 @endsection
 
 @section('content')
-{{-- STYLES (Copied from your BHW view for consistency) --}}
 <style>
-    /* Header styles */
-    .header-section {
+    /* --- HEADER STYLES --- */
+    .profiling-header {
         background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
         color: white;
+        padding: 40px;
         border-radius: 16px;
         margin-bottom: 30px;
         position: relative;
-        padding: 40px;
     }
-    .header-title {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 8px;
+    .profiling-title { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+    .profiling-subtitle { opacity: 0.95; font-size: 1rem; margin-bottom: 15px; }
+    
+    .barangay-badge {
+        display: inline-flex; align-items: center; gap: 10px;
+        background: rgba(255, 165, 0, 0.2); padding: 8px 16px;
+        border-radius: 8px; font-weight: 600;
     }
-    .header-subtitle {
-        opacity: 0.95;
-        font-size: 1rem;
+    .barangay-badge .badge-icon {
+        background: #FFA500; width: 32px; height: 32px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; color: white;
     }
 
-    /* Stats Grid styles */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-        margin-bottom: 30px;
+    /* --- STATS BOXES --- */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+    .stat-box {
+        background: white; padding: 24px; border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex;
+        justify-content: space-between; align-items: center;
     }
-    .stat-card {
-        background: white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border-radius: 12px;
-        padding: 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    .stat-content h3 { font-size: 2.5rem; font-weight: 700; margin: 0 0 8px 0; }
+    .stat-content p { color: #666; margin: 0 0 8px 0; font-size: 0.95rem; }
+    .stat-badge { font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
+    
+    .stat-box-icon {
+        width: 70px; height: 70px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2rem; color: white;
     }
-    .stat-info h3 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin: 0 0 8px 0;
-    }
-    .stat-info p {
-        color: #666;
-        margin: 0 0 8px 0;
-        font-size: 0.95rem;
-    }
-    .stat-icon {
-        width: 70px;
-        height: 70px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        color: white;
-    }
-    .icon-blue { background: #2B5CE6; }
-    .icon-yellow { background: #F59E0B; }
-    .icon-red { background: #EF4444; }
-    .icon-purple { background: #A855F7; }
 
-    /* Table Container styles */
+    .icon-blue-bg { background: #2B5CE6; } .stat-badge.blue { color: #2B5CE6; }
+    .icon-orange-bg { background: #FFA500; } .stat-badge.orange { color: #FF8C42; }
+    .icon-green-bg { background: #10B981; } .stat-badge.green { color: #10B981; }
+    .icon-red-bg { background: #EF4444; } .stat-badge.red { color: #EF4444; }
+    .icon-purple-bg { background: #A855F7; } .stat-badge.purple { color: #A855F7; }
+
+    /* --- DIRECTORY HEADER & FILTER --- */
+    .directory-header {
+        background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
+        color: white; padding: 20px 30px; border-radius: 12px 12px 0 0;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .directory-title { display: flex; align-items: center; gap: 12px; font-size: 1.1rem; font-weight: 700; }
+    
+    .filters-section { display: flex; align-items: center; gap: 10px; }
+    .search-input {
+        padding: 10px 16px; border: 1px solid #E5E7EB; border-radius: 8px;
+        font-size: 0.95rem; background: white; min-width: 250px;
+        transition: border-color 0.3s;
+    }
+    .search-input:focus { outline: none; border-color: #2B5CE6; }
+
+    /* --- TABLE STYLES --- */
     .table-container {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        padding: 24px;
+        background: white; border-radius: 0 0 12px 12px;
+        overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
     }
-    .table-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-        gap: 15px;
-    }
-    .table-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        flex-shrink: 0;
-    }
-    .table-search {
-        width: 300px;
-    }
-
-    /* Table styles */
-    .table-wrapper {
-        overflow-x: auto;
-    }
-    .table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 1rem;
-    }
-    .table th, .table td {
-        padding: 12px 15px;
-        text-align: left;
-        border-bottom: 1px solid #E5E7EB;
-        vertical-align: middle;
-        font-size: 0.95rem;
-    }
+    .table { width: 100%; margin: 0; border-collapse: collapse; }
+    .table thead { background: #F9FAFB; }
     .table th {
-        font-weight: 600;
-        color: #4B5563;
-        background: #F9FAFB;
+        padding: 16px 20px; font-weight: 700; color: #1F2937;
+        font-size: 0.9rem; text-transform: uppercase; border-bottom: 2px solid #E5E7EB; text-align: left;
     }
-    .table tbody tr:hover {
-        background: #F9FAFB;
-    }
+    .table td { padding: 18px 20px; vertical-align: middle; border-bottom: 1px solid #F3F4F6; color: #4B5563; }
+    .table tbody tr:hover { background: #F9FAFB; }
 
-    /* Responsive adjustments */
-    @media (max-width: 1200px) {
-        .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-    @media (max-width: 768px) {
-        .stats-grid {
-            grid-template-columns: 1fr;
-        }
-        .table-search {
-            width: 100%;
-        }
-    }
+    /* --- BADGES --- */
+    .badge { padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 0.75rem; }
+    .bg-success { background: #D1FAE5 !important; color: #065F46; }
+    .bg-warning { background: #FEF3C7 !important; color: #92400E; }
+    .bg-danger { background: #FEE2E2 !important; color: #991B1B; }
+
+    .no-results { text-align: center; padding: 40px; color: #9CA3AF; }
 </style>
 
-{{-- CONTENT: Medicine Inventory (View-Only) --}}
-
-<div class="header-section">
-    <div class="header-title">Health & Social Services</div>
-    <div class="header-subtitle">View medicine inventory and resident assistance requests.</div>
-</div>
-
-<div class="stats-grid">
-    {{-- 1. Total Medicines --}}
-    <div class="stat-card">
-        <div class="stat-info">
-            <h3>{{ number_format($stats['total_medicines'] ?? 0) }}</h3>
-            <p>Medicine Types</p>
-        </div>
-        <div class="stat-icon icon-blue"><i class="fas fa-pills"></i></div>
-    </div>
-
-    {{-- 2. Low Stock --}}
-    <div class="stat-card">
-        <div class="stat-info">
-            <h3>{{ number_format($stats['low_stock_medicines'] ?? 0) }}</h3>
-            <p>Low Stock Items</p>
-        </div>
-        <div class="stat-icon icon-yellow"><i class="fas fa-exclamation-triangle"></i></div>
-    </div>
-
-    {{-- 3. Expired --}}
-    <div class="stat-card">
-        <div class="stat-info">
-            <h3>{{ number_format($stats['expired_medicines'] ?? 0) }}</h3>
-            <p>Expired Items</p>
-        </div>
-        <div class="stat-icon icon-red"><i class="fas fa-calendar-times"></i></div>
+{{-- Header Section --}}
+<div class="profiling-header">
+    <div class="profiling-title">Health & Social Services</div>
+    <div class="profiling-subtitle">View medicine inventory and track supplies managed by Health Workers.</div>
+    <div class="barangay-badge">
+        <span class="badge-icon">HC</span>
+        <span>Barangay Health Center</span>
     </div>
     
-    {{-- 4. Pending Requests (Placeholder) --}}
-    <div class="stat-card">
-        <div class="stat-info">
+    {{-- REMOVED: Add Medicine Button (View Only Mode) --}}
+</div>
+
+{{-- Stats Row --}}
+<div class="stats-row">
+    <div class="stat-box">
+        <div class="stat-content">
+            <h3>{{ number_format($stats['total_medicines'] ?? 0) }}</h3>
+            <p>Total Medicines</p>
+            <div class="stat-badge blue"><i class="fas fa-pills"></i><span>Inventory</span></div>
+        </div>
+        <div class="stat-box-icon icon-blue-bg"><i class="fas fa-capsules"></i></div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-content">
+            <h3>{{ number_format($stats['low_stock_medicines'] ?? 0) }}</h3>
+            <p>Low Stock Items</p>
+            <div class="stat-badge orange"><i class="fas fa-exclamation-triangle"></i><span>Restock Needed</span></div>
+        </div>
+        <div class="stat-box-icon icon-orange-bg"><i class="fas fa-cubes"></i></div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-content">
+            <h3>{{ number_format($stats['expired_medicines'] ?? 0) }}</h3>
+            <p>Expired Items</p>
+            <div class="stat-badge red"><i class="fas fa-ban"></i><span>Dispose</span></div>
+        </div>
+        <div class="stat-box-icon icon-red-bg"><i class="fas fa-calendar-times"></i></div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-content">
             <h3>{{ number_format($stats['pending_requests'] ?? 0) }}</h3>
             <p>Pending Requests</p>
+            <div class="stat-badge purple"><i class="fas fa-clock"></i><span>Action Required</span></div>
         </div>
-        <div class="stat-icon icon-purple"><i class="fas fa-tasks"></i></div>
+        <div class="stat-box-icon icon-purple-bg"><i class="fas fa-hand-holding-medical"></i></div>
     </div>
 </div>
 
+{{-- Directory Header --}}
+<div class="directory-header">
+    <div class="directory-title">
+        <i class="fas fa-medkit"></i>
+        <span>Medicine Inventory</span>
+    </div>
+    <div class="filters-section">
+        <input type="text" class="search-input" placeholder="🔍 Search medicine name or brand...">
+    </div>
+</div>
+
+{{-- Table --}}
 <div class="table-container">
-    <div class="table-header">
-        <div class="table-title">Medicine Inventory</div>
-
-        {{-- 
-            MODIFICATION: 
-            The "Add Medicine" and "Manage Requests" buttons have been removed 
-            to make this page view-only for the Captain.
-        --}}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Medicine Name</th>
+                <th>Brand</th>
+                <th>Dosage</th>
+                <th>Stock Quantity</th>
+                <th>Expiration Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($medicines as $medicine)
+            <tr>
+                <td style="font-weight: 600; color: #1F2937;">{{ $medicine->item_name }}</td>
+                <td>{{ $medicine->brand_name ?? 'Generic' }}</td>
+                <td>{{ $medicine->dosage }}</td>
+                <td>
+                    <span class="{{ $medicine->status === 'Low Stock' || $medicine->status === 'Out of Stock' ? 'text-danger fw-bold' : '' }}">
+                        {{ $medicine->quantity }}
+                    </span>
+                </td>
+                <td>
+                    <span class="{{ $medicine->status === 'Expired' ? 'text-danger fw-bold' : '' }}">
+                        {{ $medicine->expiration_date ? \Carbon\Carbon::parse($medicine->expiration_date)->format('M d, Y') : 'N/A' }}
+                    </span>
+                </td>
+                <td>
+                    @if ($medicine->status === 'In Stock')
+                        <span class="badge bg-success">IN STOCK</span>
+                    @elseif ($medicine->status === 'Low Stock')
+                        <span class="badge bg-warning">LOW STOCK</span>
+                    @elseif ($medicine->status === 'Expired')
+                        <span class="badge bg-danger">EXPIRED</span>
+                    @else
+                        <span class="badge bg-danger">OUT OF STOCK</span>
+                    @endif
+                </td>
+            </tr>
+            @empty
+            <tr>
+                <td colspan="6">
+                    <div class="no-results">
+                        <i class="fas fa-box-open fa-3x mb-3 opacity-25"></i>
+                        <p>No medicines found in the inventory.</p>
+                    </div>
+                </td>
+            </tr>
+            @endforelse
+        </tbody>
+    </table>
+    
+    @if(method_exists($medicines, 'links'))
+    <div class="p-3 bg-white border-top">
+        {{ $medicines->links('pagination::bootstrap-5') }}
     </div>
-
-    {{-- Alert for Success/Error Messages (from other pages) --}}
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
     @endif
-    @if (session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    <div class="table-wrapper">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Medicine Name</th>
-                    <th>Brand</th>
-                    {{-- <th>Category</th>  --}} {{-- Category was missing from your captain store/create logic --}}
-                    <th>Dosage</th>
-                    <th>Quantity</th>
-                    <th>Expiration Date</th>
-                    <th>Status</th>
-                    {{-- MODIFICATION: Removed "Actions" column --}}
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($medicines as $medicine)
-                    <tr>
-                        <td><strong>{{ $medicine->item_name }}</strong></td>
-                        <td>{{ $medicine->brand_name ?? 'N/A' }}</td>
-                        {{-- <td>{{ $medicine->category ?? 'N/A' }}</td> --}}
-                        <td>{{ $medicine->dosage }}</td>
-                        <td>
-                            <span class="{{ $medicine->status === 'Low Stock' || $medicine->status === 'Out of Stock' ? 'text-danger fw-bold' : '' }}">
-                                {{ $medicine->quantity }}
-                            </span>
-                        </td>
-                        <td>
-                            <span class="{{ $medicine->status === 'Expired' ? 'text-danger fw-bold' : '' }}">
-                                {{ $medicine->expiration_date ? \Carbon\Carbon::parse($medicine->expiration_date)->format('M d, Y') : 'N/A' }}
-                            </span>
-                        </td>
-                        <td>
-                            @if ($medicine->status === 'In Stock')
-                                <span class="badge bg-success">{{ $medicine->status }}</span>
-                            @elseif ($medicine->status === 'Low Stock')
-                                <span class="badge bg-warning">{{ $medicine->status }}</span>
-                            @elseif ($medicine->status === 'Expired')
-                                <span class="badge bg-danger">{{ $medicine->status }}</span>
-                            @else {{-- Out of Stock --}}
-                                <span class="badge bg-danger">{{ $medicine->status }}</span>
-                            @endif
-                        </td>
-                        {{-- MODIFICATION: Removed "Actions" column --}}
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="6" class="text-center">
-                            No medicines found in the inventory.
-                        </td>
-                    </tr>
-                @endempty
-            </tbody>
-        </table>
-    </div>
 </div>
-
 @endsection

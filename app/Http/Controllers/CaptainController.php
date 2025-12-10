@@ -24,6 +24,7 @@ use App\Models\Announcements;
 use App\Models\FinancialTransaction;
 use App\Models\Project;
 use App\Models\BlotterRecord;
+use App\Models\SkOfficial;
 
 class CaptainController extends Controller
 {
@@ -1047,4 +1048,54 @@ class CaptainController extends Controller
 
         return redirect()->back()->with('success', 'Incident record deleted successfully.');
     }
-}
+  public function skOverview()
+    {
+        $user = Auth::user();
+
+        // 1. Demographics
+        $minDate = Carbon::now()->subYears(15)->format('Y-m-d');
+        $maxDate = Carbon::now()->subYears(30)->format('Y-m-d');
+
+        $kkQuery = Resident::where('is_active', true)
+            ->whereDate('date_of_birth', '<=', $minDate)
+            ->whereDate('date_of_birth', '>=', $maxDate);
+
+        $youthStats = [
+            'total_youth' => (clone $kkQuery)->count(),
+            'registered_voters' => (clone $kkQuery)->where('is_registered_voter', true)->count(),
+            'out_of_school' => (clone $kkQuery)->where('occupation', '!=', 'Student')->whereNull('monthly_income')->count(),
+            'students' => (clone $kkQuery)->where('occupation', 'Student')->count(),
+        ];
+
+        // 2. Budget
+        $barangayBudget = DB::table('settings')->where('key', 'annual_budget')->value('value') ?? 0;
+        $skAllocation = $barangayBudget * 0.10;
+        
+        $skSpent = FinancialTransaction::where('status', 'approved')
+            ->where(function($q) {
+                $q->where('category', 'SK Fund')
+                  ->orWhereHas('project', function($p) { $p->where('category', 'SK Project'); });
+            })->sum('amount');
+        
+        $skCommitted = Project::where('category', 'SK Project')
+            ->where('status', '!=', 'Cancelled')
+            ->sum('budget');
+
+        $budgetStats = [
+            'allocation' => $skAllocation,
+            'spent' => $skSpent,
+            'committed' => $skCommitted,
+            // FIX: Added 'remaining' key here to resolve the error
+            'remaining' => $skAllocation - $skSpent, 
+            'available_cash' => $skAllocation - $skSpent, 
+            'uncommitted_balance' => $skAllocation - $skCommitted,
+            'utilization_rate' => ($skAllocation > 0) ? ($skSpent / $skAllocation) * 100 : 0
+        ];
+
+        // 3. Projects & Officials
+        $skProjects = Project::where('category', 'SK Project')->orderBy('status', 'desc')->get();
+        $officials = SkOfficial::with('resident')->where('is_active', true)->get();
+
+            return view('dashboard.captain-sk-overview', compact('user', 'youthStats', 'budgetStats', 'skProjects', 'officials'));
+        }
+    }

@@ -1,6 +1,6 @@
 @extends('layouts.dashboard-layout')
 
-@section('title', 'Create Announcement')
+@section('title', 'Edit Announcement')
 
 @section('nav-items')
     <li class="nav-item">
@@ -101,12 +101,12 @@
     
     /* --- UPLOAD AREA --- */
     .image-upload-box {
-        border: 2px dashed #D1D5DB; border-radius: 10px; padding: 30px;
+        border: 2px dashed #D1D5DB; border-radius: 10px; padding: 20px;
         text-align: center; cursor: pointer; transition: all 0.2s; background: #F9FAFB;
         position: relative;
     }
     .image-upload-box:hover { border-color: #2B5CE6; background: #EFF6FF; }
-    .upload-icon { font-size: 2rem; color: #9CA3AF; margin-bottom: 10px; }
+    .upload-icon { font-size: 1.5rem; color: #9CA3AF; margin-bottom: 5px; }
     .upload-text { font-size: 0.85rem; color: #6B7280; font-weight: 500; }
     
     /* --- BUTTONS --- */
@@ -135,29 +135,31 @@
 {{-- Header --}}
 <div class="profiling-header">
     <div>
-        <div class="profiling-title">Create Announcement</div>
-        <div class="profiling-subtitle">Compose updates for barangay residents and officials.</div>
+        <div class="profiling-title">Edit Announcement</div>
+        <div class="profiling-subtitle">Update the details of your existing post.</div>
     </div>
     <a href="{{ route('captain.announcements.index') }}" class="btn-back">
-        <i class="fas fa-arrow-left"></i> Back
+        <i class="fas fa-arrow-left"></i> Cancel
     </a>
 </div>
 
-<form action="{{ route('captain.announcements.store') }}" method="POST" enctype="multipart/form-data">
+<form action="{{ route('captain.announcements.update', $announcement->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
+    @method('PUT')
+
     <div class="row">
         {{-- LEFT COLUMN: Main Content --}}
         <div class="col-lg-8 mb-4">
             <div class="content-card">
                 <div class="mb-4">
                     <label class="form-label">Announcement Title <span class="text-danger">*</span></label>
-                    <input type="text" name="title" class="form-control form-control-lg fw-bold" placeholder="Enter a catchy headline..." value="{{ old('title') }}" required>
+                    <input type="text" name="title" class="form-control form-control-lg fw-bold" value="{{ old('title', $announcement->title) }}" required>
                     @error('title') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Content / Details <span class="text-danger">*</span></label>
-                    <textarea name="content" class="form-control" rows="12" placeholder="Write the full announcement details here..." style="line-height: 1.6;" required>{{ old('content') }}</textarea>
+                    <textarea name="content" class="form-control" rows="12" style="line-height: 1.6;" required>{{ old('content', $announcement->content) }}</textarea>
                     @error('content') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                 </div>
             </div>
@@ -168,19 +170,19 @@
             
             {{-- Publish Card --}}
             <div class="sidebar-card">
-                <div class="section-title">Publishing</div>
+                <div class="section-title">Status & Action</div>
                 
                 <div class="form-check form-switch mb-3 ps-5">
-                    <input class="form-check-input" type="checkbox" id="is_published" name="is_published" value="1" checked style="width: 3em; height: 1.5em; margin-left: -3.5em;">
-                    <label class="form-check-label fw-bold ms-1 pt-1" for="is_published">Publish Immediately</label>
+                    <input class="form-check-input" type="checkbox" id="is_published" name="is_published" value="1" {{ old('is_published', $announcement->is_published) ? 'checked' : '' }} style="width: 3em; height: 1.5em; margin-left: -3.5em;">
+                    <label class="form-check-label fw-bold ms-1 pt-1" for="is_published">Published</label>
                 </div>
                 
                 <p class="small text-muted mb-4">
-                    If unchecked, this post will be saved as a <strong>Draft</strong> and hidden from the public.
+                    Uncheck to revert this post to a <strong>Draft</strong> (hidden from public).
                 </p>
 
                 <button type="submit" class="btn-publish">
-                    <i class="fas fa-paper-plane"></i> Post Announcement
+                    <i class="fas fa-save"></i> Update Changes
                 </button>
             </div>
 
@@ -192,25 +194,32 @@
                 <div class="mb-4">
                     <label class="form-label">Target Audience <span class="text-danger">*</span></label>
                     <select name="audience" class="form-select">
-                        <option value="All">All (Everyone)</option>
-                        <option value="Residents">Residents Only</option>
-                        <option value="Barangay Officials">Barangay Officials</option>
-                        <option value="SK Officials">SK Officials Only</option>
+                        <option value="All" {{ old('audience', $announcement->audience) == 'All' ? 'selected' : '' }}>All (Everyone)</option>
+                        <option value="Residents" {{ old('audience', $announcement->audience) == 'Residents' ? 'selected' : '' }}>Residents Only</option>
+                        <option value="Barangay Officials" {{ old('audience', $announcement->audience) == 'Barangay Officials' ? 'selected' : '' }}>Barangay Officials</option>
+                        <option value="SK Officials" {{ old('audience', $announcement->audience) == 'SK Officials' ? 'selected' : '' }}>SK Officials Only</option>
                     </select>
-                    <div class="form-text small">Who can see this post?</div>
                 </div>
+
+                {{-- Current Image Display --}}
+                @if($announcement->image_path)
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Current Image:</label>
+                        <img src="{{ asset('storage/' . $announcement->image_path) }}" alt="Current" class="img-fluid rounded border w-100 mb-2">
+                    </div>
+                @endif
 
                 {{-- Image Upload --}}
                 <div class="mb-3">
-                    <label class="form-label">Cover Image</label>
+                    <label class="form-label">Update Image</label>
                     <div class="image-upload-box" onclick="document.getElementById('imageInput').click()">
                         <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                        <div class="upload-text">Click to upload image</div>
-                        <div class="small text-muted mt-1">(JPG, PNG max 5MB)</div>
+                        <div class="upload-text">Click to replace image</div>
                         <input type="file" name="image" id="imageInput" class="d-none" accept="image/*" onchange="previewImage(this)">
                     </div>
                     {{-- Preview Container --}}
                     <div id="imagePreview" class="mt-3 d-none">
+                        <p class="small text-success fw-bold mb-1">New Selection:</p>
                         <img src="" alt="Preview" class="img-fluid rounded border w-100">
                     </div>
                 </div>

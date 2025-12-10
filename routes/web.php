@@ -13,6 +13,7 @@ use App\Http\Controllers\SecretaryController;
 use App\Http\Controllers\ResidentController;
 use App\Http\Controllers\TreasurerController;
 use App\Http\Controllers\KagawadController; // Added Kagawad Controller import
+use App\Http\Controllers\SkController;
 
 /*
 |--------------------------------------------------------------------------
@@ -126,7 +127,14 @@ Route::middleware('auth')->group(function () {
         
         // Delete Record
         Route::delete('/incident/{id}', [CaptainController::class, 'destroyIncident'])->name('incident.destroy');
+        // Inside your existing Captain Routes group:
+// Route::prefix('captain')...
+
+        Route::get('/sk-oversight', [App\Http\Controllers\CaptainController::class, 'skOverview'])
+        ->name('sk.overview');
     });
+
+    
 
     // ============================================
     // SECRETARY ROUTES
@@ -248,4 +256,31 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', CheckRole::class . ':kagawad'])->prefix('kagawad')->name('kagawad.')->group(function () {
     Route::get('/dashboard', [KagawadController::class, 'index'])->name('dashboard');
     Route::get('/residents', [KagawadController::class, 'residents'])->name('residents');
+});
+
+// routes/web.php
+
+
+
+
+
+Route::prefix('sk')->name('sk.')->middleware(['auth'])->group(function () {
+    // 1. Dashboard
+    Route::get('/dashboard', [App\Http\Controllers\SkController::class, 'index'])->name('dashboard');
+    
+    // 2. Youth Profiling & Printing
+    Route::get('/youth-profiling', [App\Http\Controllers\SkController::class, 'youthProfiling'])->name('youth-profiling');
+    Route::get('/youth-profiling/print', [App\Http\Controllers\SkController::class, 'printYouthList'])->name('youth-profiling.print');
+    
+    // 3. Projects (Create, Read, Update, Delete)
+    Route::get('/projects', [App\Http\Controllers\SkController::class, 'projects'])->name('projects');
+    Route::post('/projects', [App\Http\Controllers\SkController::class, 'storeProject'])->name('projects.store');
+    Route::put('/projects/{id}', [App\Http\Controllers\SkController::class, 'updateProject'])->name('projects.update');
+    Route::delete('/projects/{id}', [App\Http\Controllers\SkController::class, 'destroyProject'])->name('projects.destroy');
+    
+    // 4. Officials (Create, Read, Update, Delete)
+    Route::get('/officials', [App\Http\Controllers\SkController::class, 'manageOfficials'])->name('officials');
+    Route::post('/officials', [App\Http\Controllers\SkController::class, 'storeOfficial'])->name('officials.store');
+    Route::put('/officials/{id}', [App\Http\Controllers\SkController::class, 'updateOfficial'])->name('officials.update');
+    Route::delete('/officials/{id}', [App\Http\Controllers\SkController::class, 'destroyOfficial'])->name('officials.destroy');
 });

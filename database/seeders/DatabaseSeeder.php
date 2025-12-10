@@ -11,6 +11,7 @@ use App\Models\Medicine;
 use App\Models\DocumentRequest;
 use App\Models\DocumentType;
 use App\Models\Template;
+use App\Models\SkOfficial; // Added this import
 use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
@@ -38,6 +39,24 @@ class DatabaseSeeder extends Seeder
         );
 
         // ==========================================
+        // SK OFFICIAL USER & PROFILE
+        // ==========================================
+        
+        // 1. Create the SK User Account
+        $skUser = User::updateOrCreate(
+            ['username' => 'skchairman'],
+            [
+                'password' => Hash::make('password123'),
+                'first_name' => 'Gabriel',
+                'last_name' => 'Magsaysay',
+                'role' => 'sk_official', // Matches the isSkofficial() check
+                'email' => 'skchairman@calbueg.gov.ph',
+                'contact_number' => '09170001111',
+                'is_active' => true,
+            ]
+        );
+
+        // ==========================================
         // 7 KAGAWAD MEMBERS
         // ==========================================
         
@@ -53,14 +72,14 @@ class DatabaseSeeder extends Seeder
 
         foreach ($kagawads as $kagawad) {
             User::updateOrCreate(
-                ['username' => 'kagawad' . $kagawad['id']], // Checks for username: kagawad1, kagawad2...
+                ['username' => 'kagawad' . $kagawad['id']], 
                 [
                     'password' => Hash::make('password123'),
                     'first_name' => $kagawad['first'],
                     'last_name' => $kagawad['last'],
                     'role' => 'kagawad',
                     'email' => 'kagawad' . $kagawad['id'] . '@calbueg.gov.ph',
-                    'contact_number' => '0918123456' . $kagawad['id'], // Generates unique number
+                    'contact_number' => '0918123456' . $kagawad['id'], 
                     'is_active' => true,
                 ]
             );
@@ -184,7 +203,51 @@ class DatabaseSeeder extends Seeder
         );
 
         // --- Create Residents ---
-        // (Using email as the unique identifier for updateOrCreate)
+        
+        // ** NEW: SK CHAIRMAN RESIDENT PROFILE **
+        // We create the resident profile linked to the User created above
+        $skResident = Resident::updateOrCreate(
+            ['email' => 'skchairman@calbueg.gov.ph'],
+            [
+                'user_id' => $skUser->id, // Link to User
+                'first_name' => 'Gabriel', 
+                'middle_name' => 'Torres', 
+                'last_name' => 'Magsaysay', 
+                'suffix' => '',
+                'date_of_birth' => '2002-05-15', // 22 years old
+                'age' => 22, 
+                'gender' => 'Male', 
+                'civil_status' => 'Single',
+                'household_id' => $household1->id, // Living with Cruz family for demo
+                'household_status' => 'Member',
+                'address' => '123 Rizal St.', 
+                'contact_number' => '09170001111',
+                'occupation' => 'Student', 
+                'monthly_income' => null,
+                'is_registered_voter' => true, 
+                'precinct_number' => '0021A',
+                'is_pwd' => false, 
+                'pwd_id_number' => null, 
+                'disability_type' => null,
+                'is_indigenous' => false, 
+                'is_senior_citizen' => false, 
+                'is_4ps' => false, 
+                'is_active' => true,
+            ]
+        );
+
+        // ** NEW: CREATE SK OFFICIAL RECORD **
+        // This makes him appear in the SK Officials list
+        SkOfficial::updateOrCreate(
+            ['resident_id' => $skResident->id],
+            [
+                'position' => 'SK Chairperson',
+                'committee' => 'Committee on Sports and Youth Development',
+                'term_start' => '2023-11-01',
+                'term_end' => '2025-11-30',
+                'is_active' => true,
+            ]
+        );
 
         // Household 1: Cruz Household
         $res1 = Resident::updateOrCreate(

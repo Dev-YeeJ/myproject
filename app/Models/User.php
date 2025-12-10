@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+// Import the SkOfficial model if it's in the same namespace context or reference it directly
+use App\Models\SkOfficial; 
+use App\Models\Resident;
+
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
@@ -22,8 +26,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'contact_number', // <-- ADD THIS
-        'is_active',      // <-- AND ADD THIS
+        'contact_number',
+        'is_active',
     ];
 
     /**
@@ -49,12 +53,32 @@ class User extends Authenticatable
         ];
     }
     
+    // ============================================
+    // RELATIONSHIPS
+    // ============================================
+
     /**
      * Get the resident profile associated with this user.
      */
     public function resident()
     {
         return $this->hasOne(Resident::class);
+    }
+
+    /**
+     * Get the SK Official profile associated with this user.
+     * This links User -> Resident -> SkOfficial
+     */
+    public function skOfficialProfile()
+    {
+        return $this->hasOneThrough(
+            SkOfficial::class,
+            Resident::class,
+            'user_id',      // Foreign key on residents table
+            'resident_id',  // Foreign key on sk_officials table
+            'id',           // Local key on users table
+            'id'            // Local key on residents table
+        );
     }
 
     // ============================================
@@ -90,8 +114,10 @@ class User extends Authenticatable
     {
         return $this->role === 'tanod';
     }
+    
     public function isSkofficial(): bool
     {
+        // Checks if the role string is strictly 'sk_official'
         return $this->role === 'sk_official';
     }
     
@@ -99,6 +125,4 @@ class User extends Authenticatable
     {
         return $this->role === 'resident';
     }
-
-   
 }
