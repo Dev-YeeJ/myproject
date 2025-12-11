@@ -4,7 +4,7 @@
 
 @section('nav-items')
     <li class="nav-item">
-        <a href="{{ route('resident.dashboard') }}" class="nav-link">
+        <a href="{{ route('resident.dashboard') }}" class="nav-link ">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
@@ -16,33 +16,28 @@
             <span>Documents Services</span>
         </a>
     </li>
-    
     <li class="nav-item">
-        {{-- Active State for Health Services --}}
-        <a href="{{ route('resident.health-services') }}" class="nav-link active">
-            <i class="fas fa-heartbeat"></i>
-            <span>Health Services</span>
-        </a>
-    </li>
-    
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-bell"></i>
-            <span>Announcements</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-check-circle"></i>
-            <span>SK Module</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
-        </a>
-    </li>
+    <a href="{{ route('resident.health-services') }}" class="nav-link active">
+        <i class="fas fa-heartbeat"></i>
+        <span>Health Services</span>
+    </a>
+</li>
+
+{{-- NEW LINK HERE --}}
+<li class="nav-item">
+    <a href="{{ route('resident.incidents.index') }}" class="nav-link {{ request()->routeIs('resident.incidents.*') ? 'active' : '' }}">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Incident Reports</span>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a href="{{ route('resident.announcements.index') }}" class="nav-link">
+        <i class="fas fa-bullhorn"></i>
+        <span>Announcements</span>
+    </a>
+</li>
+
 @endsection
 
 @section('content')

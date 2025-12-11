@@ -5,9 +5,9 @@
 @section('title', 'Edit Resident - ' . $resident->first_name . ' ' . $resident->last_name)
 
 @section('nav-items')
-    {{-- (Nav items remain unchanged) --}}
+    {{-- Active class on Dashboard link --}}
     <li class="nav-item">
-        <a href="{{ route('captain.dashboard') }}" class="nav-link">
+        <a href="{{ route('captain.dashboard') }}" class="nav-link ">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
@@ -19,53 +19,51 @@
         </a>
     </li>
     <li class="nav-item">
+        {{-- UPDATED: Link to the new document services route --}}
         <a href="{{ route('captain.document-services') }}" class="nav-link">
             <i class="far fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-dollar-sign"></i>
-            <span>Financial Management</span>
-        </a>
-    </li>
+    <a href="{{ route('captain.financial') }}" class="nav-link {{ request()->routeIs('captain.financial*') ? 'active' : '' }}">
+        <i class="fas fa-dollar-sign"></i>
+        <span>Financial Management</span>
+    </a>
+</li>
     <li class="nav-item">
+        {{-- UPDATED: Link to the new health services route --}}
         <a href="{{ route('captain.health-services') }}" class="nav-link">
             <i class="fas fa-heart"></i>
             <span>Health & Social Services</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>Incident & Blotter</span>
-        </a>
-    </li>
+    <a href="{{ route('captain.incident.index') }}" class="nav-link {{ request()->routeIs('captain.incident.*') ? 'active' : '' }}">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Incident & Blotter</span>
+    </a>
+</li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
+        <a href="{{ route('captain.project.monitoring') }}" class="nav-link"> {{-- Add route later --}}
             <i class="fas fa-flag"></i>
             <span>Project Monitoring</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-bell"></i>
-            <span>Announcements</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-check-circle"></i>
+    <a href="{{ route('captain.announcements.index') }}" class="nav-link {{ request()->routeIs('captain.announcements.*') ? 'active' : '' }}">
+        <i class="fas fa-bell"></i>
+        <span>Announcements</span>
+    </a>
+</li>
+   <li class="nav-item">
+        {{-- Use the new captain.sk.overview route --}}
+        <a href="{{ route('captain.sk.overview') }}" class="nav-link {{ request()->routeIs('captain.sk.overview') ? 'active' : '' }}">
+            <i class="fas fa-user-graduate"></i>
             <span>SK Module</span>
         </a>
     </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
-        </a>
-    </li>
+   
 @endsection
 
 @section('content')

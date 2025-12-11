@@ -63,12 +63,7 @@
             <span>SK Module</span>
         </a>
     </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
-        </a>
-    </li>
+   
 @endsection
 
 @section('content')

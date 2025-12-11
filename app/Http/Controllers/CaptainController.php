@@ -500,7 +500,6 @@ class CaptainController extends Controller
     public function updateDocumentRequest(Request $request, $id)
     {
         $documentRequest = DocumentRequest::with('documentType', 'resident')->findOrFail($id);
-
         $oldPaymentStatus = $documentRequest->payment_status;
 
         $validated = $request->validate([
@@ -523,6 +522,7 @@ class CaptainController extends Controller
         $documentRequest->remarks = $validated['remarks'];
         $documentRequest->save();
 
+        // Auto-record Revenue if Paid
         if ($validated['payment_status'] === 'Paid' && $oldPaymentStatus !== 'Paid' && $documentRequest->price > 0) {
             $residentName = $documentRequest->resident ? $documentRequest->resident->first_name . ' ' . $documentRequest->resident->last_name : 'Unknown';
             $docName = $documentRequest->documentType ? $documentRequest->documentType->name : 'Document';
@@ -655,6 +655,8 @@ class CaptainController extends Controller
     {
         $user = Auth::user();
         $activeProjects = Project::where('status', '!=', 'Completed')->orderBy('title')->get();
+        
+        // Retrieve Pending Requests (e.g. from Kagawads)
         $pendingRequests = FinancialTransaction::where('type', 'expense')->where('status', 'pending')->latest()->get();
         
         $query = FinancialTransaction::with('project')->latest(); 
@@ -787,6 +789,9 @@ class CaptainController extends Controller
         return redirect()->back()->with('success', 'Transaction deleted.');
     }
 
+    /**
+     * Updates status of pending transactions (e.g. from Kagawads)
+     */
     public function updateTransactionStatus(Request $request, $id)
     {
         $transaction = FinancialTransaction::findOrFail($id);
@@ -796,7 +801,9 @@ class CaptainController extends Controller
             $transaction->status = $status;
             $transaction->save();
             
-            if ($transaction->project_id) $this->recalculateProjectSpend($transaction->project_id);
+            if ($status == 'approved' && $transaction->project_id) {
+                $this->recalculateProjectSpend($transaction->project_id);
+            }
             
             return redirect()->back()->with('success', 'Status updated.');
         }
@@ -828,28 +835,56 @@ class CaptainController extends Controller
     public function projectMonitoring(Request $request)
     {
         $user = Auth::user();
-        $selectedCategory = $request->input('category', 'All Projects');
+        $view = $request->input('view', 'active'); 
 
-        $baseQuery = Project::query();
-        if ($selectedCategory != 'All Projects') {
-            $baseQuery->where('category', $selectedCategory);
+        // 1. Proposals (Waiting for Approval)
+        $proposalsQuery = Project::where('status', 'Proposed')->latest();
+        $proposals = $proposalsQuery->paginate(6, ['*'], 'proposals_page');
+
+        // 2. Active/Completed Projects
+        $projectsQuery = Project::where('status', '!=', 'Proposed');
+
+        if ($request->has('category') && $request->category != 'All Projects') {
+            $projectsQuery->where('category', $request->category);
+        }
+        if ($request->has('search') && $request->search != '') {
+            $projectsQuery->where('title', 'like', '%' . $request->search . '%');
         }
 
+        $projects = $projectsQuery->latest()->paginate(6, ['*'], 'projects_page');
+        
         $stats = [
-            'total_projects'    => (clone $baseQuery)->count(),
-            'active_projects'   => (clone $baseQuery)->where('status', 'In Progress')->count(),
-            'total_budget'      => (clone $baseQuery)->sum('budget'),
-            'total_spent'       => (clone $baseQuery)->sum('amount_spent'),
-            'completed_projects'=> (clone $baseQuery)->where('status', 'Completed')->count(),
+            'total_projects'    => Project::count(),
+            'active_projects'   => Project::where('status', 'In Progress')->count(),
+            'pending_proposals' => Project::where('status', 'Proposed')->count(),
+            'total_budget'      => Project::where('status', '!=', 'Proposed')->sum('budget'),
+            'total_spent'       => Project::sum('amount_spent'),
+            'completed_projects'=> Project::where('status', 'Completed')->count(),
         ];
 
-        if ($request->has('search') && $request->search != '') {
-            $baseQuery->where('title', 'like', '%' . $request->search . '%');
+        return view('dashboard.captain-project-monitoring', compact('user', 'stats', 'projects', 'proposals', 'view'));
+    }
+
+    public function approveProjectProposal($id)
+    {
+        $project = Project::findOrFail($id);
+        
+        if ($project->status !== 'Proposed') {
+            return redirect()->back()->with('error', 'Project is already processed.');
         }
 
-        $projects = $baseQuery->latest()->paginate(6)->withQueryString();
+        $project->status = 'In Progress';
+        $project->save();
 
-        return view('dashboard.captain-project-monitoring', compact('user', 'stats', 'projects', 'selectedCategory'));
+        return redirect()->back()->with('success', 'Project approved and is now active.');
+    }
+
+    public function rejectProjectProposal($id)
+    {
+        $project = Project::findOrFail($id);
+        // Permanently delete or set status to Rejected
+        $project->delete(); 
+        return redirect()->back()->with('success', 'Project proposal rejected/removed.');
     }
 
     public function storeProject(Request $request)
@@ -907,7 +942,7 @@ class CaptainController extends Controller
     }
 
     // ============================================
-    // 8. INCIDENT & BLOTTER MANAGEMENT (FULL)
+    // 8. INCIDENT & BLOTTER
     // ============================================
 
     public function incidentAndBlotter(Request $request)
@@ -918,7 +953,6 @@ class CaptainController extends Controller
 
         $query = BlotterRecord::query();
 
-        // Search Logic
         if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('case_number', 'like', "%{$search}%")
@@ -928,12 +962,10 @@ class CaptainController extends Controller
             });
         }
 
-        // Filter Logic
         if ($statusFilter && $statusFilter !== 'All') {
             $query->where('status', $statusFilter);
         }
 
-        // Statistics
         $stats = [
             'total_cases'    => BlotterRecord::count(),
             'high_priority'  => BlotterRecord::where('priority', 'High')->where('status', '!=', 'Resolved')->count(),
@@ -941,7 +973,6 @@ class CaptainController extends Controller
             'resolved_cases' => BlotterRecord::where('status', 'Resolved')->count(),
         ];
 
-        // Sorting
         $records = $query->orderByRaw("FIELD(status, 'Open', 'Scheduled for Hearing', 'Under Investigation', 'For Mediation', 'Resolved', 'Dismissed')")
                          ->orderBy('priority', 'desc')
                          ->orderBy('date_reported', 'desc')
@@ -972,9 +1003,6 @@ class CaptainController extends Controller
         return redirect()->back()->with('success', 'Incident logged successfully. Case #: ' . $validated['case_number']);
     }
 
-    /**
-     * PROCESS: Handle Status Updates, Hearings, and Resolutions
-     */
     public function processIncident(Request $request, $id)
     {
         $record = BlotterRecord::findOrFail($id);
@@ -993,19 +1021,16 @@ class CaptainController extends Controller
                 $newStatus = 'Scheduled for Hearing';
                 $newLog = "[$timestamp] STATUS: Scheduled for Hearing. DETAILS: " . $request->remarks;
                 break;
-
             case 'resolve_case':
                 $newStatus = 'Resolved';
                 $newLog = "[$timestamp] STATUS: Case Resolved. REMARKS: " . $request->remarks;
                 break;
-
             case 'status_update':
                 $newStatus = $request->new_status ?? $record->status;
                 $newLog = "[$timestamp] STATUS: Updated to $newStatus. UPDATE: " . $request->remarks;
                 break;
         }
 
-        // Append to history
         $updatedHistory = $record->actions_taken . "\n" . $newLog;
 
         $record->update([
@@ -1016,9 +1041,6 @@ class CaptainController extends Controller
         return redirect()->back()->with('success', 'Case workflow updated successfully.');
     }
 
-    /**
-     * EDIT: Handle corrections to data (Typos, wrong location, etc.)
-     */
     public function updateIncidentDetails(Request $request, $id)
     {
         $record = BlotterRecord::findOrFail($id);
@@ -1038,9 +1060,6 @@ class CaptainController extends Controller
         return redirect()->back()->with('success', 'Incident details updated.');
     }
 
-    /**
-     * DESTROY: Delete a record
-     */
     public function destroyIncident($id)
     {
         $record = BlotterRecord::findOrFail($id);
@@ -1048,7 +1067,12 @@ class CaptainController extends Controller
 
         return redirect()->back()->with('success', 'Incident record deleted successfully.');
     }
-  public function skOverview()
+
+    // ============================================
+    // 9. SK OVERVIEW
+    // ============================================
+
+    public function skOverview()
     {
         $user = Auth::user();
 
@@ -1085,7 +1109,6 @@ class CaptainController extends Controller
             'allocation' => $skAllocation,
             'spent' => $skSpent,
             'committed' => $skCommitted,
-            // FIX: Added 'remaining' key here to resolve the error
             'remaining' => $skAllocation - $skSpent, 
             'available_cash' => $skAllocation - $skSpent, 
             'uncommitted_balance' => $skAllocation - $skCommitted,
@@ -1096,6 +1119,50 @@ class CaptainController extends Controller
         $skProjects = Project::where('category', 'SK Project')->orderBy('status', 'desc')->get();
         $officials = SkOfficial::with('resident')->where('is_active', true)->get();
 
-            return view('dashboard.captain-sk-overview', compact('user', 'youthStats', 'budgetStats', 'skProjects', 'officials'));
-        }
+        return view('dashboard.captain-sk-overview', compact('user', 'youthStats', 'budgetStats', 'skProjects', 'officials'));
     }
+
+    // ============================================
+    // 10. EXPORT REPORT (New Addition)
+    // ============================================
+
+    public function export(Request $request)
+    {
+        $type = $request->input('report_type');
+        
+        if ($type === 'transactions') {
+            $filename = 'transaction-history-' . now()->format('Y-m-d') . '.csv';
+            $headers = [
+                "Content-type"        => "text/csv",
+                "Content-Disposition" => "attachment; filename=$filename",
+                "Pragma"              => "no-cache",
+                "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                "Expires"             => "0"
+            ];
+
+            $callback = function() {
+                $file = fopen('php://output', 'w');
+                fputcsv($file, ['Date', 'Title', 'Category', 'Type', 'Amount', 'Status', 'Requested By']);
+
+                $transactions = FinancialTransaction::orderBy('transaction_date', 'desc')->get();
+
+                foreach ($transactions as $row) {
+                    fputcsv($file, [
+                        $row->transaction_date,
+                        $row->title,
+                        $row->category,
+                        $row->type,
+                        $row->amount,
+                        $row->status,
+                        $row->requested_by
+                    ]);
+                }
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+        }
+
+        return redirect()->back()->with('error', 'Export type not supported yet.');
+    }
+}

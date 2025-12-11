@@ -119,7 +119,7 @@
     </button>
 </div>
 
-{{-- Success & Error Alerts --}}
+{{-- Success & Error Alerts (Global) --}}
 @if(session('success')) 
     <div class="alert alert-success alert-dismissible fade show shadow-sm border-left-success" role="alert">
         <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
@@ -131,6 +131,7 @@
 
 @if($errors->any()) 
     <div class="alert alert-danger alert-dismissible fade show shadow-sm border-left-danger" role="alert">
+        <strong><i class="fas fa-exclamation-triangle mr-1"></i> Action Failed</strong>
         <ul class="mb-0 pl-3">
             @foreach($errors->all() as $error) 
                 <li>{{ $error }}</li> 
@@ -230,14 +231,26 @@
                 <div id="methodField"></div> {{-- Placeholder for PUT method --}}
                 
                 <div class="modal-body p-4">
+                    {{-- Validation Errors Inside Modal --}}
+                    @if($errors->any())
+                        <div class="alert alert-danger p-2 small">
+                            <strong><i class="fas fa-exclamation-circle"></i> Check the inputs:</strong>
+                            <ul class="mb-0 pl-3">
+                                @foreach($errors->all() as $error) <li>{{ $error }}</li> @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     {{-- Resident Selection (Only visible in Add Mode) --}}
                     <div class="form-group" id="residentGroup">
                         <label class="font-weight-bold text-dark">Select Resident <span class="text-danger">*</span></label>
                         <select name="resident_id" class="form-control custom-select" required>
                             <option value="">-- Select Eligible Resident (15-30yo) --</option>
                             @foreach($eligible as $resident)
-                                {{-- NOTICE: Using date_of_birth to calculate age --}}
-                                <option value="{{ $resident->id }}">{{ $resident->last_name }}, {{ $resident->first_name }} ({{ \Carbon\Carbon::parse($resident->date_of_birth)->age }} yo)</option>
+                                <option value="{{ $resident->id }}">
+                                    {{ $resident->last_name }}, {{ $resident->first_name }} 
+                                    ({{ \Carbon\Carbon::parse($resident->date_of_birth)->age }} yo)
+                                </option>
                             @endforeach
                         </select>
                         <small class="form-text text-muted">Only showing residents aged 15-30 who are not yet officials.</small>
@@ -257,7 +270,7 @@
                     {{-- Committee --}}
                     <div class="form-group">
                         <label class="font-weight-bold text-dark">Committee Assignment</label>
-                        <input type="text" name="committee" id="oCom" class="form-control" placeholder="e.g. Committee on Sports & Youth Development">
+                        <input type="text" name="committee" id="oCom" class="form-control" placeholder="e.g. Committee on Sports & Youth Development" value="{{ old('committee') }}">
                     </div>
 
                     {{-- Term Dates --}}
@@ -265,13 +278,13 @@
                         <div class="col-6">
                             <div class="form-group">
                                 <label class="font-weight-bold text-dark">Term Start <span class="text-danger">*</span></label>
-                                <input type="date" name="term_start" id="oStart" class="form-control" required>
+                                <input type="date" name="term_start" id="oStart" class="form-control" value="{{ old('term_start') }}" required>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="form-group">
                                 <label class="font-weight-bold text-dark">Term End <span class="text-danger">*</span></label>
-                                <input type="date" name="term_end" id="oEnd" class="form-control" required>
+                                <input type="date" name="term_end" id="oEnd" class="form-control" value="{{ old('term_end') }}" required>
                             </div>
                         </div>
                     </div>
@@ -289,44 +302,65 @@
 {{-- Scripts to handle Modal Logic --}}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Handle Modal Opening via Button
         $('#officialModal').on('show.bs.modal', function (event) {
             var button = $(event.relatedTarget);
-            var mode = button.data('mode');
-            var modal = $(this);
-            var form = modal.find('#officialForm');
-
-            if (mode === 'edit') {
-                // Switch to Edit Mode
-                modal.find('#modalTitle').text('Edit Official Details');
-                modal.find('#methodField').html('<input type="hidden" name="_method" value="PUT">');
-                
-                // Hide Resident Selector (Cannot change person once appointed)
-                modal.find('#residentGroup').hide();
-                modal.find('select[name="resident_id"]').prop('required', false);
-
-                // Populate Fields
-                modal.find('#oPos').val(button.data('pos'));
-                modal.find('#oCom').val(button.data('com'));
-                modal.find('#oStart').val(button.data('start'));
-                modal.find('#oEnd').val(button.data('end'));
-                
-                // Set Action URL
-                form.attr('action', '/sk/officials/' + button.data('id'));
             
-            } else {
-                // Switch to Add Mode
-                modal.find('#modalTitle').text('Appoint New Official');
-                modal.find('#methodField').html('');
+            // Check if triggered by button (not by error reload)
+            if (button.length) {
+                var mode = button.data('mode');
+                var modal = $(this);
+                var form = modal.find('#officialForm');
+
+                if (mode === 'edit') {
+                    // Switch to Edit Mode
+                    modal.find('#modalTitle').text('Edit Official Details');
+                    modal.find('#methodField').html('<input type="hidden" name="_method" value="PUT">');
+                    
+                    // Hide Resident Selector (Cannot change person once appointed)
+                    modal.find('#residentGroup').hide();
+                    modal.find('select[name="resident_id"]').prop('required', false);
+
+                    // Populate Fields
+                    modal.find('#oPos').val(button.data('pos'));
+                    modal.find('#oCom').val(button.data('com'));
+                    modal.find('#oStart').val(button.data('start'));
+                    modal.find('#oEnd').val(button.data('end'));
+                    
+                    // Set Action URL
+                    form.attr('action', '/sk/officials/' + button.data('id'));
                 
-                // Show Resident Selector
-                modal.find('#residentGroup').show();
-                modal.find('select[name="resident_id"]').prop('required', true);
-                
-                // Reset Form
-                form.trigger('reset');
-                form.attr('action', '{{ route("sk.officials.store") }}');
+                } else {
+                    // Switch to Add Mode
+                    modal.find('#modalTitle').text('Appoint New Official');
+                    modal.find('#methodField').html('');
+                    
+                    // Show Resident Selector
+                    modal.find('#residentGroup').show();
+                    modal.find('select[name="resident_id"]').prop('required', true);
+                    
+                    // Reset Form (Only if no previous errors)
+                    @if(!$errors->any())
+                        form.trigger('reset');
+                    @endif
+                    form.attr('action', '{{ route("sk.officials.store") }}');
+                }
             }
         });
+
+        // AUTO-OPEN MODAL ON ERROR
+        // If the page reloads due to validation error, re-open the modal automatically
+        @if($errors->any())
+            $('#officialModal').modal('show');
+            
+            // Fallback to restore Edit state if it was an update attempt
+            @if(old('_method') == 'PUT')
+                 $('#modalTitle').text('Edit Official Details');
+                 $('#methodField').html('<input type="hidden" name="_method" value="PUT">');
+                 $('#residentGroup').hide();
+                 $('select[name="resident_id"]').prop('required', false);
+            @endif
+        @endif
     });
 </script>
 @endsection

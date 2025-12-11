@@ -101,6 +101,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/project', [CaptainController::class, 'storeProject'])->name('project.store');
         Route::put('/project/{id}', [CaptainController::class, 'updateProjectProgress'])->name('project.update');
         Route::delete('/project/{id}', [CaptainController::class, 'destroyProject'])->name('project.destroy');
+        // Project Approvals
+        Route::put('/projects/{id}/approve', [CaptainController::class, 'approveProjectProposal'])->name('projects.approve');
+        Route::delete('/projects/{id}/reject', [CaptainController::class, 'rejectProjectProposal'])->name('projects.reject');
 
         // Announcements
         Route::get('/announcements', [CaptainController::class, 'announcements'])->name('announcements.index');
@@ -256,7 +259,13 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', CheckRole::class . ':kagawad'])->prefix('kagawad')->name('kagawad.')->group(function () {
     Route::get('/dashboard', [KagawadController::class, 'index'])->name('dashboard');
     Route::get('/residents', [KagawadController::class, 'residents'])->name('residents');
+    // Project Monitoring
+    Route::get('/projects', [KagawadController::class, 'projects'])->name('projects');
+    Route::post('/projects/store', [KagawadController::class, 'storeProjectProposal'])->name('projects.store');
+    Route::put('/projects/{id}/progress', [KagawadController::class, 'updateProjectProgress'])->name('projects.progress');
+    Route::post('/projects/expense', [KagawadController::class, 'storeProjectExpense'])->name('projects.expense');
 });
+
 
 // routes/web.php
 
@@ -264,23 +273,25 @@ Route::middleware(['auth', CheckRole::class . ':kagawad'])->prefix('kagawad')->n
 
 
 
+
+
 Route::prefix('sk')->name('sk.')->middleware(['auth'])->group(function () {
-    // 1. Dashboard
-    Route::get('/dashboard', [App\Http\Controllers\SkController::class, 'index'])->name('dashboard');
+    // Dashboard
+    Route::get('/dashboard', [SkController::class, 'index'])->name('dashboard');
     
-    // 2. Youth Profiling & Printing
-    Route::get('/youth-profiling', [App\Http\Controllers\SkController::class, 'youthProfiling'])->name('youth-profiling');
-    Route::get('/youth-profiling/print', [App\Http\Controllers\SkController::class, 'printYouthList'])->name('youth-profiling.print');
+    // Profiling
+    Route::get('/youth-profiling', [SkController::class, 'youthProfiling'])->name('youth-profiling');
+    Route::get('/youth-profiling/print', [SkController::class, 'printYouthList'])->name('youth-profiling.print');
     
-    // 3. Projects (Create, Read, Update, Delete)
-    Route::get('/projects', [App\Http\Controllers\SkController::class, 'projects'])->name('projects');
-    Route::post('/projects', [App\Http\Controllers\SkController::class, 'storeProject'])->name('projects.store');
-    Route::put('/projects/{id}', [App\Http\Controllers\SkController::class, 'updateProject'])->name('projects.update');
-    Route::delete('/projects/{id}', [App\Http\Controllers\SkController::class, 'destroyProject'])->name('projects.destroy');
+    // Projects
+    Route::get('/projects', [SkController::class, 'projects'])->name('projects');
+    Route::post('/projects', [SkController::class, 'storeProject'])->name('projects.store');
+    Route::put('/projects/{id}', [SkController::class, 'updateProject'])->name('projects.update'); // Note the URL param
+    Route::delete('/projects/{id}', [SkController::class, 'destroyProject'])->name('projects.destroy');
     
-    // 4. Officials (Create, Read, Update, Delete)
-    Route::get('/officials', [App\Http\Controllers\SkController::class, 'manageOfficials'])->name('officials');
-    Route::post('/officials', [App\Http\Controllers\SkController::class, 'storeOfficial'])->name('officials.store');
-    Route::put('/officials/{id}', [App\Http\Controllers\SkController::class, 'updateOfficial'])->name('officials.update');
-    Route::delete('/officials/{id}', [App\Http\Controllers\SkController::class, 'destroyOfficial'])->name('officials.destroy');
+    // Officials
+    Route::get('/officials', [SkController::class, 'manageOfficials'])->name('officials');
+    Route::post('/officials', [SkController::class, 'storeOfficial'])->name('officials.store');
+    Route::put('/officials/{id}', [SkController::class, 'updateOfficial'])->name('officials.update');
+    Route::delete('/officials/{id}', [SkController::class, 'destroyOfficial'])->name('officials.destroy');
 });

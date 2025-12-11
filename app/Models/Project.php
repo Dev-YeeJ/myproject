@@ -9,25 +9,21 @@ class Project extends Model
 {
     use HasFactory;
 
+    // This property allows the data to be saved. Without it, the save button does nothing.
     protected $fillable = [
-        'title',
-        'description',
-        'category',
-        'status',
-        'progress',
-        'budget',
-        'amount_spent',
-        'start_date',
-        'end_date',
+        'title', 
+        'category', 
+        'status', 
+        'budget', 
+        'amount_spent', 
+        'progress', 
+        'start_date', 
+        'end_date', 
+        'description'
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
     ];
-
-    public function transactions()
-    {
-        return $this->hasMany(FinancialTransaction::class);
-    }
 }

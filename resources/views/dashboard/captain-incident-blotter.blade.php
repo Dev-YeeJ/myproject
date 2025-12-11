@@ -3,9 +3,9 @@
 @section('title', 'Incident & Blotter Management')
 
 @section('nav-items')
-    {{-- Navigation items remain the same --}}
+    {{-- Active class on Dashboard link --}}
     <li class="nav-item">
-        <a href="{{ route('captain.dashboard') }}" class="nav-link">
+        <a href="{{ route('captain.dashboard') }}" class="nav-link ">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
@@ -23,19 +23,19 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.financial') }}" class="nav-link">
+        <a href="{{ route('captain.financial') }}" class="nav-link {{ request()->routeIs('captain.financial*') ? 'active' : '' }}">
             <i class="fas fa-dollar-sign"></i>
             <span>Financial Management</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.health-services') }}" class="nav-link">
+        <a href="{{ route('captain.health-services') }}" class="nav-link ">
             <i class="fas fa-heart"></i>
             <span>Health & Social Services</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.incident.index') }}" class="nav-link active">
+        <a href="{{ route('captain.incident.index') }}" class="nav-link active {{ request()->routeIs('captain.incident.*') ? 'active' : '' }}">
             <i class="fas fa-exclamation-triangle"></i>
             <span>Incident & Blotter</span>
         </a>
@@ -47,21 +47,15 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.announcements.index') }}" class="nav-link">
+        <a href="{{ route('captain.announcements.index') }}" class="nav-link {{ request()->routeIs('captain.announcements.*') ? 'active' : '' }}">
             <i class="fas fa-bell"></i>
             <span>Announcements</span>
         </a>
     </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-check-circle"></i>
+   <li class="nav-item">
+        <a href="{{ route('captain.sk.overview') }}" class="nav-link {{ request()->routeIs('captain.sk.overview') ? 'active' : '' }}">
+            <i class="fas fa-user-graduate"></i>
             <span>SK Module</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
         </a>
     </li>
 @endsection
@@ -210,7 +204,7 @@
 
 @if(session('success'))
 <div class="alert alert-success d-flex align-items-center mb-3" style="background: #ECFDF5; color: #065F46; border: 1px solid #6EE7B7; border-radius: 12px; padding: 20px;">
-    <i class="fas fa-check-circle me-3 fa-lg"></i>
+    <i class="fas fa-check-circle mr-3 fa-lg"></i> {{-- BS4 uses mr-3 --}}
     <span style="font-weight: 500;">{{ session('success') }}</span>
 </div>
 @endif
@@ -223,7 +217,8 @@
         <span class="badge-icon">PH</span>
         <span>Barangay Calbueg Security</span>
     </div>
-    <button class="btn-log-case" data-bs-toggle="modal" data-bs-target="#logIncidentModal">
+    {{-- BS4 FIX: data-toggle/target --}}
+    <button class="btn-log-case" data-toggle="modal" data-target="#logIncidentModal">
         <i class="fas fa-plus-circle fa-lg"></i> 
         <span>Log New Case</span>
     </button>
@@ -273,6 +268,7 @@
     </div>
     <form action="{{ route('captain.incident.index') }}" method="GET" class="filters-section">
         <input type="text" name="search" class="search-input" placeholder="🔍 Search Case #..." value="{{ $search }}">
+        {{-- BS4 uses standard classes --}}
         <select name="status" class="filter-select" onchange="this.form.submit()">
             <option value="All">All Statuses</option>
             <option value="Open" {{ $statusFilter == 'Open' ? 'selected' : '' }}>Open</option>
@@ -291,7 +287,6 @@
     <table class="table">
         <thead>
             <tr>
-                {{-- Separated Columns --}}
                 <th>Case Number</th>
                 <th>Date Filed</th>
                 <th>Type</th>
@@ -314,7 +309,7 @@
                 </td>
                 <td>{{ $record->date_reported->format('M d, Y') }}</td>
                 <td><span class="text-muted fw-bold">{{ $record->incident_type }}</span></td>
-                <td class="fw-bold text-primary">{{ $record->complainant }}</td>
+                <td><span class="fw-bold text-primary">{{ $record->complainant }}</span></td>
                 <td>{{ $record->respondent ?? 'N/A' }}</td>
                 <td>
                     @php
@@ -330,13 +325,14 @@
                 </td>
                 <td>
                     <div class="action-icons">
-                        <button class="action-icon process" data-bs-toggle="modal" data-bs-target="#processModal{{ $record->id }}" title="Process">
+                        {{-- BS4 FIX: data-toggle/target --}}
+                        <button class="action-icon process" data-toggle="modal" data-target="#processModal{{ $record->id }}" title="Process">
                             <i class="fas fa-tasks"></i>
                         </button>
-                        <button class="action-icon edit" data-bs-toggle="modal" data-bs-target="#editModal{{ $record->id }}" title="Edit">
+                        <button class="action-icon edit" data-toggle="modal" data-target="#editModal{{ $record->id }}" title="Edit">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="action-icon delete" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $record->id }}" title="Delete">
+                        <button class="action-icon delete" data-toggle="modal" data-target="#deleteModal{{ $record->id }}" title="Delete">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
@@ -348,37 +344,40 @@
                 <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content border-0 shadow-lg">
                         <div class="modal-header bg-light border-bottom-0 py-3">
-                            <h5 class="modal-title fw-bold ps-2">Process Case: {{ $record->case_number }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <h5 class="modal-title fw-bold pl-2">Process Case: {{ $record->case_number }}</h5> {{-- pl-2 --}}
+                            {{-- BS4 Close --}}
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
                         </div>
                         <div class="modal-body p-4">
-                            <div class="row g-4">
-                                <div class="col-md-6 border-end">
+                            <div class="row"> {{-- BS4 doesn't support g-4 directly in row, standard row has margin --}}
+                                {{-- BS4: border-right, pl-md-4 --}}
+                                <div class="col-md-6 border-right">
                                     <label class="small fw-bold text-secondary text-uppercase mb-2">Narrative</label>
                                     <div class="bg-light p-3 rounded mb-4 border" style="font-size: 0.9rem;">{{ $record->narrative }}</div>
                                     <label class="small fw-bold text-secondary text-uppercase mb-2">History Log</label>
                                     <div class="history-log-box">{{ $record->actions_taken }}</div>
                                 </div>
-                                <div class="col-md-6 ps-md-4">
+                                <div class="col-md-6 pl-md-4">
                                     <form action="{{ route('captain.incident.process', $record->id) }}" method="POST">
                                         @csrf @method('PUT')
-                                        <div class="mb-3">
+                                        <div class="form-group">
                                             <label class="small fw-bold text-muted mb-1">Action</label>
-                                            <select name="action_type" class="form-select" id="actSel{{ $record->id }}" onchange="toggleP{{ $record->id }}()">
+                                            {{-- BS4: form-control --}}
+                                            <select name="action_type" class="form-control" id="actSel{{ $record->id }}" onchange="toggleP{{ $record->id }}()">
                                                 <option value="status_update">Update Status</option>
                                                 <option value="schedule_hearing">Schedule Hearing</option>
                                                 <option value="resolve_case">Mark Resolved</option>
                                             </select>
                                         </div>
-                                        <div class="mb-3" id="statGrp{{ $record->id }}">
+                                        <div class="form-group" id="statGrp{{ $record->id }}">
                                             <label class="small fw-bold text-muted mb-1">New Status</label>
-                                            <select name="new_status" class="form-select">
+                                            <select name="new_status" class="form-control">
                                                 <option value="Under Investigation">Under Investigation</option>
                                                 <option value="For Mediation">For Mediation</option>
                                                 <option value="Dismissed">Dismissed</option>
                                             </select>
                                         </div>
-                                        <div class="mb-3">
+                                        <div class="form-group">
                                             <label class="small fw-bold text-muted mb-1" id="remLbl{{ $record->id }}">Remarks</label>
                                             <textarea name="remarks" class="form-control" rows="5" required placeholder="Enter details..."></textarea>
                                         </div>
@@ -408,38 +407,39 @@
                         <form action="{{ route('captain.incident.update_details', $record->id) }}" method="POST">
                             @csrf @method('PUT')
                             <div class="modal-header bg-light border-bottom-0 py-3">
-                                <h5 class="modal-title fw-bold ps-2">Edit Details</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                <h5 class="modal-title fw-bold pl-2">Edit Details</h5>
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
                             </div>
                             <div class="modal-body p-4">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
+                                {{-- BS4: form-row for grid inside forms --}}
+                                <div class="form-row">
+                                    <div class="col-md-6 mb-3">
                                         <label class="small fw-bold text-muted">Complainant</label>
                                         <input type="text" name="complainant" class="form-control" value="{{ $record->complainant }}">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 mb-3">
                                         <label class="small fw-bold text-muted">Respondent</label>
                                         <input type="text" name="respondent" class="form-control" value="{{ $record->respondent }}">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 mb-3">
                                         <label class="small fw-bold text-muted">Type</label>
-                                        <select name="incident_type" class="form-select">
+                                        <select name="incident_type" class="form-control">
                                             <option selected>{{ $record->incident_type }}</option>
                                             <option>Noise Complaint</option><option>Theft</option><option>Property Dispute</option><option>Physical Injury</option><option>Others</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 mb-3">
                                         <label class="small fw-bold text-muted">Priority</label>
-                                        <select name="priority" class="form-select">
+                                        <select name="priority" class="form-control">
                                             <option selected>{{ $record->priority }}</option>
                                             <option>Low</option><option>Medium</option><option>High</option>
                                         </select>
                                     </div>
-                                    <div class="col-12">
+                                    <div class="col-12 mb-3">
                                         <label class="small fw-bold text-muted">Date</label>
                                         <input type="datetime-local" name="date_reported" class="form-control" value="{{ $record->date_reported->format('Y-m-d\TH:i') }}">
                                     </div>
-                                    <div class="col-12">
+                                    <div class="col-12 mb-3">
                                         <label class="small fw-bold text-muted">Location</label>
                                         <input type="text" name="location" class="form-control" value="{{ $record->location }}">
                                     </div>
@@ -449,7 +449,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="modal-footer border-top-0 pt-0 pb-4 pe-4">
+                            <div class="modal-footer border-top-0 pt-0 pb-4 pr-4">
                                 <button type="submit" class="btn btn-success text-white fw-bold px-4">Save Changes</button>
                             </div>
                         </form>
@@ -467,7 +467,7 @@
                         <form action="{{ route('captain.incident.destroy', $record->id) }}" method="POST">
                             @csrf @method('DELETE')
                             <button type="submit" class="btn btn-danger w-100 mb-2 py-2 fw-bold">Yes, Delete it</button>
-                            <button type="button" class="btn btn-light w-100 py-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-light w-100 py-2" data-dismiss="modal">Cancel</button>
                         </form>
                     </div>
                 </div>
@@ -480,7 +480,8 @@
     </table>
     
     <div class="pagination-container">
-        {{ $records->links('pagination::bootstrap-5') }}
+        {{-- BS4 Pagination --}}
+        {{ $records->links('pagination::bootstrap-4') }}
     </div>
 </div>
 
@@ -492,35 +493,38 @@
                 @csrf
                 <div class="modal-header bg-primary text-white py-3">
                     <h5 class="modal-title fw-bold">Log New Incident</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    {{-- BS4 Close --}}
+                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body p-4">
-                    <div class="row g-3">
-                        <div class="col-md-6">
+                    {{-- BS4 form-row --}}
+                    <div class="form-row">
+                        <div class="col-md-6 mb-3">
                             <label class="small fw-bold text-muted">Complainant Name</label>
                             <input type="text" name="complainant" class="form-control" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6 mb-3">
                             <label class="small fw-bold text-muted">Respondent Name</label>
                             <input type="text" name="respondent" class="form-control">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6 mb-3">
                             <label class="small fw-bold text-muted">Incident Type</label>
-                            <select name="incident_type" class="form-select">
+                            {{-- BS4 form-control --}}
+                            <select name="incident_type" class="form-control">
                                 <option>Noise Complaint</option><option>Theft</option><option>Property Dispute</option><option>Physical Injury</option><option>Others</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6 mb-3">
                             <label class="small fw-bold text-muted">Priority</label>
-                            <select name="priority" class="form-select">
+                            <select name="priority" class="form-control">
                                 <option>Low</option><option>Medium</option><option>High</option>
                             </select>
                         </div>
-                        <div class="col-12">
+                        <div class="col-12 mb-3">
                             <label class="small fw-bold text-muted">Date & Time</label>
                             <input type="datetime-local" name="date_reported" class="form-control" required>
                         </div>
-                        <div class="col-12">
+                        <div class="col-12 mb-3">
                             <label class="small fw-bold text-muted">Location</label>
                             <input type="text" name="location" class="form-control" required>
                         </div>
@@ -530,8 +534,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-top-0 pt-0 pb-4 pe-4">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <div class="modal-footer border-top-0 pt-0 pb-4 pr-4">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary fw-bold px-4">Log Case</button>
                 </div>
             </form>

@@ -3,83 +3,59 @@
 @section('title', 'Project Monitoring')
 
 @section('nav-items')
-    {{-- 1. Dashboard --}}
+    {{-- Active class on Dashboard link --}}
     <li class="nav-item">
-        <a href="{{ route('captain.dashboard') }}" class="nav-link">
+        <a href="{{ route('captain.dashboard') }}" class="nav-link ">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
     </li>
-    
-    {{-- 2. Resident Profiling --}}
     <li class="nav-item">
         <a href="{{ route('captain.resident-profiling') }}" class="nav-link">
             <i class="fas fa-users"></i>
             <span>Resident Profiling</span>
         </a>
     </li>
-    
-    {{-- 3. Document Services --}}
     <li class="nav-item">
         <a href="{{ route('captain.document-services') }}" class="nav-link">
             <i class="far fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
     </li>
-    
-    {{-- 4. Financial Management --}}
     <li class="nav-item">
         <a href="{{ route('captain.financial') }}" class="nav-link">
             <i class="fas fa-dollar-sign"></i>
             <span>Financial Management</span>
         </a>
     </li>
-    
-    {{-- 5. Health Services --}}
     <li class="nav-item">
-        <a href="{{ route('captain.health-services') }}" class="nav-link">
+        <a href="{{ route('captain.health-services') }}" class="nav-link ">
             <i class="fas fa-heart"></i>
             <span>Health & Social Services</span>
         </a>
     </li>
-    
-    {{-- 6. Incident & Blotter --}}
     <li class="nav-item">
-        <a href="#" class="nav-link">
+        <a href="{{ route('captain.incident.index') }}" class="nav-link">
             <i class="fas fa-exclamation-triangle"></i>
             <span>Incident & Blotter</span>
         </a>
     </li>
-    
-    {{-- 7. Project Monitoring (ACTIVE) --}}
     <li class="nav-item">
         <a href="{{ route('captain.project.monitoring') }}" class="nav-link active">
             <i class="fas fa-flag"></i>
             <span>Project Monitoring</span>
         </a>
     </li>
-    
-    {{-- 8. Announcements --}}
     <li class="nav-item">
         <a href="{{ route('captain.announcements.index') }}" class="nav-link">
             <i class="fas fa-bell"></i>
             <span>Announcements</span>
         </a>
     </li>
-    
-    {{-- 9. SK Module --}}
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-check-circle"></i>
+   <li class="nav-item">
+        <a href="{{ route('captain.sk.overview') }}" class="nav-link">
+            <i class="fas fa-user-graduate"></i>
             <span>SK Module</span>
-        </a>
-    </li>
-    
-    {{-- 10. Settings --}}
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
         </a>
     </li>
 @endsection
@@ -89,11 +65,7 @@
     /* Reuse styles from Resident Profiling for consistency */
     .profiling-header {
         background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
-        color: white;
-        padding: 40px;
-        border-radius: 16px;
-        margin-bottom: 30px;
-        position: relative;
+        color: white; padding: 40px; border-radius: 16px; margin-bottom: 30px; position: relative;
     }
     .profiling-title { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
     .profiling-subtitle { opacity: 0.95; font-size: 1rem; margin-bottom: 15px; }
@@ -135,43 +107,65 @@
     .icon-green-bg { background: #10B981; }
     .icon-purple-bg { background: #A855F7; }
 
-    /* Directory Header Style (Adapted for Projects) */
+    /* Directory Header Style */
     .directory-header {
-        background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
-        color: white; padding: 20px 30px;
-        border-radius: 12px 12px 0 0;
-        display: flex; justify-content: space-between; align-items: center;
+        background: white; border-bottom: 1px solid #E5E7EB;
+        padding: 0 30px; border-radius: 12px 12px 0 0;
+        display: flex; flex-direction: column;
     }
-    .directory-title { display: flex; align-items: center; gap: 12px; font-size: 1.1rem; font-weight: 700; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; }
+    .directory-title { display: flex; align-items: center; gap: 12px; font-size: 1.1rem; font-weight: 700; color: #1F2937; }
 
     .filters-section { display: flex; align-items: center; gap: 10px; }
     .search-input {
         padding: 10px 16px; border: 1px solid #E5E7EB; border-radius: 8px;
-        font-size: 0.95rem; background: white; min-width: 250px;
+        font-size: 0.95rem; background: #F9FAFB; min-width: 250px;
     }
     .btn-add-new {
-        background: #FFA500; color: white; border: none; padding: 10px 20px;
+        background: #2B5CE6; color: white; border: none; padding: 10px 20px;
         border-radius: 8px; font-weight: 700; cursor: pointer; display: flex;
         align-items: center; gap: 8px; text-decoration: none; transition: all 0.3s;
     }
-    .btn-add-new:hover { background: #e69500; transform: translateY(-2px); }
+    .btn-add-new:hover { background: #1E3A8A; transform: translateY(-2px); }
+
+    /* Tab Navigation */
+    .nav-tabs { display: flex; gap: 30px; margin-top: 10px; }
+    .nav-link-tab {
+        padding: 15px 5px; color: #6B7280; font-weight: 600; text-decoration: none;
+        border-bottom: 3px solid transparent; transition: 0.3s;
+    }
+    .nav-link-tab:hover { color: #2B5CE6; }
+    .nav-link-tab.active { color: #2B5CE6; border-bottom-color: #2B5CE6; }
+    .badge-count {
+        background: #EF4444; color: white; font-size: 0.75rem; padding: 2px 8px;
+        border-radius: 10px; margin-left: 5px; vertical-align: middle;
+    }
 
     /* Project Grid Container */
     .project-grid-container {
-        background: #F3F4F6; /* Light gray bg for grid area */
-        padding-top: 20px;
+        background: white; /* Changed to white container */
+        padding: 30px; border-radius: 0 0 12px 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
     /* Project Card Styling */
     .project-card {
         background: white; border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         padding: 25px; border: 1px solid #E5E7EB;
-        transition: transform 0.2s;
+        transition: transform 0.2s; position: relative;
     }
-    .project-card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+    .project-card:hover { transform: translateY(-5px); box-shadow: 0 12px 20px rgba(0,0,0,0.12); }
     
-    /* Modals (Copied from Resident Profiling) */
+    .status-badge {
+        position: absolute; top: 20px; right: 20px;
+        font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px;
+    }
+    .status-active { background: #EFF6FF; color: #2B5CE6; }
+    .status-proposed { background: #FEF3C7; color: #92400E; }
+    .status-completed { background: #D1FAE5; color: #065F46; }
+
+    /* Modals */
     .modal {
         display: none; position: fixed; z-index: 1000; left: 0; top: 0;
         width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5);
@@ -184,7 +178,6 @@
     .modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
     .modal-title { font-size: 1.3rem; font-weight: 700; color: #1F2937; }
     
-    /* Form Elements */
     .form-control { width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 6px; margin-bottom: 5px; }
     .form-label { display: block; font-weight: 600; margin-bottom: 5px; color: #374151; }
     .form-group { margin-bottom: 15px; }
@@ -193,10 +186,17 @@
     .btn-secondary { background: #E5E7EB; color: #374151; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
 </style>
 
+{{-- Notifications --}}
+@if(session('success'))
+<div style="background: #D1FAE5; color: #065F46; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #6EE7B7;">
+    <i class="fas fa-check-circle"></i> {{ session('success') }}
+</div>
+@endif
+
 {{-- Header Section --}}
 <div class="profiling-header">
     <div class="profiling-title">Project Monitoring</div>
-    <div class="profiling-subtitle">Track infrastructure, health programs, and budget allocation</div>
+    <div class="profiling-subtitle">Track infrastructure, health programs, and manage proposals</div>
     <div class="barangay-badge">
         <span class="badge-icon">PH</span>
         <span>Barangay Calbueg, Malasiqui, Pangasinan</span>
@@ -264,70 +264,159 @@
 
 {{-- Directory / Tool Bar --}}
 <div class="directory-header">
-    <div class="directory-title">
-        <i class="fas fa-th-large"></i>
-        <span>Project Directory</span>
+    <div class="header-top">
+        <div class="directory-title">
+            <i class="fas fa-th-large"></i>
+            <span>Project Directory</span>
+        </div>
+        <div class="filters-section">
+            <form action="{{ route('captain.project.monitoring') }}" method="GET" style="display:flex; gap:10px;">
+                <input type="hidden" name="view" value="{{ $view }}">
+                <input type="text" name="search" class="search-input" placeholder="🔍 Search projects..." value="{{ request('search') }}">
+                <button type="submit" style="display:none;"></button>
+            </form>
+            <button onclick="openModal('newProjectModal')" class="btn-add-new">
+                <i class="fas fa-plus"></i> New Project
+            </button>
+        </div>
     </div>
-    <div class="filters-section">
-        <input type="text" class="search-input" placeholder="🔍 Search projects..." id="projectSearch">
-        <button onclick="openModal('newProjectModal')" class="btn-add-new">
-            <i class="fas fa-plus"></i> New Project
-        </button>
+
+    {{-- TAB NAVIGATION --}}
+    <div class="nav-tabs">
+        <a href="{{ route('captain.project.monitoring', ['view' => 'active']) }}" class="nav-link-tab {{ $view == 'active' ? 'active' : '' }}">
+            Active Projects
+        </a>
+        <a href="{{ route('captain.project.monitoring', ['view' => 'proposals']) }}" class="nav-link-tab {{ $view == 'proposals' ? 'active' : '' }}">
+            Proposals 
+            @if($stats['pending_proposals'] > 0)
+                <span class="badge-count">{{ $stats['pending_proposals'] }}</span>
+            @endif
+        </a>
     </div>
 </div>
 
 {{-- Projects Grid --}}
-<div class="project-grid-container" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding-bottom: 30px;">
-    @foreach($projects as $project)
-        <div class="project-card">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
-                <h3 style="margin: 0; font-size: 1.1rem; color: #111827;">{{ $project->title }}</h3>
-                <span style="background: #EFF6FF; color: #2B5CE6; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">{{ $project->status }}</span>
-            </div>
+<div class="project-grid-container">
 
-            <div style="margin-bottom: 15px; font-size: 0.9rem; color: #4B5563;">
-                <span style="display:inline-block; background:#F3F4F6; color:#374151; padding:2px 8px; border-radius:4px; font-size:0.75rem; margin-right:5px; border: 1px solid #E5E7EB;">
-                    {{ $project->category }}
+    @if($view === 'proposals')
+        {{-- PROPOSALS GRID (KAGAWAD SUBMISSIONS) --}}
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+            @forelse($proposals as $proposal)
+            <div class="project-card" style="border-left: 5px solid #F59E0B;">
+                <span class="status-badge status-proposed">Proposed</span>
+                <h3 style="margin: 0; font-size: 1.1rem; color: #111827;">{{ $proposal->title }}</h3>
+                <span style="display:inline-block; margin-top:5px; font-size: 0.85rem; color: #6B7280;">
+                    <i class="fas fa-tag"></i> {{ $proposal->category }}
                 </span>
-                {{ Str::limit($project->description, 80) }}
-            </div>
 
-            {{-- Progress Bar --}}
-            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; font-weight: 600; color: #4B5563;">
-                <span>Progress</span><span>{{ $project->progress }}%</span>
-            </div>
-            <div style="background: #F3F4F6; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 15px;">
-                <div style="height: 100%; background: #2B5CE6; width: {{ $project->progress }}%;"></div>
-            </div>
+                <p style="font-size: 0.9rem; color: #4B5563; margin: 15px 0; min-height: 40px;">
+                    {{ Str::limit($proposal->description, 100) }}
+                </p>
 
-            {{-- Financials --}}
-            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; background: #F9FAFB; padding: 12px; border-radius: 8px; border: 1px solid #F3F4F6;">
-                <div>
-                    <div style="color: #6B7280; font-size: 0.75rem;">Budget</div>
-                    <div style="font-weight: 700; color: #1F2937;">₱{{ number_format($project->budget) }}</div>
-                </div>
-                <div style="text-align: right;">
-                    <div style="color: #6B7280; font-size: 0.75rem;">Spent</div>
-                    <div style="font-weight: 700; color: {{ $project->amount_spent > $project->budget ? '#EF4444' : '#10B981' }}">
-                        ₱{{ number_format($project->amount_spent) }}
+                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; background: #FEF3C7; padding: 12px; border-radius: 8px; color: #92400E;">
+                    <div>
+                        <div style="font-size: 0.75rem; opacity: 0.8;">Estimated Budget</div>
+                        <div style="font-weight: 700;">₱{{ number_format($proposal->budget) }}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.75rem; opacity: 0.8;">Target Start</div>
+                        <div style="font-weight: 700;">{{ \Carbon\Carbon::parse($proposal->start_date)->format('M d, Y') }}</div>
                     </div>
                 </div>
-            </div>
 
-            {{-- ACTION BUTTONS --}}
-            <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button onclick="addExpense({{ json_encode($project) }})" 
-                        style="background: #FFA500; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; color: white; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s;">
-                    <i class="fas fa-coins"></i> Add Expense
-                </button>
-
-                <button onclick="editProject({{ json_encode($project) }})" 
-                        style="background: #EFF6FF; border: 1px solid #BFDBFE; padding: 10px 16px; border-radius: 6px; cursor: pointer; color: #1E40AF; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s;">
-                    <i class="fas fa-edit"></i> Update
-                </button>
+                <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <form action="{{ route('captain.projects.approve', $proposal->id) }}" method="POST">
+                        @csrf @method('PUT')
+                        <button type="submit" style="width:100%; background: #10B981; border: none; padding: 10px; border-radius: 6px; cursor: pointer; color: white; font-weight: 600;">
+                            <i class="fas fa-check"></i> Approve
+                        </button>
+                    </form>
+                    <form action="{{ route('captain.projects.reject', $proposal->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to reject/delete this proposal?');">
+                        @csrf @method('DELETE')
+                        <button type="submit" style="width:100%; background: #EF4444; border: none; padding: 10px; border-radius: 6px; cursor: pointer; color: white; font-weight: 600;">
+                            <i class="fas fa-times"></i> Reject
+                        </button>
+                    </form>
+                </div>
             </div>
+            @empty
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #6B7280;">
+                <i class="fas fa-folder-open fa-3x" style="opacity: 0.3; margin-bottom: 10px;"></i>
+                <p>No pending project proposals.</p>
+            </div>
+            @endforelse
         </div>
-    @endforeach
+        <div style="margin-top: 20px;">{{ $proposals->appends(['view' => 'proposals'])->links('pagination::bootstrap-4') }}</div>
+
+    @else
+        {{-- ACTIVE PROJECTS GRID --}}
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+            @forelse($projects as $project)
+                <div class="project-card">
+                    <span class="status-badge {{ $project->status == 'Completed' ? 'status-completed' : 'status-active' }}">
+                        {{ $project->status }}
+                    </span>
+                    
+                    <h3 style="margin: 0; font-size: 1.1rem; color: #111827; padding-right: 80px;">{{ $project->title }}</h3>
+                    
+                    <div style="margin-bottom: 15px; font-size: 0.9rem; color: #4B5563; margin-top: 5px;">
+                        <span style="display:inline-block; background:#F3F4F6; color:#374151; padding:2px 8px; border-radius:4px; font-size:0.75rem; margin-right:5px; border: 1px solid #E5E7EB;">
+                            {{ $project->category }}
+                        </span>
+                        {{ Str::limit($project->description, 80) }}
+                    </div>
+
+                    {{-- Progress Bar --}}
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; font-weight: 600; color: #4B5563;">
+                        <span>Progress</span><span>{{ $project->progress }}%</span>
+                    </div>
+                    <div style="background: #F3F4F6; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 15px;">
+                        <div style="height: 100%; background: #2B5CE6; width: {{ $project->progress }}%;"></div>
+                    </div>
+
+                    {{-- Financials --}}
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9rem; background: #F9FAFB; padding: 12px; border-radius: 8px; border: 1px solid #F3F4F6;">
+                        <div>
+                            <div style="color: #6B7280; font-size: 0.75rem;">Budget</div>
+                            <div style="font-weight: 700; color: #1F2937;">₱{{ number_format($project->budget) }}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="color: #6B7280; font-size: 0.75rem;">Spent</div>
+                            <div style="font-weight: 700; color: {{ $project->amount_spent > $project->budget ? '#EF4444' : '#10B981' }}">
+                                ₱{{ number_format($project->amount_spent) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ACTION BUTTONS --}}
+                    @if($project->status != 'Completed')
+                    <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button onclick="addExpense({{ json_encode($project) }})" 
+                                style="background: #FFA500; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; color: white; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s;">
+                            <i class="fas fa-coins"></i> Add Expense
+                        </button>
+
+                        <button onclick="editProject({{ json_encode($project) }})" 
+                                style="background: #EFF6FF; border: 1px solid #BFDBFE; padding: 10px 16px; border-radius: 6px; cursor: pointer; color: #1E40AF; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s;">
+                            <i class="fas fa-edit"></i> Update
+                        </button>
+                    </div>
+                    @else
+                    <div style="margin-top: 20px; text-align: center; color: #065F46; font-weight: 600; padding: 10px; background: #D1FAE5; border-radius: 6px;">
+                        <i class="fas fa-check-circle"></i> Project Completed
+                    </div>
+                    @endif
+                </div>
+            @empty
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #6B7280;">
+                    <i class="fas fa-search fa-3x" style="opacity: 0.3; margin-bottom: 10px;"></i>
+                    <p>No active projects found.</p>
+                </div>
+            @endforelse
+        </div>
+        <div style="margin-top: 20px;">{{ $projects->appends(['view' => 'active'])->links('pagination::bootstrap-4') }}</div>
+    @endif
+
 </div>
 
 {{-- 1. Create Project Modal --}}
@@ -485,7 +574,7 @@
     }
 
     function editProject(project) {
-        document.getElementById('updateForm').action = "/captain/project/" + project.id;
+        document.getElementById('updateForm').action = "/captain/project/" + project.id + "/progress";
         document.getElementById('u_status').value = project.status;
         document.getElementById('u_progress').value = project.progress;
         

@@ -54,18 +54,14 @@
         <span>Announcements</span>
     </a>
 </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
-            <i class="fas fa-check-circle"></i>
+   <li class="nav-item">
+        {{-- Use the new captain.sk.overview route --}}
+        <a href="{{ route('captain.sk.overview') }}" class="nav-link {{ request()->routeIs('captain.sk.overview') ? 'active' : '' }}">
+            <i class="fas fa-user-graduate"></i>
             <span>SK Module</span>
         </a>
     </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
-        </a>
-    </li>
+   
 @endsection
 
 @section('content')

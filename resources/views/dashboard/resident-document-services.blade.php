@@ -5,46 +5,41 @@
 @section('title', 'Document Services')
 
 @section('nav-items')
-    {{-- Active class on Dashboard link --}}
     <li class="nav-item">
-        <a href="{{ route('resident.dashboard') }}" class="nav-link active">
+        <a href="{{ route('resident.dashboard') }}" class="nav-link ">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
     </li>
 
     <li class="nav-item">
-        {{-- Link to the resident's document services page --}}
-        <a href="{{ route('resident.document-services') }}" class="nav-link">
+        <a href="{{ route('resident.document-services') }}" class="nav-link active">
             <i class="far fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
     </li>
     <li class="nav-item">
-    <a href="{{ route('resident.health-services') }}" class="nav-link {{ request()->routeIs('resident.health-services') ? 'active' : '' }}">
+    <a href="{{ route('resident.health-services') }}" class="nav-link">
         <i class="fas fa-heartbeat"></i>
         <span>Health Services</span>
     </a>
 </li>
-    
-    <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
-            <i class="fas fa-bell"></i>
-            <span>Announcements</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
-            <i class="fas fa-check-circle"></i>
-            <span>SK Module</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
-        </a>
-    </li>
+
+{{-- NEW LINK HERE --}}
+<li class="nav-item">
+    <a href="{{ route('resident.incidents.index') }}" class="nav-link {{ request()->routeIs('resident.incidents.*') ? 'active' : '' }}">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Incident Reports</span>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a href="{{ route('resident.announcements.index') }}" class="nav-link">
+        <i class="fas fa-bullhorn"></i>
+        <span>Announcements</span>
+    </a>
+</li>
+
 @endsection
 
 @section('content')

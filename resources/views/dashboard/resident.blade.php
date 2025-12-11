@@ -38,18 +38,6 @@
     </a>
 </li>
 
-    <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Placeholder for SK Module --}}
-            <i class="fas fa-check-circle"></i>
-            <span>SK Module</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Placeholder for Settings --}}
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
-        </a>
-    </li>
 @endsection
 
 @section('content')

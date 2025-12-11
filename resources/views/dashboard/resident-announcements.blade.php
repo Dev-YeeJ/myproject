@@ -1,7 +1,43 @@
 @extends('layouts.dashboard-layout')
 
 @section('title', 'Announcements')
+@section('nav-items')
+    <li class="nav-item">
+        <a href="{{ route('resident.dashboard') }}" class="nav-link ">
+            <i class="fas fa-home"></i>
+            <span>Dashboard</span>
+        </a>
+    </li>
 
+    <li class="nav-item">
+        <a href="{{ route('resident.document-services') }}" class="nav-link">
+            <i class="far fa-file-alt"></i>
+            <span>Documents Services</span>
+        </a>
+    </li>
+    <li class="nav-item">
+    <a href="{{ route('resident.health-services') }}" class="nav-link ">
+        <i class="fas fa-heartbeat"></i>
+        <span>Health Services</span>
+    </a>
+</li>
+
+{{-- NEW LINK HERE --}}
+<li class="nav-item">
+    <a href="{{ route('resident.incidents.index') }}" class="nav-link {{ request()->routeIs('resident.incidents.*') ? 'active' : '' }}">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Incident Reports</span>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a href="{{ route('resident.announcements.index') }}" class="nav-link active">
+        <i class="fas fa-bullhorn"></i>
+        <span>Announcements</span>
+    </a>
+</li>
+
+@endsection
 @section('content')
 <style>
     /* Resident-specific green theme for header */

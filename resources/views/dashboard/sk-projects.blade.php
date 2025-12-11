@@ -122,6 +122,7 @@
 
 @if($errors->any())
     <div class="alert alert-danger alert-dismissible fade show shadow-sm border-left-danger" role="alert">
+        <h5 class="alert-heading"><i class="fas fa-exclamation-triangle mr-1"></i> Cannot Save Project</h5>
         <ul class="mb-0 pl-3">
             @foreach($errors->all() as $error) <li>{{ $error }}</li> @endforeach
         </ul>
@@ -279,17 +280,27 @@
                 <div id="methodField"></div> {{-- Placeholder for PUT input --}}
                 
                 <div class="modal-body p-4">
+                    {{-- Validation Error inside Modal --}}
+                    @if($errors->any())
+                        <div class="alert alert-danger p-2 small">
+                            <strong><i class="fas fa-exclamation-circle"></i> Please fix the following:</strong>
+                            <ul class="mb-0 pl-3">
+                                @foreach($errors->all() as $error) <li>{{ $error }}</li> @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     {{-- Basic Info Section --}}
                     <h6 class="text-uppercase text-muted small font-weight-bold mb-3 border-bottom pb-2">Project Details</h6>
                     
                     <div class="form-group">
                         <label class="font-weight-bold text-dark">Project Title <span class="text-danger">*</span></label>
-                        <input type="text" name="title" id="pTitle" class="form-control" placeholder="e.g. Annual Linggo ng Kabataan" required>
+                        <input type="text" name="title" id="pTitle" class="form-control" placeholder="e.g. Annual Linggo ng Kabataan" value="{{ old('title') }}" required>
                     </div>
 
                     <div class="form-group">
                         <label class="font-weight-bold text-dark">Description</label>
-                        <textarea name="description" id="pDesc" class="form-control" rows="3" placeholder="Brief description of the event..." required></textarea>
+                        <textarea name="description" id="pDesc" class="form-control" rows="3" placeholder="Brief description of the event..." required>{{ old('description') }}</textarea>
                     </div>
 
                     <div class="row">
@@ -298,7 +309,7 @@
                                 <label class="font-weight-bold text-dark">Allocated Budget (₱) <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <div class="input-group-prepend"><span class="input-group-text">₱</span></div>
-                                    <input type="number" name="budget" id="pBudget" class="form-control" step="0.01" min="0" required>
+                                    <input type="number" name="budget" id="pBudget" class="form-control" step="0.01" min="0" value="{{ old('budget') }}" required>
                                 </div>
                                 <small class="form-text text-muted">Must fit within available funds.</small>
                             </div>
@@ -306,13 +317,13 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label class="font-weight-bold text-dark">Start Date <span class="text-danger">*</span></label>
-                                <input type="date" name="start_date" id="pStart" class="form-control" required>
+                                <input type="date" name="start_date" id="pStart" class="form-control" value="{{ old('start_date') }}" required>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label class="font-weight-bold text-dark">End Date</label>
-                                <input type="date" name="end_date" id="pEnd" class="form-control">
+                                <input type="date" name="end_date" id="pEnd" class="form-control" value="{{ old('end_date') }}">
                             </div>
                         </div>
                     </div>
@@ -354,40 +365,62 @@
 {{-- 6. JavaScript Logic for Modal --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Modal Event Listener
         $('#projectModal').on('show.bs.modal', function (event) {
             var button = $(event.relatedTarget);
-            var mode = button.data('mode');
-            var modal = $(this);
-            var form = modal.find('#projectForm');
+            
+            // If opened via button click (not via error reloading)
+            if (button.length) {
+                var mode = button.data('mode');
+                var modal = $(this);
+                var form = modal.find('#projectForm');
 
-            if (mode === 'edit') {
-                // Edit Mode Configuration
-                modal.find('#modalTitle').text('Update Project Details');
-                modal.find('#methodField').html('<input type="hidden" name="_method" value="PUT">');
-                modal.find('#statusSection').show(); // Show status controls
-                
-                // Populate Fields
-                modal.find('#pTitle').val(button.data('title'));
-                modal.find('#pDesc').val(button.data('desc'));
-                modal.find('#pBudget').val(button.data('budget'));
-                modal.find('#pStart').val(button.data('start'));
-                modal.find('#pEnd').val(button.data('end'));
-                modal.find('#pStatus').val(button.data('status'));
-                modal.find('#pProgress').val(button.data('progress'));
-                
-                // Set Action URL
-                form.attr('action', '/sk/projects/' + button.data('id'));
-            } else {
-                // Add Mode Configuration
-                modal.find('#modalTitle').text('Create New Project');
-                modal.find('#methodField').html('');
-                modal.find('#statusSection').hide(); // Hide status controls
-                
-                // Reset Form
-                form.trigger('reset');
-                form.attr('action', '{{ route("sk.projects.store") }}');
+                if (mode === 'edit') {
+                    // Edit Mode Configuration
+                    modal.find('#modalTitle').text('Update Project Details');
+                    modal.find('#methodField').html('<input type="hidden" name="_method" value="PUT">');
+                    modal.find('#statusSection').show(); // Show status controls
+                    
+                    // Populate Fields
+                    modal.find('#pTitle').val(button.data('title'));
+                    modal.find('#pDesc').val(button.data('desc'));
+                    modal.find('#pBudget').val(button.data('budget'));
+                    modal.find('#pStart').val(button.data('start'));
+                    modal.find('#pEnd').val(button.data('end'));
+                    modal.find('#pStatus').val(button.data('status'));
+                    modal.find('#pProgress').val(button.data('progress'));
+                    
+                    // Set Action URL
+                    form.attr('action', '/sk/projects/' + button.data('id'));
+                } else {
+                    // Add Mode Configuration
+                    modal.find('#modalTitle').text('Create New Project');
+                    modal.find('#methodField').html('');
+                    modal.find('#statusSection').hide(); // Hide status controls
+                    
+                    // Reset Form (but keep old values if validation failed)
+                    @if(!$errors->any())
+                        form.trigger('reset');
+                    @endif
+                    form.attr('action', '{{ route("sk.projects.store") }}');
+                }
             }
         });
+
+        // AUTO-OPEN MODAL ON ERROR
+        // If the page reloads and there are errors, open the modal automatically so the user sees the error.
+        @if($errors->any())
+            $('#projectModal').modal('show');
+            
+            // Heuristic: If there is a "status" in old input, it was likely an edit.
+            // Otherwise, we assume it was a create action.
+            // This is a simple fallback. For robust edit-error handling, you might need more complex JS logic or session flags.
+            @if(old('_method') == 'PUT')
+                 $('#modalTitle').text('Update Project Details');
+                 $('#methodField').html('<input type="hidden" name="_method" value="PUT">');
+                 $('#statusSection').show();
+            @endif
+        @endif
     });
 </script>
 @endsection

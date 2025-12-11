@@ -17,7 +17,7 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="" class="nav-link">
+        <a href="{{ route('kagawad.projects') }}" class="nav-link">
             <i class="fas fa-tasks"></i>
             <span>Project Monitoring</span>
         </a>
@@ -34,12 +34,7 @@
             <span>Announcements</span>
         </a>
     </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-hand-holding-heart"></i>
-            <span>Committees</span>
-        </a>
-    </li>
+   
     <li class="nav-item">
         <a href="#" class="nav-link">
             <i class="fas fa-cog"></i>

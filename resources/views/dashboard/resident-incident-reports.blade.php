@@ -1,20 +1,61 @@
 @extends('layouts.dashboard-layout')
 
 @section('title', 'My Incident Reports')
+@section('nav-items')
+    <li class="nav-item">
+        <a href="{{ route('resident.dashboard') }}" class="nav-link ">
+            <i class="fas fa-home"></i>
+            <span>Dashboard</span>
+        </a>
+    </li>
 
+    <li class="nav-item">
+        <a href="{{ route('resident.document-services') }}" class="nav-link">
+            <i class="far fa-file-alt"></i>
+            <span>Documents Services</span>
+        </a>
+    </li>
+    <li class="nav-item">
+    <a href="{{ route('resident.health-services') }}" class="nav-link ">
+        <i class="fas fa-heartbeat"></i>
+        <span>Health Services</span>
+    </a>
+</li>
+
+{{-- NEW LINK HERE --}}
+<li class="nav-item">
+    <a href="{{ route('resident.incidents.index') }}" class="nav-link active {{ request()->routeIs('resident.incidents.*') ? 'active' : '' }}">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Incident Reports</span>
+    </a>
+</li>
+
+<li class="nav-item">
+    <a href="{{ route('resident.announcements.index') }}" class="nav-link">
+        <i class="fas fa-bullhorn"></i>
+        <span>Announcements</span>
+    </a>
+</li>
+
+@endsection
 @section('content')
 
 {{-- Alerts --}}
 @if(session('error'))
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         {{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        {{-- BS4: Changed data-bs-dismiss to data-dismiss --}}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
     </div>
 @endif
 @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
     </div>
 @endif
 
@@ -82,7 +123,8 @@
     <div class="card-body p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="fw-bold mb-0 text-secondary">Report History</h5>
-            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#fileIncidentModal">
+            {{-- BS4 FIX: Changed data-bs-toggle to data-toggle, data-bs-target to data-target --}}
+            <button class="btn btn-danger" data-toggle="modal" data-target="#fileIncidentModal">
                 <i class="fas fa-plus-circle me-1"></i> File New Report
             </button>
         </div>
@@ -120,7 +162,8 @@
                         </td>
                         <td class="text-end">
                             {{-- View/Edit Button --}}
-                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#viewModal{{ $incident->id }}">
+                            {{-- BS4 FIX: Changed data-bs-toggle to data-toggle --}}
+                            <button class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#viewModal{{ $incident->id }}">
                                 <i class="fas fa-eye"></i> Details
                             </button>
                         </td>
@@ -132,12 +175,15 @@
                             <div class="modal-content">
                                 <div class="modal-header bg-light">
                                     <h5 class="modal-title fw-bold">Case: {{ $incident->case_number }}</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    {{-- BS4 FIX: Close button syntax --}}
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="row">
                                         {{-- LEFT: Details --}}
-                                        <div class="col-md-6 border-end">
+                                        <div class="col-md-6 border-right"> {{-- BS4 uses border-right --}}
                                             <h6 class="fw-bold text-danger mb-3">Report Details</h6>
                                             <p class="mb-1 small text-muted">RESPONDENT:</p>
                                             <p class="fw-bold">{{ $incident->respondent ?? 'N/A' }}</p>
@@ -167,7 +213,7 @@
                                                     
                                                     <div class="mb-2">
                                                         <label class="small fw-bold">Incident Type</label>
-                                                        <select name="incident_type" class="form-select form-select-sm">
+                                                        <select name="incident_type" class="form-control form-control-sm"> {{-- BS4 uses form-control not form-select --}}
                                                             <option selected>{{ $incident->incident_type }}</option>
                                                             <option>Noise Complaint</option>
                                                             <option>Theft</option>
@@ -239,7 +285,7 @@
     </div>
 </div>
 
-{{-- Modal for New Incident (Same as before) --}}
+{{-- Modal for New Incident --}}
 <div class="modal fade" id="fileIncidentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -247,11 +293,15 @@
                 @csrf
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title fw-bold">File Incident Report</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    {{-- BS4 FIX: Close Button --}}
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Incident Type <span class="text-danger">*</span></label>
+                        {{-- BS4 uses form-control for selects --}}
                         <select name="incident_type" class="form-control" required>
                             <option value="" disabled selected>Select Type</option>
                             <option value="Noise Complaint">Noise Complaint</option>
@@ -281,7 +331,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                    {{-- BS4 FIX: data-dismiss --}}
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
                     <button type="submit" class="btn btn-danger">Submit Report</button>
                 </div>
             </form>
@@ -292,8 +343,8 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         @if ($errors->any())
-            var myModal = new bootstrap.Modal(document.getElementById('fileIncidentModal'));
-            myModal.show();
+            // BS4 FIX: Use jQuery to open modal, NOT 'new bootstrap.Modal'
+            $('#fileIncidentModal').modal('show');
         @endif
     });
 </script>
