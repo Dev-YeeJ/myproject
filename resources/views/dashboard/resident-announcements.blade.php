@@ -1,14 +1,15 @@
 @extends('layouts.dashboard-layout')
 
 @section('title', 'Announcements')
+
 @section('nav-items')
+    {{-- Resident Navigation Items --}}
     <li class="nav-item">
         <a href="{{ route('resident.dashboard') }}" class="nav-link ">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
     </li>
-
     <li class="nav-item">
         <a href="{{ route('resident.document-services') }}" class="nav-link">
             <i class="far fa-file-alt"></i>
@@ -16,118 +17,245 @@
         </a>
     </li>
     <li class="nav-item">
-    <a href="{{ route('resident.health-services') }}" class="nav-link ">
-        <i class="fas fa-heartbeat"></i>
-        <span>Health Services</span>
-    </a>
-</li>
-
-{{-- NEW LINK HERE --}}
-<li class="nav-item">
-    <a href="{{ route('resident.incidents.index') }}" class="nav-link {{ request()->routeIs('resident.incidents.*') ? 'active' : '' }}">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>Incident Reports</span>
-    </a>
-</li>
-
-<li class="nav-item">
-    <a href="{{ route('resident.announcements.index') }}" class="nav-link active">
-        <i class="fas fa-bullhorn"></i>
-        <span>Announcements</span>
-    </a>
-</li>
-
+        <a href="{{ route('resident.health-services') }}" class="nav-link ">
+            <i class="fas fa-heartbeat"></i>
+            <span>Health Services</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ route('resident.incidents.index') }}" class="nav-link {{ request()->routeIs('resident.incidents.*') ? 'active' : '' }}">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Incident Reports</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ route('resident.announcements.index') }}" class="nav-link active {{ request()->routeIs('resident.announcements.*') ? 'active' : '' }}">
+            <i class="fas fa-bullhorn"></i>
+            <span>Announcements</span>
+        </a>
+    </li>
 @endsection
+
 @section('content')
 <style>
-    /* Resident-specific green theme for header */
-    .header-section {
-        background: linear-gradient(135deg, #10B981 0%, #059669 100%); 
+    /* --- HEADER STYLES (Identical to Captain) --- */
+    .profiling-header {
+        background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%); /* Captain Blue */
         color: white;
+        padding: 40px;
         border-radius: 16px;
         margin-bottom: 30px;
         position: relative;
-        padding: 40px; 
     }
-    .header-title {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 8px;
+    .profiling-title { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+    .profiling-subtitle { opacity: 0.95; font-size: 1rem; margin-bottom: 15px; }
+    
+    .barangay-badge {
+        display: inline-flex; align-items: center; gap: 10px;
+        background: rgba(255, 165, 0, 0.2); padding: 8px 16px;
+        border-radius: 8px; font-weight: 600;
     }
-    .header-subtitle {
-        opacity: 0.95;
-        font-size: 1rem;
+    .barangay-badge .badge-icon {
+        background: #FFA500; width: 32px; height: 32px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; color: white;
     }
+
+    /* --- STATS BOXES (Identical to Captain) --- */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+    .stat-box {
+        background: white; padding: 24px; border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex;
+        justify-content: space-between; align-items: center;
+    }
+    .stat-content h3 { font-size: 2.5rem; font-weight: 700; margin: 0 0 8px 0; }
+    .stat-content p { color: #666; margin: 0 0 8px 0; font-size: 0.95rem; }
+    .stat-badge { font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
+    
+    .stat-box-icon {
+        width: 70px; height: 70px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2rem; color: white;
+    }
+
+    /* Colors (Identical to Captain) */
+    .icon-blue-bg { background: #2B5CE6; } .stat-badge.blue { color: #2B5CE6; }
+    .icon-orange-bg { background: #FFA500; } .stat-badge.orange { color: #FF8C42; }
+    .icon-green-bg { background: #10B981; } .stat-badge.green { color: #10B981; }
+    .icon-purple-bg { background: #A855F7; } .stat-badge.purple { color: #A855F7; }
+
+    /* --- FILTER BAR --- */
+    .filter-bar {
+        background: white; border-radius: 12px; padding: 15px; margin-bottom: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; gap: 10px;
+    }
+    .search-input {
+        flex: 1; padding: 10px 16px; border: 1px solid #E5E7EB; border-radius: 8px;
+        font-size: 0.95rem; background: #F9FAFB; transition: border-color 0.3s;
+    }
+    .search-input:focus { outline: none; border-color: #2B5CE6; background: white; }
+    .btn-search {
+        background: #2B5CE6; color: white; border: none; padding: 0 24px;
+        border-radius: 8px; font-weight: 600; transition: background 0.3s;
+    }
+    .btn-search:hover { background: #1E3A8A; }
+
+    /* --- ANNOUNCEMENT CARD --- */
+    .announcement-card {
+        border: none; border-radius: 12px; overflow: hidden; height: 100%;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: transform 0.2s, box-shadow 0.2s;
+        background: white; display: flex; flex-direction: column;
+    }
+    .announcement-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+    
+    .card-img-container { height: 200px; overflow: hidden; position: relative; background: #F3F4F6; }
+    .card-img-top { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+    .announcement-card:hover .card-img-top { transform: scale(1.05); }
+    
+    .card-badges { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+    .custom-badge { 
+        padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; 
+        text-transform: uppercase; letter-spacing: 0.5px; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Using Captain's Badge Colors */
+    .badge-published { background: #D1FAE5; color: #065F46; } /* Used for 'Official' */
+    .badge-draft { background: #FEF3C7; color: #92400E; }     /* Used for 'New' */
+    .badge-audience { background: rgba(255,255,255,0.9); color: #1F2937; backdrop-filter: blur(4px); }
+
+    .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+    .card-title { font-size: 1.1rem; font-weight: 700; color: #1F2937; margin-bottom: 10px; line-height: 1.4; }
+    .card-meta { font-size: 0.85rem; color: #6B7280; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .card-text { font-size: 0.95rem; color: #4B5563; line-height: 1.6; margin-bottom: 20px; flex: 1; }
+    
+    .card-actions { 
+        padding: 15px 20px; background: #F9FAFB; border-top: 1px solid #F3F4F6; 
+        display: flex; justify-content: flex-end; align-items: center; gap: 10px; 
+        font-size: 0.85rem; color: #6B7280;
+    }
+
+    .no-results { text-align: center; padding: 60px; color: #9CA3AF; }
 </style>
 
-<div class="header-section">
-    <div class="header-title">Barangay Announcements</div>
-    <div class="header-subtitle">Latest news, updates, and events in Brgy. Calbueg</div>
+{{-- Header Section --}}
+<div class="profiling-header">
+    <div class="profiling-title">Announcements</div>
+    <div class="profiling-subtitle">Manage barangay news, updates, and public advisories.</div>
+    <div class="barangay-badge">
+        <span class="badge-icon">PH</span>
+        <span>Barangay Calbueg Information</span>
+    </div>
+    
+    {{-- Spacer to match Captain's "Create" button position if needed, or left empty --}}
 </div>
 
-<div class="container-fluid px-0">
-    {{-- Search Bar --}}
-    <div class="card shadow-sm mb-4 border-0">
-        <div class="card-body">
-            <form action="{{ route('resident.announcements.index') }}" method="GET" class="d-flex gap-2">
-                <input type="text" name="search" class="form-control" placeholder="Search announcements..." value="{{ $search ?? '' }}">
-                <button type="submit" class="btn btn-success text-white">Search</button>
-            </form>
+{{-- Stats Row (Same colors as Captain) --}}
+<div class="stats-row">
+    <div class="stat-box">
+        <div class="stat-content">
+            <h3>{{ $announcements->total() }}</h3>
+            <p>Total Posts</p>
+            <div class="stat-badge blue"><i class="fas fa-bullhorn"></i><span>All Time</span></div>
         </div>
+        <div class="stat-box-icon icon-blue-bg"><i class="fas fa-newspaper"></i></div>
     </div>
+    <div class="stat-box">
+        <div class="stat-content">
+            {{-- Logic for Resident: Show Recent --}}
+            <h3>{{ $announcements->where('created_at', '>=', now()->subDays(7))->count() }}</h3>
+            <p>New This Week</p>
+            <div class="stat-badge green"><i class="fas fa-check-circle"></i><span>Active</span></div>
+        </div>
+        <div class="stat-box-icon icon-green-bg"><i class="fas fa-globe"></i></div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-content">
+            {{-- Logic for Resident: Show Today's Date or similar --}}
+            <h3>{{ now()->day }}</h3>
+            <p>{{ now()->format('F Y') }}</p>
+            <div class="stat-badge orange"><i class="fas fa-calendar-day"></i><span>Today</span></div>
+        </div>
+        <div class="stat-box-icon icon-orange-bg"><i class="fas fa-calendar-alt"></i></div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-content">
+            <h3>Residents</h3>
+            <p>Target Audience</p>
+            <div class="stat-badge purple"><i class="fas fa-users"></i><span>Public</span></div>
+        </div>
+        <div class="stat-box-icon icon-purple-bg"><i class="fas fa-home"></i></div>
+    </div>
+</div>
 
-    <div class="row">
-        @forelse($announcements as $announcement)
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm border-0 position-relative">
-                {{-- Image Display --}}
+{{-- Filter Bar --}}
+<form action="{{ route('resident.announcements.index') }}" method="GET" class="filter-bar">
+    <input type="text" name="search" class="search-input" placeholder="🔍 Search announcements by title or content..." value="{{ $search ?? '' }}">
+    <button type="submit" class="btn-search">Search</button>
+</form>
+
+{{-- Grid Content --}}
+<div class="row g-4">
+    @forelse($announcements as $announcement)
+    <div class="col-md-6 col-lg-4">
+        <div class="announcement-card h-100">
+            <div class="card-img-container">
                 @if($announcement->image_path)
-                    <img src="{{ asset('storage/' . $announcement->image_path) }}" class="card-img-top" alt="Announcement Image" style="height: 200px; object-fit: cover;">
+                    <img src="{{ asset('storage/' . $announcement->image_path) }}" class="card-img-top" alt="Announcement Image">
                 @else
-                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
-                        <i class="fas fa-bullhorn text-muted fa-3x"></i>
+                    <div class="d-flex align-items-center justify-content-center h-100 bg-light text-secondary">
+                        <i class="fas fa-image fa-3x opacity-25"></i>
                     </div>
                 @endif
                 
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h5 class="card-title font-weight-bold text-dark">{{ $announcement->title }}</h5>
-                        {{-- Date Badge --}}
-                        <span class="badge bg-success bg-opacity-10 text-success">
-                            {{ $announcement->created_at->format('M d') }}
+                {{-- Badges (Using Captain's style classes) --}}
+                <div class="card-badges">
+                    @if($announcement->created_at->diffInDays(now()) <= 3)
+                        <span class="custom-badge badge-draft">
+                             New
                         </span>
-                    </div>
-                    
-                    {{-- Meta Info --}}
-                    <p class="card-text text-muted small mb-3">
-                        <i class="far fa-clock me-1"></i> Posted {{ $announcement->created_at->diffForHumans() }}
-                        <span class="mx-1">•</span> 
-                        {{-- Display Author Role safely --}}
-                        by {{ $announcement->user->role == 'barangay_captain' ? 'Captain' : 'Secretary' }}
-                    </p>
-                    
-                    {{-- Content --}}
-                    <p class="card-text text-secondary">
-                        {{ $announcement->content }}
-                    </p>
+                    @endif
+                    <span class="custom-badge badge-published">
+                        Official
+                    </span>
+                    <span class="custom-badge badge-audience">
+                        <i class="fas fa-eye me-1 text-primary"></i> Public
+                    </span>
                 </div>
             </div>
-        </div>
-        @empty
-        {{-- Empty State --}}
-        <div class="col-12 text-center py-5">
-            <div class="text-muted">
-                <i class="fas fa-folder-open fa-3x mb-3"></i>
-                <p>No announcements found.</p>
-                <p class="small">Check back later for updates from the Barangay.</p>
+            
+            <div class="card-body">
+                <div class="card-meta">
+                    <i class="far fa-clock"></i> {{ $announcement->created_at->format('M d, Y • h:i A') }}
+                </div>
+                <h5 class="card-title">{{ $announcement->title }}</h5>
+                <p class="card-text">
+                    {{ Str::limit($announcement->content, 120) }}
+                </p>
+            </div>
+            
+            <div class="card-actions">
+                {{-- No Edit/Delete, just info --}}
+                <span>
+                    <i class="fas fa-user-circle me-1"></i> Posted by: 
+                    <strong>{{ $announcement->user->role == 'barangay_captain' ? 'Captain' : 'Secretary' }}</strong>
+                </span>
             </div>
         </div>
-        @endforelse
     </div>
-
-    {{-- Pagination Links --}}
-    <div class="d-flex justify-content-center mt-4">
-        {{ $announcements->links() }}
+    @empty
+    <div class="col-12">
+        <div class="no-results">
+            <i class="fas fa-folder-open fa-4x mb-3 opacity-25"></i>
+            <p class="h5 text-secondary">No announcements found.</p>
+            <p class="small">Try adjusting your search.</p>
+        </div>
     </div>
+    @endforelse
 </div>
+
+<div class="d-flex justify-content-center mt-5">
+    {{ $announcements->links('pagination::bootstrap-5') }}
+</div>
+
 @endsection

@@ -11,7 +11,7 @@ use App\Models\Resident;
 use App\Models\Medicine; 
 use App\Models\MedicineRequest; 
 use App\Models\DocumentRequirement;
-use App\Models\BlotterRecord; // Ensure this model exists
+use App\Models\BlotterRecord;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -43,6 +43,10 @@ class ResidentController extends Controller
         // --- Announcement Stats ---
         $announcementsQuery = Announcements::forUser($user);
         
+        // --- FIX: Use paginate() so ->links() works in your Blade view ---
+        $announcements = (clone $announcementsQuery)->latest()->paginate(6);
+        // -----------------------------------------------------------------
+
         $newCount = (clone $announcementsQuery)
             ->where('created_at', '>=', Carbon::now()->subDays(7))
             ->count();
@@ -57,7 +61,7 @@ class ResidentController extends Controller
             'unread_announcements' => $totalAvailable, 
         ];
 
-        return view('dashboard.resident', compact('user', 'stats'));
+        return view('dashboard.resident', compact('user', 'stats', 'announcements'));
     }
 
     /**
