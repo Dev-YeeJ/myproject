@@ -5,7 +5,7 @@
 @section('nav-items')
     {{-- Navigation for BHW Role --}}
     <li class="nav-item">
-        <a href="{{ route('dashboard.health') }}" class="nav-link">
+        <a href="{{ route('health.dashboard') }}" class="nav-link">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>    
         </a>
@@ -14,6 +14,12 @@
         <a href="{{ route('health.health-services') }}" class="nav-link active"> 
             <i class="fas fa-heart"></i>
             <span>Health & Social Services</span>
+        </a>
+    </li>
+     <li class="nav-item">
+        <a href="{{ route('health.announcements') }}" class="nav-link">
+            <i class="fas fa-bullhorn"></i>
+            <span>Announcements</span>
         </a>
     </li>
 @endsection

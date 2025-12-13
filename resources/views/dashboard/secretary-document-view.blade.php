@@ -12,14 +12,14 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('secretary.resident-profiling') }}" class="nav-link">
+        <a href="{{ route('secretary.resident-profiling') }}" class="nav-link ">
             <i class="fas fa-users"></i>
             <span>Resident Profiling</span>
         </a>
     </li>
     <li class="nav-item">
         <a href="{{ route('secretary.document-services') }}" class="nav-link active">
-            <i class="fas fa-file-alt"></i>
+            <i class="far fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
     </li>
@@ -29,17 +29,34 @@
             <span>Financial Management</span>
         </a>
     </li>
-    {{-- REPLACED: Search Residents with Announcements --}}
+    <li class="nav-item">
+        <a href="{{ route('secretary.health-services') }}" class="nav-link">
+            <i class="fas fa-heart"></i>
+            <span>Health & Social Services</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ route('secretary.incident-blotter') }}" class="nav-link">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Incident & Blotter</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ route('secretary.project-monitoring') }}" class="nav-link">
+            <i class="fas fa-flag"></i>
+            <span>Project Monitoring</span>
+        </a>
+    </li>
     <li class="nav-item">
         <a href="{{ route('secretary.announcements.index') }}" class="nav-link">
-            <i class="fas fa-bullhorn"></i>
+            <i class="fas fa-bell"></i>
             <span>Announcements</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
+        <a href="{{ route('secretary.sk-overview') }}" class="nav-link">
+            <i class="fas fa-user-graduate"></i>
+            <span>SK Module</span>
         </a>
     </li>
 @endsection

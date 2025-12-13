@@ -1,151 +1,367 @@
 @extends('layouts.dashboard-layout')
 
-@section('title', 'Financial Overview')
+@section('title', 'Financial Management')
 
 @section('nav-items')
     <li class="nav-item">
         <a href="{{ route('secretary.dashboard') }}" class="nav-link">
-            <i class="fas fa-home"></i> <span>Dashboard</span>
+            <i class="fas fa-home"></i>
+            <span>Dashboard</span>
         </a>
     </li>
     <li class="nav-item">
         <a href="{{ route('secretary.resident-profiling') }}" class="nav-link">
-            <i class="fas fa-users"></i> <span>Resident Profiling</span>
+            <i class="fas fa-users"></i>
+            <span>Resident Profiling</span>
         </a>
     </li>
     <li class="nav-item">
         <a href="{{ route('secretary.document-services') }}" class="nav-link">
-            <i class="far fa-file-alt"></i> <span>Documents Services</span>
+            <i class="far fa-file-alt"></i>
+            <span>Documents Services</span>
         </a>
     </li>
     <li class="nav-item">
-        {{-- This route name matches the web.php I provided --}}
+        {{-- ACTIVE PAGE --}}
         <a href="{{ route('secretary.financial-management') }}" class="nav-link active">
-            <i class="fas fa-coins"></i> <span>Financials</span>
+            <i class="fas fa-dollar-sign"></i>
+            <span>Financial Management</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ route('secretary.health-services') }}" class="nav-link">
+            <i class="fas fa-heart"></i>
+            <span>Health & Social Services</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ route('secretary.incident-blotter') }}" class="nav-link">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Incident & Blotter</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ route('secretary.project-monitoring') }}" class="nav-link">
+            <i class="fas fa-flag"></i>
+            <span>Project Monitoring</span>
         </a>
     </li>
     <li class="nav-item">
         <a href="{{ route('secretary.announcements.index') }}" class="nav-link">
-            <i class="fas fa-bullhorn"></i> <span>Announcements</span>
+            <i class="fas fa-bell"></i>
+            <span>Announcements</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-cog"></i> <span>Settings</span>
+        <a href="{{ route('secretary.sk-overview') }}" class="nav-link">
+            <i class="fas fa-user-graduate"></i>
+            <span>SK Module</span>
         </a>
     </li>
 @endsection
 
 @section('content')
 <style>
-    /* Styling */
-    .finance-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 30px; }
-    .finance-card { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; }
-    .finance-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #F3F4F6; padding-bottom: 10px; }
-    .finance-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; color: #1F2937; }
+    /* --- Base styles (Matched to Captain) --- */
+    .profiling-header {
+        background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
+        color: white; padding: 40px; border-radius: 16px;
+        margin-bottom: 30px; position: relative;
+    }
+    .profiling-title { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+    .profiling-subtitle { opacity: 0.95; font-size: 1rem; margin-bottom: 15px; }
+    .barangay-badge {
+        display: inline-flex; align-items: center; gap: 10px;
+        background: rgba(255, 165, 0, 0.2); padding: 8px 16px;
+        border-radius: 8px; font-weight: 600;
+    }
+    .barangay-badge .badge-icon {
+        background: #FFA500; width: 32px; height: 32px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; color: white;
+    }
+    .total-registered {
+        position: absolute; top: 40px; right: 40px; text-align: right;
+    }
+    .total-registered-label { font-size: 0.9rem; opacity: 0.9; margin-bottom: 4px; }
+    .total-registered-count { font-size: 2.5rem; font-weight: 700; }
+    .total-registered-sublabel { font-size: 0.85rem; opacity: 0.9; }
+
+    /* Stats Grid */
+    .stats-row {
+        display: grid; grid-template-columns: repeat(3, 1fr); /* 3 cols for Secretary */
+        gap: 20px; margin-bottom: 30px;
+    }
+    .stat-box {
+        background: white; padding: 24px; border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex;
+        justify-content: space-between; align-items: center;
+        position: relative;
+    }
+    .stat-content h3 { font-size: 2rem; font-weight: 700; margin: 0 0 8px 0; color: #1F2937; }
+    .stat-content p { color: #666; margin: 0 0 8px 0; font-size: 0.95rem; }
+    .stat-badge { font-size: 0.85rem; display: flex; align-items: center; gap: 6px; font-weight: 600; }
     
+    .stat-badge.blue { color: #2B5CE6; }
+    .stat-badge.orange { color: #FF8C42; }
+    .stat-badge.green { color: #10B981; }
+    .stat-badge.purple { color: #A855F7; }
+
+    .stat-box-icon {
+        width: 60px; height: 60px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.75rem; color: white;
+    }
+    .icon-blue-bg { background: #2B5CE6; }
+    .icon-orange-bg { background: #FFA500; }
+    .icon-green-bg { background: #10B981; }
+    .icon-purple-bg { background: #A855F7; }
+
+    /* Action Buttons */
+    .action-buttons { display: flex; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; }
+    .btn-action {
+        padding: 12px 24px; border-radius: 10px; border: none;
+        font-weight: 600; display: flex; align-items: center;
+        gap: 10px; cursor: pointer; transition: all 0.3s;
+        font-size: 0.95rem; text-decoration: none;
+    }
+    /* Sync Button - Teal */
+    .btn-sync { background: #0D9488; color: white; } 
+    .btn-sync:hover { background: #0F766E; color: white; transform: translateY(-2px); }
+    
+    .btn-expense { background: #3B82F6; color: white; } /* Blue for Request */
+    .btn-expense:hover { background: #2563EB; color: white; transform: translateY(-2px); }
+    
+    .btn-export { background: white; color: #374151; border: 2px solid #E5E7EB; }
+    .btn-export:hover { border-color: #2B5CE6; color: #2B5CE6; transform: translateY(-2px); }
+
+    /* Directory Header Style for Tables */
+    .directory-header {
+        background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
+        color: white; padding: 20px 30px;
+        border-radius: 12px 12px 0 0;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .directory-title { display: flex; align-items: center; gap: 12px; font-size: 1.1rem; font-weight: 700; }
+    
+    .filters-section { display: flex; align-items: center; gap: 10px; }
+    .filter-select {
+        padding: 8px 16px; border: 1px solid #E5E7EB; border-radius: 8px;
+        font-size: 0.9rem; background: white; color: #374151;
+        outline: none; cursor: pointer;
+    }
+
+    /* Table Styles */
+    .table-container {
+        background: white; border-radius: 0 0 12px 12px;
+        overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        margin-bottom: 30px;
+    }
+    .custom-table { width: 100%; border-collapse: collapse; }
+    .custom-table th {
+        padding: 16px 20px; font-weight: 700; color: #1F2937;
+        font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;
+        text-align: left; border-bottom: 2px solid #E5E7EB; background: #F9FAFB;
+    }
+    .custom-table td {
+        padding: 16px 20px; vertical-align: middle;
+        border-bottom: 1px solid #F3F4F6; text-align: left; font-size: 0.95rem;
+    }
+    .custom-table tbody tr:hover { background: #F9FAFB; }
+
+    /* Financial Specific Styles */
+    .finance-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 30px; }
+    .finance-card {
+        background: white; padding: 24px; border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07); height: 100%;
+        display: flex; flex-direction: column;
+    }
+    .finance-card-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #F3F4F6;
+    }
+    .finance-card-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; color: #1F2937; }
+
+    /* Progress Bars */
+    .progress-item { margin-bottom: 16px; }
+    .progress-labels { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: #4B5563; }
+    .progress-bg { width: 100%; height: 8px; background: #F3F4F6; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #2B5CE6; border-radius: 4px; transition: width 0.5s ease; }
+    
+    /* Scrollable list for Revenue Sources */
     .scrollable-list { flex: 1; overflow-y: auto; max-height: 350px; padding-right: 5px; }
     .scrollable-list::-webkit-scrollbar { width: 5px; }
     .scrollable-list::-webkit-scrollbar-track { background: #f1f1f1; }
     .scrollable-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 5px; }
-    
-    .progress-item { margin-bottom: 16px; }
-    .progress-labels { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: #4B5563; }
-    .progress-bg { width: 100%; height: 8px; background: #F3F4F6; border-radius: 4px; overflow: hidden; }
-    .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
-    
-    .action-btn { padding: 8px 16px; border-radius: 6px; border: none; color: white; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
-    .action-btn:hover { opacity: 0.9; color: white; }
-    .btn-blue { background: #3B82F6; }
-    .btn-green { background: #10B981; }
-    .btn-purple { background: #8B5CF6; }
-    .btn-secondary { background: #6B7280; }
-    
-    .custom-table { width: 100%; border-collapse: collapse; min-width: 800px; }
-    .custom-table th { text-align: left; padding: 14px 16px; border-bottom: 2px solid #E5E7EB; color: #6B7280; font-size: 0.8rem; text-transform: uppercase; background: #F9FAFB; }
-    .custom-table td { padding: 16px; border-bottom: 1px solid #F3F4F6; color: #374151; font-size: 0.95rem; }
-    .table-container { overflow-x: auto; }
-    
-    .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
-    .status-pending { background: #FEF3C7; color: #D97706; }
-    .status-approved { background: #D1FAE5; color: #059669; }
-    .status-rejected { background: #FEE2E2; color: #DC2626; }
 
-    @media (max-width: 1024px) { .finance-grid { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: 1fr 1fr !important; } }
-    @media (max-width: 640px) { .stats-grid { grid-template-columns: 1fr !important; } }
+    /* Badges */
+    .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+    .status-approved { background: #D1FAE5; color: #065F46; }
+    .status-pending { background: #FEF3C7; color: #92400E; }
+    .status-rejected { background: #FEE2E2; color: #991B1B; }
+
+    /* Pending Approval Box */
+    .pending-box {
+        border: 1px solid #FCD34D; background: #FFFBEB;
+        border-radius: 12px; overflow: hidden; margin-bottom: 30px;
+    }
+    .pending-header {
+        background: #FDE68A; color: #92400E; padding: 15px 20px;
+        font-weight: 700; display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* Modal Styles */
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center; }
+    .modal-content { background: white; padding: 30px; border-radius: 12px; max-width: 450px; width: 90%; }
+    .form-control { width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.95rem; margin-top: 5px; }
+    
+    @media (max-width: 1200px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) { 
+        .stats-row { grid-template-columns: 1fr; } 
+        .finance-grid { grid-template-columns: 1fr; }
+        .total-registered { position: static; margin-top: 20px; text-align: left; }
+    }
 </style>
 
-{{-- Header --}}
-<div style="background: linear-gradient(135deg, #4B5563 0%, #1F2937 100%); color: white; padding: 30px; border-radius: 16px; margin-bottom: 30px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
-        <div>
-            <div style="font-size: 1.8rem; font-weight: 800; margin-bottom: 6px;">Financial Overview</div>
-            <div style="opacity: 0.9; font-size: 0.95rem;">
-                <i class="fas fa-user-shield"></i> Secretary View (Restricted Access)
+{{-- Notifications --}}
+@if(session('success'))
+<div class="alert alert-success" style="background: #D1FAE5; color: #065F46; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #6EE7B7; display: flex; align-items: center; gap: 10px;">
+    <i class="fas fa-check-circle"></i> {{ session('success') }}
+</div>
+@endif
+
+{{-- 1. Header Section --}}
+<div class="profiling-header">
+    <div class="profiling-title">Financial Management</div>
+    <div class="profiling-subtitle">Track barangay revenues, expenses, and budget allocations.</div>
+    <div class="barangay-badge">
+        <span class="badge-icon">PH</span>
+        <span>Barangay Calbueg, Malasiqui, Pangasinan</span>
+    </div>
+    <div class="total-registered">
+        <div class="total-registered-label">Available Balance</div>
+        <div class="total-registered-count">₱{{ number_format($availableBudget) }}</div>
+        <div class="total-registered-sublabel">Cash on Hand</div>
+    </div>
+</div>
+
+{{-- 2. Stats Row --}}
+<div class="stats-row">
+    {{-- Annual Budget --}}
+    <div class="stat-box">
+        <div class="stat-content">
+            <h3>₱{{ number_format($annualBudget) }}</h3>
+            <p>Annual Budget</p>
+            <div class="stat-badge blue">
+                <i class="fas fa-calendar-alt"></i>
+                <span>FY {{ date('Y') }}</span>
             </div>
         </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button class="action-btn btn-green" onclick="openModal('revenueModal')">
-                <i class="fas fa-plus-circle"></i> Record Revenue
-            </button>
-            <button class="action-btn btn-blue" onclick="openModal('expenseModal')">
-                <i class="fas fa-paper-plane"></i> Request Expense
-            </button>
-            <button class="action-btn btn-purple" onclick="openModal('exportModal')">
-                <i class="fas fa-file-export"></i> Export Data
-            </button>
+        <div class="stat-box-icon icon-blue-bg">
+            <i class="fas fa-wallet"></i>
+        </div>
+    </div>
+
+    {{-- Total Expenses --}}
+    <div class="stat-box">
+        <div class="stat-content">
+            <h3>₱{{ number_format($totalSpent) }}</h3>
+            <p>Total Expenses</p>
+            <div class="stat-badge orange">
+                <i class="fas fa-chart-pie"></i>
+                <span>{{ $annualBudget > 0 ? number_format(($totalSpent / $annualBudget) * 100, 1) : 0 }}% Used</span>
+            </div>
+        </div>
+        <div class="stat-box-icon icon-orange-bg">
+            <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+    </div>
+
+    {{-- Total Revenue --}}
+    <div class="stat-box">
+        <div class="stat-content">
+            <h3>₱{{ number_format($totalRevenue) }}</h3>
+            <p>Total Collections</p>
+            <div class="stat-badge purple">
+                <i class="fas fa-arrow-up"></i>
+                <span>Includes Docs</span>
+            </div>
+        </div>
+        <div class="stat-box-icon icon-purple-bg">
+            <i class="fas fa-hand-holding-usd"></i>
         </div>
     </div>
 </div>
 
-{{-- Top Stats Cards --}}
-<div class="stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 30px;">
-    {{-- Annual Budget --}}
-    <div class="finance-card" style="height: auto;">
-        <div class="stat-info">
-            <p style="color: #6B7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; margin: 0;">Annual Budget</p>
-            <h3 style="font-size: 1.75rem; margin: 5px 0 0 0; color: #111827;">₱{{ number_format($annualBudget) }}</h3>
-        </div>
-        <div style="margin-top: 15px; color: #3B82F6; display: flex; justify-content: space-between;">
-            <span style="font-size: 0.8rem; background: #EFF6FF; padding: 4px 8px; border-radius: 6px;">FY {{ date('Y') }}</span>
-        </div>
-    </div>
+{{-- 3. Action Buttons --}}
+<div class="action-buttons">
+    {{-- REMOVED: Manual Record Revenue Button --}}
+    
+    <button class="btn-action btn-expense" onclick="openModal('expenseModal')">
+        <i class="fas fa-paper-plane"></i>
+        <span>Request Expense</span>
+    </button>
+    
+    {{-- SYNC DOCS REVENUE BUTTON --}}
+    <form action="{{ route('secretary.financial.store') }}" method="POST" style="display:inline;">
+        @csrf
+        <input type="hidden" name="type" value="sync_docs">
+        <input type="hidden" name="title" value="Sync Docs Revenue"> {{-- Dummy values for validation --}}
+        <input type="hidden" name="amount" value="0">
+        <input type="hidden" name="category" value="System">
+        <input type="hidden" name="transaction_date" value="{{ date('Y-m-d') }}">
+        
+        <button type="submit" class="btn-action btn-sync" title="Recalculate revenue from paid documents">
+            <i class="fas fa-sync-alt"></i>
+            <span>Sync Docs Revenue</span>
+        </button>
+    </form>
 
-    {{-- Total Spent --}}
-    <div class="finance-card" style="height: auto;">
-        <div class="stat-info">
-            <p style="color: #6B7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; margin: 0;">Total Expenses</p>
-            <h3 style="font-size: 1.75rem; margin: 5px 0 0 0; color: #111827;">₱{{ number_format($totalSpent) }}</h3>
-        </div>
-        <div style="margin-top: 15px;">
-            <span style="font-size: 0.85rem; color: #DC2626; background: #FEF2F2; padding: 4px 8px; border-radius: 6px; font-weight: 600;">
-                {{ $annualBudget > 0 ? number_format(($totalSpent / $annualBudget) * 100, 1) : 0 }}% Used
-            </span>
-        </div>
-    </div>
-
-    {{-- Available --}}
-    <div class="finance-card" style="height: auto;">
-        <div class="stat-info">
-            <p style="color: #6B7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; margin: 0;">Available Funds</p>
-            <h3 style="font-size: 1.75rem; margin: 5px 0 0 0; color: #10B981;">₱{{ number_format($availableBudget) }}</h3>
-        </div>
-    </div>
-
-    {{-- Revenue --}}
-    <div class="finance-card" style="height: auto;">
-        <div class="stat-info">
-            <p style="color: #6B7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; margin: 0;">Total Collections</p>
-            <h3 style="font-size: 1.75rem; margin: 5px 0 0 0; color: #111827;">₱{{ number_format($totalRevenue) }}</h3>
-        </div>
-    </div>
+    <button class="btn-action btn-export" onclick="openModal('exportModal')">
+        <i class="fas fa-file-download"></i>
+        <span>Export Reports</span>
+    </button>
 </div>
 
-{{-- Charts --}}
+{{-- 4. Pending Approvals (Secretary specific view) --}}
+@if(isset($pendingRequests) && $pendingRequests->count() > 0)
+<div class="pending-box">
+    <div class="pending-header">
+        <span><i class="fas fa-exclamation-circle"></i> Your Pending Requests</span>
+        <span style="background: white; color: #92400E; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem;">Waiting for Captain</span>
+    </div>
+    <div class="table-container" style="margin-bottom: 0; border-radius: 0;">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($pendingRequests as $req)
+                <tr>
+                    <td style="font-weight: 600;">{{ $req->title }}</td>
+                    <td>{{ $req->category }}</td>
+                    <td style="color: #DC2626; font-weight: 700;">₱{{ number_format($req->amount, 2) }}</td>
+                    <td>{{ $req->transaction_date->format('M d') }}</td>
+                    <td><span class="status-badge status-pending">Pending</span></td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
+
+{{-- 5. Charts / Progress Bars --}}
 <div class="finance-grid">
     {{-- Budget Utilization --}}
     <div class="finance-card">
-        <div class="finance-header">
+        <div class="finance-card-header">
             <h3><i class="fas fa-chart-pie text-primary me-2"></i> Budget Utilization</h3>
         </div>
         <div class="scrollable-list">
@@ -153,10 +369,10 @@
             <div class="progress-item">
                 <div class="progress-labels">
                     <span>{{ $item['name'] }}</span>
-                    <span>₱{{ number_format($item['spent']) }} / ₱{{ number_format($item['limit']) }}</span>
+                    <span>₱{{ number_format($item['spent']) }} <span style="color:#9CA3AF; font-weight:400;">/ ₱{{ number_format($item['limit']) }}</span></span>
                 </div>
                 <div class="progress-bg">
-                    <div class="progress-fill" style="width: {{ min($item['percentage'], 100) }}%; background-color: {{ $item['percentage'] > 90 ? '#EF4444' : '#3B82F6' }}"></div>
+                    <div class="progress-fill" style="width: {{ min($item['percentage'], 100) }}%; background-color: {{ $item['percentage'] > 90 ? '#EF4444' : ($item['percentage'] > 70 ? '#F59E0B' : '#3B82F6') }}"></div>
                 </div>
                 <div style="text-align: right; font-size: 0.75rem; color: #6B7280; margin-top: 4px;">
                     {{ number_format($item['percentage'], 1) }}% Utilized
@@ -166,9 +382,9 @@
         </div>
     </div>
 
-    {{-- Revenue Performance --}}
+    {{-- Revenue Sources (Matched Content to Captain) --}}
     <div class="finance-card">
-        <div class="finance-header">
+        <div class="finance-card-header">
             <h3><i class="fas fa-chart-bar text-success me-2"></i> Revenue Sources</h3>
         </div>
         <div class="scrollable-list">
@@ -191,59 +407,67 @@
     </div>
 </div>
 
-{{-- Filters --}}
-<form action="{{ route('secretary.financial-management') }}" method="GET" style="margin-bottom: 24px; background: white; padding: 20px; border-radius: 12px; display: flex; gap: 15px; align-items: center;">
-    <span style="font-weight: 600; color: #374151;"><i class="fas fa-filter text-muted"></i> Filters:</span>
-    <select name="type" onchange="this.form.submit()" style="padding: 8px; border-radius: 6px; border: 1px solid #D1D5DB;">
-        <option value="all" {{ request('type') == 'all' ? 'selected' : '' }}>All Transactions</option>
-        <option value="revenue" {{ request('type') == 'revenue' ? 'selected' : '' }}>Revenue Only</option>
-        <option value="expense" {{ request('type') == 'expense' ? 'selected' : '' }}>Expenses Only</option>
-    </select>
-</form>
+{{-- 6. Recent Transactions Table --}}
+<div class="directory-header">
+    <div class="directory-title">
+        <i class="fas fa-history"></i>
+        <span>Transaction History</span>
+    </div>
+    <form action="{{ route('secretary.financial-management') }}" method="GET" class="filters-section">
+        <select name="type" class="filter-select" onchange="this.form.submit()">
+            <option value="all" {{ request('type') == 'all' ? 'selected' : '' }}>All Types</option>
+            <option value="revenue" {{ request('type') == 'revenue' ? 'selected' : '' }}>Revenue</option>
+            <option value="expense" {{ request('type') == 'expense' ? 'selected' : '' }}>Expense</option>
+        </select>
+    </form>
+</div>
 
-{{-- Table --}}
-<div class="finance-card" style="padding: 0; overflow: hidden;">
-    <div class="finance-header" style="padding: 20px 24px; border-bottom: 1px solid #E5E7EB; margin-bottom: 0;">
-        <h3><i class="fas fa-history text-secondary me-2"></i> Transaction History</h3>
-    </div>
-    <div class="table-container">
-        <table class="custom-table">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Category</th>
-                    <th>Requested By</th>
-                    <th>Amount</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($transactions as $transaction)
-                <tr>
-                    <td style="font-weight: 600;">{{ $transaction->title }}</td>
-                    <td><span style="background: #F3F4F6; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem;">{{ $transaction->category }}</span></td>
-                    <td>{{ $transaction->requested_by }}</td>
-                    <td style="font-weight: 600; {{ $transaction->type == 'revenue' ? 'color:#059669' : 'color:#DC2626' }}">
-                        {{ $transaction->type == 'revenue' ? '+' : '-' }}₱{{ number_format($transaction->amount, 2) }}
-                    </td>
-                    <td>{{ $transaction->transaction_date->format('M d, Y') }}</td>
-                    <td>
-                        @if($transaction->status == 'approved')
-                            <span class="status-badge status-approved">Approved</span>
-                        @elseif($transaction->status == 'rejected')
-                            <span class="status-badge status-rejected">Rejected</span>
-                        @else
-                            <span class="status-badge status-pending">Pending</span>
-                        @endif
-                    </td>
-                </tr>
-                @empty
-                <tr><td colspan="6" style="text-align:center; padding: 20px; color: #666;">No records found.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+<div class="table-container">
+    <table class="custom-table">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Recorded By</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($transactions as $transaction)
+            <tr>
+                <td style="font-weight: 600; color: #111827;">{{ $transaction->title }}</td>
+                <td>
+                    <span style="background: #F3F4F6; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; color: #4B5563;">
+                        {{ $transaction->category }}
+                    </span>
+                </td>
+                <td>{{ $transaction->requested_by ?? 'System' }}</td>
+                <td style="font-weight: 700; {{ $transaction->type == 'revenue' ? 'color:#059669' : 'color:#DC2626' }}">
+                    {{ $transaction->type == 'revenue' ? '+' : '-' }}₱{{ number_format($transaction->amount, 2) }}
+                </td>
+                <td>{{ $transaction->transaction_date->format('M d, Y') }}</td>
+                <td>
+                    @if($transaction->status == 'approved')
+                        <span class="status-badge status-approved">Approved</span>
+                    @elseif($transaction->status == 'rejected')
+                        <span class="status-badge status-rejected">Rejected</span>
+                    @else
+                        <span class="status-badge status-pending">Pending</span>
+                    @endif
+                </td>
+            </tr>
+            @empty
+            <tr>
+                <td colspan="6" style="text-align:center; padding: 40px; color: #6B7280;">
+                    <i class="fas fa-folder-open fa-2x" style="margin-bottom: 10px; display: block; opacity: 0.5;"></i>
+                    No transactions found.
+                </td>
+            </tr>
+            @endforelse
+        </tbody>
+    </table>
     <div style="padding: 20px;">
         {{ $transactions->links('pagination::bootstrap-4') }}
     </div>
@@ -251,102 +475,68 @@
 
 {{-- MODALS --}}
 
-{{-- 1. Add Revenue (Direct Approval) --}}
-<div id="revenueModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:white; width:450px; margin: 50px auto; padding:25px; border-radius:16px;">
-        <h3 style="margin-top: 0; margin-bottom: 20px;">Record Revenue</h3>
-        <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Use this to record walk-in payments or manual collections.</p>
-        <form action="{{ route('secretary.financial.store') }}" method="POST">
-            @csrf
-            <input type="hidden" name="type" value="revenue">
-            <div style="margin-bottom:15px;">
-                <label style="display:block; font-weight:600; margin-bottom:5px;">Source/Title</label>
-                <input type="text" name="title" class="form-control" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
-            </div>
-            <div style="margin-bottom:15px;">
-                <label style="display:block; font-weight:600; margin-bottom:5px;">Category</label>
-                <select name="category" class="form-control" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
-                    <option>Barangay Clearance</option>
-                    <option>Business Permits</option>
-                    <option>Community Tax</option>
-                    <option>Other Fees</option>
-                </select>
-            </div>
-            <div style="margin-bottom:15px;">
-                <label style="display:block; font-weight:600; margin-bottom:5px;">Amount (₱)</label>
-                <input type="number" name="amount" step="0.01" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
-            </div>
-            <div style="margin-bottom:20px;">
-                 <label style="display:block; font-weight:600; margin-bottom:5px;">Date</label>
-                 <input type="date" name="transaction_date" value="{{ date('Y-m-d') }}" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
-            </div>
-            <div style="text-align:right;">
-                <button type="button" onclick="closeModal('revenueModal')" class="action-btn btn-secondary">Cancel</button>
-                <button type="submit" class="action-btn btn-green">Save Record</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-{{-- 2. Request Expense (Submission only) --}}
-<div id="expenseModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:white; width:450px; margin: 50px auto; padding:25px; border-radius:16px;">
-        <h3 style="margin-top: 0; margin-bottom: 20px;">Request Expense</h3>
-        <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">This request will be sent to the Treasurer/Captain for approval.</p>
+{{-- 1. Expense Modal --}}
+<div id="expenseModal" class="modal">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
+            <h3 style="margin:0; color:#1F2937;">Request Expense</h3>
+            <span style="cursor:pointer;" onclick="closeModal('expenseModal')">&times;</span>
+        </div>
+        <p style="font-size: 0.85rem; color: #666; margin-top: -10px; margin-bottom: 15px;">This will be sent for approval.</p>
         <form action="{{ route('secretary.financial.store') }}" method="POST">
             @csrf
             <input type="hidden" name="type" value="expense">
-            <div style="margin-bottom:15px;">
-                <label style="display:block; font-weight:600; margin-bottom:5px;">Description</label>
-                <input type="text" name="title" class="form-control" placeholder="e.g. Office Supplies" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
-            </div>
-            <div style="margin-bottom:15px;">
-                <label style="display:block; font-weight:600; margin-bottom:5px;">Category</label>
-                <select name="category" class="form-control" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
-                    <option>Office Supplies</option>
-                    <option>Utilities</option>
-                    <option>Education</option>
-                    <option>Health Programs</option>
-                    <option>Others</option>
-                </select>
-            </div>
-            <div style="margin-bottom:15px;">
-                <label style="display:block; font-weight:600; margin-bottom:5px;">Amount Needed (₱)</label>
-                <input type="number" name="amount" step="0.01" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
-            </div>
-            <div style="margin-bottom:20px;">
-                 <label style="display:block; font-weight:600; margin-bottom:5px;">Date Needed</label>
-                 <input type="date" name="transaction_date" value="{{ date('Y-m-d') }}" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
-            </div>
-            <div style="text-align:right;">
-                <button type="button" onclick="closeModal('expenseModal')" class="action-btn btn-secondary">Cancel</button>
-                <button type="submit" class="action-btn btn-blue">Submit Request</button>
+            
+            <label style="font-weight:600; font-size:0.9rem;">Description</label>
+            <input type="text" name="title" class="form-control" placeholder="e.g. Office Supplies" required>
+            
+            <label style="font-weight:600; font-size:0.9rem; margin-top:15px; display:block;">Category</label>
+            <select name="category" class="form-control">
+                <option>Office Supplies</option>
+                <option>Utilities</option>
+                <option>Education</option>
+                <option>Health Programs</option>
+                <option>Others</option>
+            </select>
+
+            <label style="font-weight:600; font-size:0.9rem; margin-top:15px; display:block;">Amount (₱)</label>
+            <input type="number" name="amount" class="form-control" step="0.01" required>
+
+            <label style="font-weight:600; font-size:0.9rem; margin-top:15px; display:block;">Date Needed</label>
+            <input type="date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" required>
+
+            <div style="text-align:right; margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="closeModal('expenseModal')" class="btn-action btn-export" style="border:none; background:#F3F4F6;">Cancel</button>
+                <button type="submit" class="btn-action btn-expense">Submit Request</button>
             </div>
         </form>
     </div>
 </div>
 
-{{-- 3. Export Modal --}}
-<div id="exportModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
-    <div style="background:white; width:400px; margin: 100px auto; padding:25px; border-radius:16px;">
-        <h3 style="margin-top: 0; margin-bottom: 20px;">Export Data</h3>
-        <p style="color: #666; font-size: 0.9rem;">Download financial records.</p>
-        <a href="{{ route('secretary.financial.export', ['report_type' => 'transactions']) }}" class="action-btn btn-purple" style="display:block; text-align:center; margin-bottom:10px;">
-            <i class="fas fa-list"></i> Download Transaction History (CSV)
-        </a>
+{{-- 2. Export Modal --}}
+<div id="exportModal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-top: 0; margin-bottom: 20px; color: #111827;">Export Reports</h3>
+        <div style="display: grid; gap: 10px;">
+            <a href="{{ route('secretary.financial.export', ['report_type' => 'transactions']) }}" class="btn-action btn-export" style="justify-content: center;">
+                <i class="fas fa-list"></i> Download Transaction History (CSV)
+            </a>
+        </div>
         <div style="text-align:right; margin-top: 20px;">
-            <button type="button" onclick="closeModal('exportModal')" class="action-btn btn-secondary">Close</button>
+            <button type="button" onclick="closeModal('exportModal')" class="btn-action" style="background:#F3F4F6; color:#374151;">Close</button>
         </div>
     </div>
 </div>
 
 <script>
-    function openModal(id) { document.getElementById(id).style.display = 'block'; }
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    
     window.onclick = function(event) {
-        if (event.target.id == 'revenueModal') closeModal('revenueModal');
-        if (event.target.id == 'expenseModal') closeModal('expenseModal');
-        if (event.target.id == 'exportModal') closeModal('exportModal');
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+        }
     }
 </script>
+
 @endsection

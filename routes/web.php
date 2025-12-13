@@ -143,58 +143,68 @@ Route::middleware('auth')->group(function () {
     // SECRETARY ROUTES
     // ============================================
     Route::middleware(CheckRole::class . ':secretary')->prefix('secretary')->name('secretary.')->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'secretary'])->name('dashboard');
-        
-        // Resident
-        Route::get('/resident-profiling', [SecretaryController::class, 'residentProfiling'])->name('resident-profiling');
-        Route::get('/resident/create', [SecretaryController::class, 'createResident'])->name('resident.create');
-        Route::post('/resident', [SecretaryController::class, 'storeResident'])->name('resident.store');
-        Route::get('/resident/{id}', [SecretaryController::class, 'showResident'])->name('resident.show')->where('id', '[0-9]+');
-        Route::get('/resident/{id}/edit', [SecretaryController::class, 'editResident'])->name('resident.edit')->where('id', '[0-9]+');
-        Route::put('/resident/{id}', [SecretaryController::class, 'updateResident'])->name('resident.update')->where('id', '[0-9]+');
-        Route::delete('/resident/{id}', [SecretaryController::class, 'destroyResident'])->name('resident.destroy')->where('id', '[0-9]+');
-        Route::post('/resident/{resident}/reset-password', [SecretaryController::class, 'resetPassword'])->name('resident.reset-password');
-            
-        // Household
-        Route::get('/household/create', [SecretaryController::class, 'createHousehold'])->name('household.create');
-        Route::get('/household/{id}/edit', [SecretaryController::class, 'editHousehold'])->name('household.edit')->where('id', '[0-9]+');
-        Route::put('/household/{id}', [SecretaryController::class, 'updateHousehold'])->name('household.update')->where('id', '[0-9]+');
-        Route::post('/household', [SecretaryController::class, 'storeHousehold'])->name('household.store');
-        Route::delete('/household/{id}', [SecretaryController::class, 'destroyHousehold'])->name('household.destroy')->where('id', '[0-9]+');
-        Route::get('/household/{id}/show', [SecretaryController::class, 'showHousehold'])->name('household.show');
+       // --- 1. Main Dashboard (Handled by DashboardController) ---
+    // Ensure this route name matches what you use in redirects: 'secretary.dashboard'
+    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'secretary'])->name('dashboard');
 
-        // Documents
-        Route::get('/document-services', [SecretaryController::class, 'documentServices'])->name('document-services');
-        Route::get('/document-request/{id}', [SecretaryController::class, 'showDocumentRequest'])->name('document.show');
-        Route::put('/document-request/{id}', [SecretaryController::class, 'updateDocumentRequest'])->name('document.update');
-        Route::get('/requirement/{id}/download', [SecretaryController::class, 'downloadRequirement'])->name('requirement.download');
-        
-        // Doc Types & Templates
-        Route::get('/document-type/create', [DocumentTypeController::class, 'create'])->name('document-type.create');
-        Route::post('/document-type', [DocumentTypeController::class, 'store'])->name('document-type.store');
-        Route::get('/document-type/{id}/edit', [DocumentTypeController::class, 'edit'])->name('document-type.edit');
-        Route::put('/document-type/{id}', [DocumentTypeController::class, 'update'])->name('document-type.update');
-        Route::delete('/document-type/{id}', [DocumentTypeController::class, 'destroy'])->name('document-type.destroy');
-        Route::get('/template/create', [TemplateController::class, 'create'])->name('template.create');
-        Route::post('/template', [TemplateController::class, 'store'])->name('template.store');
-        Route::get('/template/{id}/edit', [TemplateController::class, 'edit'])->name('template.edit');
-        Route::put('/template/{id}', [TemplateController::class, 'update'])->name('template.update');
-        Route::delete('/template/{id}', [TemplateController::class, 'destroy'])->name('template.destroy');
+    // --- 2. Resident Profiling ---
+    Route::get('/residents', [SecretaryController::class, 'residentProfiling'])->name('resident-profiling');
+    Route::get('/residents/create', [SecretaryController::class, 'createResident'])->name('resident.create');
+    Route::post('/residents', [SecretaryController::class, 'storeResident'])->name('resident.store');
+    Route::get('/residents/{id}', [SecretaryController::class, 'showResident'])->name('resident.show');
+    Route::get('/residents/{id}/edit', [SecretaryController::class, 'editResident'])->name('resident.edit');
+    Route::put('/residents/{id}', [SecretaryController::class, 'updateResident'])->name('resident.update');
+    Route::delete('/residents/{id}', [SecretaryController::class, 'destroyResident'])->name('resident.destroy');
+    Route::post('/residents/{resident}/reset-password', [SecretaryController::class, 'resetPassword'])->name('resident.reset-password');
 
-        // Financial Management (SECRETARY)
-        Route::get('/financial-management', [SecretaryController::class, 'financialManagement'])->name('financial-management');
-        Route::post('/financial-transaction', [SecretaryController::class, 'storeFinancialTransaction'])->name('financial.store');
-        Route::put('/financial-transaction/{id}/status', [SecretaryController::class, 'updateTransactionStatus'])->name('financial.status');
-        Route::get('/financial/export', [SecretaryController::class, 'exportFinancialReports'])->name('financial.export'); 
+    // --- 3. Household Management ---
+    Route::get('/households/create', [SecretaryController::class, 'createHousehold'])->name('household.create');
+    Route::post('/households', [SecretaryController::class, 'storeHousehold'])->name('household.store');
+    Route::get('/households/{id}', [SecretaryController::class, 'showHousehold'])->name('household.show');
+    Route::get('/households/{id}/edit', [SecretaryController::class, 'editHousehold'])->name('household.edit');
+    Route::put('/households/{id}', [SecretaryController::class, 'updateHousehold'])->name('household.update');
+    Route::delete('/households/{id}', [SecretaryController::class, 'destroyHousehold'])->name('household.destroy');
 
-        // Announcements
-        Route::get('/announcements', [SecretaryController::class, 'announcements'])->name('announcements.index');
-        Route::get('/announcements/create', [SecretaryController::class, 'createAnnouncement'])->name('announcements.create');
-        Route::post('/announcements', [SecretaryController::class, 'storeAnnouncement'])->name('announcements.store');
-        Route::get('/announcements/{id}/edit', [SecretaryController::class, 'editAnnouncement'])->name('announcements.edit');
-        Route::put('/announcements/{id}', [SecretaryController::class, 'updateAnnouncement'])->name('announcements.update');
-        Route::delete('/announcements/{id}', [SecretaryController::class, 'destroyAnnouncement'])->name('announcements.destroy');
-    });
+    // --- 4. Health & Social Services ---
+    Route::get('/health-services', [SecretaryController::class, 'healthAndSocialServices'])->name('health-services');
+    Route::get('/medicine/create', [SecretaryController::class, 'createMedicine'])->name('medicine.create');
+    Route::post('/medicine', [SecretaryController::class, 'storeMedicine'])->name('medicine.store');
+
+    // --- 5. Document Services ---
+    Route::get('/documents', [SecretaryController::class, 'documentServices'])->name('document-services');
+    Route::get('/documents/{id}', [SecretaryController::class, 'showDocumentRequest'])->name('document.show');
+    Route::put('/documents/{id}', [SecretaryController::class, 'updateDocumentRequest'])->name('document.update');
+    Route::get('/requirements/{id}/download', [SecretaryController::class, 'downloadRequirement'])->name('requirement.download');
+
+    // --- 6. Announcements ---
+    Route::get('/announcements', [SecretaryController::class, 'announcements'])->name('announcements.index');
+    Route::get('/announcements/create', [SecretaryController::class, 'createAnnouncement'])->name('announcements.create');
+    Route::post('/announcements', [SecretaryController::class, 'storeAnnouncement'])->name('announcements.store');
+    Route::get('/announcements/{id}/edit', [SecretaryController::class, 'editAnnouncement'])->name('announcements.edit');
+    Route::put('/announcements/{id}', [SecretaryController::class, 'updateAnnouncement'])->name('announcements.update');
+    Route::delete('/announcements/{id}', [SecretaryController::class, 'destroyAnnouncement'])->name('announcements.destroy');
+
+    // --- 7. Financial Management (Restricted Logic) ---
+    Route::get('/financial-management', [SecretaryController::class, 'financialManagement'])->name('financial-management');
+    Route::post('/financial/store', [SecretaryController::class, 'storeFinancialTransaction'])->name('financial.store');
+    Route::get('/financial/export', [SecretaryController::class, 'exportFinancialReports'])->name('financial.export');
+
+    // --- 8. Project Monitoring ---
+    Route::get('/projects', [SecretaryController::class, 'projectMonitoring'])->name('project-monitoring');
+    Route::post('/projects', [SecretaryController::class, 'storeProject'])->name('project.store');
+    Route::put('/projects/{id}/progress', [SecretaryController::class, 'updateProjectProgress'])->name('project.update-progress');
+    Route::delete('/projects/{id}', [SecretaryController::class, 'destroyProject'])->name('project.destroy');
+
+    // --- 9. Incident & Blotter (Mediation) ---
+    Route::get('/incidents', [SecretaryController::class, 'incidentAndBlotter'])->name('incident-blotter');
+    Route::post('/incidents', [SecretaryController::class, 'storeIncident'])->name('incident.store');
+    Route::post('/incidents/{id}/process', [SecretaryController::class, 'processIncident'])->name('incident.process');
+    Route::put('/incidents/{id}/details', [SecretaryController::class, 'updateIncidentDetails'])->name('incident.update-details');
+    Route::delete('/incidents/{id}', [SecretaryController::class, 'destroyIncident'])->name('incident.destroy');
+
+    // --- 10. SK Overview ---
+    Route::get('/sk-overview', [SecretaryController::class, 'skOverview'])->name('sk-overview');
+});
 
     // ============================================
     // TREASURER ROUTES
@@ -230,6 +240,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/medicine/{medicine}/edit', [HealthController::class, 'editMedicine'])->name('medicine.edit');
         Route::put('/medicine/{medicine}', [HealthController::class, 'updateMedicine'])->name('medicine.update');
         Route::delete('/medicine/{medicine}', [HealthController::class, 'destroyMedicine'])->name('medicine.destroy'); 
+        Route::get('/health/announcements', [HealthController::class, 'healthAnnouncements'])->name('announcements');
     });
 
     Route::middleware(CheckRole::class . ':resident')->prefix('resident')->name('resident.')->group(function () {
@@ -264,6 +275,39 @@ Route::middleware(['auth', CheckRole::class . ':kagawad'])->prefix('kagawad')->n
     Route::post('/projects/store', [KagawadController::class, 'storeProjectProposal'])->name('projects.store');
     Route::put('/projects/{id}/progress', [KagawadController::class, 'updateProjectProgress'])->name('projects.progress');
     Route::post('/projects/expense', [KagawadController::class, 'storeProjectExpense'])->name('projects.expense');
+    // ==========================================
+    // NEW: INCIDENT & BLOTTER ROUTES
+    // ==========================================
+    
+    // 1. The Main View (Table & Statistics)
+    Route::get('/incidents', [KagawadController::class, 'incidents'])->name('incidents');
+
+    // 2. Store a Walk-in Incident (Create)
+    Route::post('/incidents/store', [KagawadController::class, 'storeIncident'])->name('incidents.store');
+
+    // 3. Process/Update an Incident (Mediation, Status Change, Investigation Log)
+    Route::post('/incidents/update/{id}', [KagawadController::class, 'updateIncident'])->name('incidents.update');
+    // ===========================================
+    // ANNOUNCEMENTS ROUTES
+    // ===========================================
+    
+    // List all announcements
+    Route::get('/announcements', [KagawadController::class, 'announcements'])->name('announcements.index');
+
+    // Show create form
+    Route::get('/announcements/create', [KagawadController::class, 'createAnnouncement'])->name('announcements.create');
+
+    // Store new announcement
+    Route::post('/announcements', [KagawadController::class, 'storeAnnouncement'])->name('announcements.store');
+
+    // Show edit form
+    Route::get('/announcements/{id}/edit', [KagawadController::class, 'editAnnouncement'])->name('announcements.edit');
+
+    // Update announcement
+    Route::put('/announcements/{id}', [KagawadController::class, 'updateAnnouncement'])->name('announcements.update');
+
+    // Delete announcement
+    Route::delete('/announcements/{id}', [KagawadController::class, 'destroyAnnouncement'])->name('announcements.destroy');
 });
 
 

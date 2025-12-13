@@ -941,8 +941,8 @@ class CaptainController extends Controller
         }
     }
 
-    // ============================================
-    // 8. INCIDENT & BLOTTER
+   // ============================================
+    // 8. INCIDENT & BLOTTER (UPDATED for Mediation)
     // ============================================
 
     public function incidentAndBlotter(Request $request)
@@ -973,6 +973,7 @@ class CaptainController extends Controller
             'resolved_cases' => BlotterRecord::where('status', 'Resolved')->count(),
         ];
 
+        // UPDATED SORTING: Includes 'For Mediation' and 'Under Investigation'
         $records = $query->orderByRaw("FIELD(status, 'Open', 'Scheduled for Hearing', 'Under Investigation', 'For Mediation', 'Resolved', 'Dismissed')")
                          ->orderBy('priority', 'desc')
                          ->orderBy('date_reported', 'desc')
@@ -1019,15 +1020,15 @@ class CaptainController extends Controller
         switch ($request->action_type) {
             case 'schedule_hearing':
                 $newStatus = 'Scheduled for Hearing';
-                $newLog = "[$timestamp] STATUS: Scheduled for Hearing. DETAILS: " . $request->remarks;
+                $newLog = "[$timestamp] [Captain] STATUS: Scheduled for Hearing. DETAILS: " . $request->remarks;
                 break;
             case 'resolve_case':
                 $newStatus = 'Resolved';
-                $newLog = "[$timestamp] STATUS: Case Resolved. REMARKS: " . $request->remarks;
+                $newLog = "[$timestamp] [Captain] STATUS: Case Resolved. REMARKS: " . $request->remarks;
                 break;
             case 'status_update':
                 $newStatus = $request->new_status ?? $record->status;
-                $newLog = "[$timestamp] STATUS: Updated to $newStatus. UPDATE: " . $request->remarks;
+                $newLog = "[$timestamp] [Captain] STATUS: Updated to $newStatus. UPDATE: " . $request->remarks;
                 break;
         }
 

@@ -10,14 +10,15 @@
         </a>
     </li>
     <li class="nav-item">
+        {{-- ACTIVE PAGE --}}
         <a href="{{ route('treasurer.financial') }}" class="nav-link active">
-            <i class="fas fa-dollar-sign"></i>
+            <i class="fas fa-coins"></i>
             <span>Financial Management</span>
         </a>
     </li>
     <li class="nav-item">
         <a href="{{ route('treasurer.announcements.index') }}" class="nav-link">
-            <i class="fas fa-bell"></i>
+            <i class="fas fa-bullhorn"></i>
             <span>Announcements</span>
         </a>
     </li>
@@ -25,249 +26,345 @@
 
 @section('content')
 <style>
-    /* Specific styles for Financial page */
-    .finance-grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr; /* 2/3 for utilization, 1/3 for revenue */
-        gap: 24px;
+    /* --- Main Layout & Header (Matched to Captain) --- */
+    .profiling-header {
+        background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
+        color: white; padding: 40px; border-radius: 16px;
+        margin-bottom: 30px; position: relative;
+        box-shadow: 0 10px 20px rgba(30, 58, 138, 0.2);
+    }
+    .profiling-title { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+    .profiling-subtitle { opacity: 0.95; font-size: 1rem; margin-bottom: 15px; }
+    
+    .barangay-badge {
+        display: inline-flex; align-items: center; gap: 10px;
+        background: rgba(255, 165, 0, 0.2); padding: 8px 16px;
+        border-radius: 8px; font-weight: 600;
+    }
+    .barangay-badge .badge-icon {
+        background: #FFA500; width: 32px; height: 32px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; color: white;
+    }
+
+    .total-registered {
+        position: absolute; top: 40px; right: 40px; text-align: right;
+    }
+    .total-registered-label { font-size: 0.9rem; opacity: 0.9; margin-bottom: 4px; }
+    .total-registered-count { font-size: 2.5rem; font-weight: 700; }
+    .total-registered-sublabel { font-size: 0.85rem; opacity: 0.9; }
+
+    /* Stats Grid */
+    .stats-row {
+        display: grid; grid-template-columns: repeat(4, 1fr);
+        gap: 20px; margin-bottom: 30px;
+    }
+    .stat-box {
+        background: white; padding: 24px; border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex;
+        justify-content: space-between; align-items: center;
+        position: relative;
+        border: 1px solid #f0f0f0;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .stat-box:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+
+    .stat-content h3 { font-size: 2rem; font-weight: 700; margin: 0 0 8px 0; color: #1F2937; }
+    .stat-content p { color: #666; margin: 0 0 8px 0; font-size: 0.95rem; font-weight: 500; }
+    .stat-badge { font-size: 0.85rem; display: flex; align-items: center; gap: 6px; font-weight: 600; }
+    
+    .stat-badge.blue { color: #2B5CE6; }
+    .stat-badge.orange { color: #FF8C42; }
+    .stat-badge.green { color: #10B981; }
+    .stat-badge.purple { color: #A855F7; }
+
+    .stat-box-icon {
+        width: 64px; height: 64px; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.75rem; color: white;
+        flex-shrink: 0;
+    }
+    .icon-blue-bg { background: linear-gradient(135deg, #3B82F6, #2563EB); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); }
+    .icon-orange-bg { background: linear-gradient(135deg, #F59E0B, #D97706); box-shadow: 0 4px 10px rgba(217, 119, 6, 0.2); }
+    .icon-green-bg { background: linear-gradient(135deg, #10B981, #059669); box-shadow: 0 4px 10px rgba(5, 150, 105, 0.2); }
+    .icon-purple-bg { background: linear-gradient(135deg, #8B5CF6, #7C3AED); box-shadow: 0 4px 10px rgba(124, 58, 237, 0.2); }
+
+    /* Action Buttons */
+    .action-buttons { display: flex; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; }
+    .btn-action {
+        padding: 12px 24px; border-radius: 10px; border: none;
+        font-weight: 600; display: flex; align-items: center;
+        gap: 10px; cursor: pointer; transition: all 0.3s;
+        font-size: 0.95rem; text-decoration: none;
+    }
+    .btn-revenue { background: #10B981; color: white; } /* Green */
+    .btn-revenue:hover { background: #059669; color: white; transform: translateY(-2px); }
+    
+    .btn-expense { background: #EF4444; color: white; } /* Red */
+    .btn-expense:hover { background: #DC2626; color: white; transform: translateY(-2px); }
+    
+    .btn-export { background: white; color: #374151; border: 2px solid #E5E7EB; }
+    .btn-export:hover { border-color: #2B5CE6; color: #2B5CE6; transform: translateY(-2px); }
+
+    /* Directory Header Style for Tables */
+    .directory-header {
+        background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
+        color: white; padding: 20px 30px;
+        border-radius: 12px 12px 0 0;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .directory-title { display: flex; align-items: center; gap: 12px; font-size: 1.1rem; font-weight: 700; }
+    
+    .filters-section { display: flex; align-items: center; gap: 10px; }
+    .filter-select {
+        padding: 8px 16px; border: 1px solid #E5E7EB; border-radius: 8px;
+        font-size: 0.9rem; background: white; color: #374151;
+        outline: none; cursor: pointer;
+    }
+
+    /* Table Styles */
+    .table-container {
+        background: white; border-radius: 0 0 12px 12px;
+        overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
         margin-bottom: 30px;
     }
+    .custom-table { width: 100%; border-collapse: collapse; }
+    .custom-table th {
+        padding: 16px 20px; font-weight: 700; color: #1F2937;
+        font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;
+        text-align: left; border-bottom: 2px solid #E5E7EB; background: #F9FAFB;
+    }
+    .custom-table td {
+        padding: 16px 20px; vertical-align: middle;
+        border-bottom: 1px solid #F3F4F6; text-align: left; font-size: 0.95rem;
+    }
+    .custom-table tbody tr:hover { background: #F9FAFB; }
+
+    /* Financial Specific Styles */
+    .finance-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 30px; }
     .finance-card {
-        background: white;
-        padding: 24px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        height: 100%; /* Ensure equal height in grid */
-        display: flex;
-        flex-direction: column;
-        position: relative;
+        background: white; padding: 24px; border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05); height: 100%;
+        display: flex; flex-direction: column; border: 1px solid #f0f0f0;
     }
-    .finance-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #F3F4F6;
+    .finance-card-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #F3F4F6;
     }
-    .finance-header h3 {
-        margin: 0;
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #1F2937;
-    }
+    .finance-card-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; color: #1F2937; }
+
+    /* Progress Bars */
+    .progress-item { margin-bottom: 16px; }
+    .progress-labels { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: #4B5563; }
+    .progress-bg { width: 100%; height: 8px; background: #F3F4F6; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #2B5CE6; border-radius: 4px; transition: width 0.5s ease; }
     
-    /* Scrollable content for lists that might grow */
-    .scrollable-list {
-        flex: 1;
-        overflow-y: auto;
-        max-height: 350px; 
-        padding-right: 5px; 
+    /* Edit Button on Stat Box */
+    .edit-budget-btn {
+        position: absolute; top: 10px; right: 10px;
+        background: transparent; border: none; color: #9CA3AF;
+        cursor: pointer; transition: color 0.2s; font-size: 1rem;
     }
+    .edit-budget-btn:hover { color: #2B5CE6; }
+
+    /* Badges */
+    .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+    .status-approved { background: #D1FAE5; color: #065F46; }
+    .status-pending { background: #FEF3C7; color: #92400E; }
+    .status-rejected { background: #FEE2E2; color: #991B1B; }
+
+    /* Pending Approval Box */
+    .pending-box {
+        border: 1px solid #FCD34D; background: #FFFBEB;
+        border-radius: 12px; overflow: hidden; margin-bottom: 30px;
+    }
+    .pending-header {
+        background: #FDE68A; color: #92400E; padding: 15px 20px;
+        font-weight: 700; display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* Modal Styles */
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center; }
+    .modal-content { background: white; padding: 30px; border-radius: 12px; max-width: 450px; width: 90%; }
+    .form-control { width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.95rem; margin-top: 5px; }
+    
+    /* Scrollable list for Revenue Sources */
+    .scrollable-list { flex: 1; overflow-y: auto; max-height: 350px; padding-right: 5px; }
     .scrollable-list::-webkit-scrollbar { width: 5px; }
     .scrollable-list::-webkit-scrollbar-track { background: #f1f1f1; }
     .scrollable-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 5px; }
 
-    .progress-item { margin-bottom: 16px; }
-    .progress-labels {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 6px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #4B5563;
-    }
-    .progress-bg {
-        width: 100%;
-        height: 8px;
-        background: #F3F4F6;
-        border-radius: 4px;
-        overflow: hidden;
-    }
-    .progress-fill {
-        height: 100%;
-        background: #2B5CE6;
-        border-radius: 4px;
-        transition: width 0.5s ease;
-    }
-    
-    /* Buttons */
-    .action-btn {
-        padding: 8px 16px;
-        border-radius: 6px;
-        border: none;
-        color: white;
-        cursor: pointer;
-        font-size: 0.9rem;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        transition: opacity 0.2s;
-        font-weight: 500;
-    }
-    .action-btn:hover { opacity: 0.9; color: white; }
-    .btn-blue { background: #3B82F6; }
-    .btn-green { background: #10B981; }
-    .btn-purple { background: #8B5CF6; }
-    .btn-orange { background: #F59E0B; }
-    .btn-secondary { background: #6B7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; }
-    .btn-primary { background: #3B82F6; color: white; border: none; padding: 8px 16px; border-radius: 6px; }
-    .btn-danger { background: #EF4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; }
-    .btn-sm { padding: 4px 10px; font-size: 0.8rem; }
-    .btn-icon-only { padding: 6px 8px; }
-    
-    /* Table Styling */
-    .table-container { overflow-x: auto; }
-    .custom-table { width: 100%; border-collapse: collapse; min-width: 800px; }
-    .custom-table th { 
-        text-align: left; 
-        padding: 14px 16px; 
-        border-bottom: 2px solid #E5E7EB; 
-        color: #6B7280; 
-        font-size: 0.8rem; 
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        background: #F9FAFB;
-    }
-    .custom-table td { padding: 16px; border-bottom: 1px solid #F3F4F6; color: #374151; font-size: 0.95rem; }
-    .custom-table tr:hover { background: #F9FAFB; }
-    
-    .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
-    .status-pending { background: #FEF3C7; color: #D97706; }
-    .status-approved { background: #D1FAE5; color: #059669; }
-    .status-rejected { background: #FEE2E2; color: #DC2626; }
-    
-    .filter-bar { 
-        display: flex; 
-        gap: 15px; 
-        margin-bottom: 24px; 
-        background: white; 
-        padding: 20px; 
-        border-radius: 12px; 
-        align-items: center; 
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        flex-wrap: wrap;
-    }
-    .filter-input { padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.9rem; outline: none; }
-    .filter-input:focus { border-color: #3B82F6; }
-
-    .edit-budget-btn {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        background: transparent;
-        border: 1px solid #E5E7EB;
-        color: #6B7280;
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    .edit-budget-btn:hover { background: #F3F4F6; color: #3B82F6; border-color: #3B82F6; }
-
-    @media (max-width: 1024px) {
+    @media (max-width: 1200px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) { 
+        .stats-row { grid-template-columns: 1fr; } 
         .finance-grid { grid-template-columns: 1fr; }
-        .stats-grid { grid-template-columns: 1fr 1fr !important; }
-    }
-    @media (max-width: 640px) {
-        .stats-grid { grid-template-columns: 1fr !important; }
-        .header-section { text-align: center; justify-content: center; }
-        .header-section > div { justify-content: center; }
+        .total-registered { position: static; margin-top: 20px; text-align: left; }
     }
 </style>
 
-{{-- Header --}}
-<div class="header-section" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 30px; border-radius: 16px; margin-bottom: 30px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
-        <div>
-            <div style="font-size: 1.8rem; font-weight: 800; margin-bottom: 6px;">Financial Records</div>
-            <div style="opacity: 0.9; font-size: 0.95rem;">
-                <i class="fas fa-sync-alt"></i> Data synchronized with Document Services
-            </div>
-        </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button class="action-btn btn-green" onclick="openModal('revenueModal')">
-                <i class="fas fa-plus-circle"></i> Record Revenue
-            </button>
-            <button class="action-btn btn-blue" onclick="openModal('expenseModal')">
-                <i class="fas fa-file-invoice-dollar"></i> Record Expense
-            </button>
-            <button class="action-btn btn-purple" onclick="openModal('exportModal')">
-                <i class="fas fa-file-export"></i> Export Reports
-            </button>
-        </div>
+{{-- Notifications --}}
+@if(session('success'))
+<div class="alert alert-success" style="background: #D1FAE5; color: #065F46; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #6EE7B7; display: flex; align-items: center; gap: 10px;">
+    <i class="fas fa-check-circle"></i> {{ session('success') }}
+</div>
+@endif
+
+{{-- 1. Header Section --}}
+<div class="profiling-header">
+    <div class="profiling-title">Financial Management</div>
+    <div class="profiling-subtitle">Track barangay revenues, expenses, and budget allocations.</div>
+    <div class="barangay-badge">
+        <span class="badge-icon">PH</span>
+        <span>Barangay Calbueg, Malasiqui, Pangasinan</span>
+    </div>
+    <div class="total-registered">
+        <div class="total-registered-label">Available Balance</div>
+        <div class="total-registered-count">₱{{ number_format($availableBudget) }}</div>
+        <div class="total-registered-sublabel">Cash on Hand</div>
     </div>
 </div>
 
-{{-- Top Stats Cards (4 Columns) --}}
-<div class="stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 30px;">
-    
-    {{-- Total Budget --}}
-    <div class="finance-card" style="height: auto;">
+{{-- 2. Stats Row --}}
+<div class="stats-row">
+    {{-- Annual Budget --}}
+    <div class="stat-box">
         <button class="edit-budget-btn" onclick="openModal('budgetModal')" title="Edit Budget">
-            <i class="fas fa-pen" style="font-size: 0.8rem;"></i>
+            <i class="fas fa-pen"></i>
         </button>
-        <div class="stat-info">
-            <p style="color: #6B7280; font-size: 0.85rem; font-weight: 600; margin: 0 0 5px 0; text-transform: uppercase;">Annual Budget</p>
-            <h3 style="font-size: 1.75rem; margin: 0; color: #111827;">₱{{ number_format($annualBudget) }}</h3>
+        <div class="stat-content">
+            <h3>₱{{ number_format($annualBudget) }}</h3>
+            <p>Annual Budget</p>
+            <div class="stat-badge blue">
+                <i class="fas fa-calendar-alt"></i>
+                <span>FY {{ date('Y') }}</span>
+            </div>
         </div>
-        <div style="margin-top: 15px; color: #3B82F6; display: flex; justify-content: space-between; align-items: flex-end;">
-            <span style="font-size: 0.8rem; background: #EFF6FF; padding: 4px 8px; border-radius: 6px;">FY {{ date('Y') }}</span>
-            <i class="fas fa-wallet fa-2x" style="opacity: 0.2;"></i>
-        </div>
-    </div>
-
-    {{-- Total Spent --}}
-    <div class="finance-card" style="height: auto;">
-        <div class="stat-info">
-            <p style="color: #6B7280; font-size: 0.85rem; font-weight: 600; margin: 0 0 5px 0; text-transform: uppercase;">Total Expenses</p>
-            <h3 style="font-size: 1.75rem; margin: 0; color: #111827;">₱{{ number_format($totalSpent) }}</h3>
-        </div>
-        <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
-            <span style="font-size: 0.85rem; color: #DC2626; background: #FEF2F2; padding: 4px 8px; border-radius: 6px; font-weight: 600;">
-                {{ $annualBudget > 0 ? number_format(($totalSpent / $annualBudget) * 100, 1) : 0 }}% Used
-            </span>
-            <i class="fas fa-receipt fa-2x text-warning" style="opacity: 0.2;"></i>
+        <div class="stat-box-icon icon-blue-bg">
+            <i class="fas fa-wallet"></i>
         </div>
     </div>
 
-    {{-- Available Budget --}}
-    <div class="finance-card" style="height: auto;">
-        <div class="stat-info">
-            <p style="color: #6B7280; font-size: 0.85rem; font-weight: 600; margin: 0 0 5px 0; text-transform: uppercase;">Available Balance</p>
-            <h3 style="font-size: 1.75rem; margin: 0; color: #10B981;">₱{{ number_format($availableBudget) }}</h3>
+    {{-- Total Expenses --}}
+    <div class="stat-box">
+        <div class="stat-content">
+            <h3>₱{{ number_format($totalSpent) }}</h3>
+            <p>Total Expenses</p>
+            <div class="stat-badge orange">
+                <i class="fas fa-chart-pie"></i>
+                <span>{{ $annualBudget > 0 ? number_format(($totalSpent / $annualBudget) * 100, 1) : 0 }}% Used</span>
+            </div>
         </div>
-        <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
-            <span style="font-size: 0.8rem; color: #059669;">Cash on Hand</span>
-            <i class="fas fa-money-bill-wave fa-2x text-success" style="opacity: 0.2;"></i>
+        <div class="stat-box-icon icon-orange-bg">
+            <i class="fas fa-file-invoice-dollar"></i>
         </div>
     </div>
 
     {{-- Total Revenue --}}
-    <div class="finance-card" style="height: auto;">
-        <div class="stat-info">
-            <p style="color: #6B7280; font-size: 0.85rem; font-weight: 600; margin: 0 0 5px 0; text-transform: uppercase;">Total Collections</p>
-            <h3 style="font-size: 1.75rem; margin: 0; color: #111827;">₱{{ number_format($totalRevenue) }}</h3>
+    <div class="stat-box">
+        <div class="stat-content">
+            <h3>₱{{ number_format($totalRevenue) }}</h3>
+            <p>Total Collections</p>
+            <div class="stat-badge purple">
+                <i class="fas fa-arrow-up"></i>
+                <span>Includes Docs</span>
+            </div>
         </div>
-        <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
-            <span style="font-size: 0.8rem; color: #6B7280;">Includes Docs</span>
-            <i class="fas fa-chart-line fa-2x text-purple" style="opacity: 0.2; color: #8B5CF6;"></i>
+        <div class="stat-box-icon icon-purple-bg">
+            <i class="fas fa-hand-holding-usd"></i>
+        </div>
+    </div>
+
+    {{-- Transaction Count --}}
+    <div class="stat-box">
+        <div class="stat-content">
+            <h3>{{ $transactions->total() }}</h3>
+            <p>Transactions</p>
+            <div class="stat-badge green">
+                <i class="fas fa-check"></i>
+                <span>Recorded</span>
+            </div>
+        </div>
+        <div class="stat-box-icon icon-green-bg">
+            <i class="fas fa-list-ol"></i>
         </div>
     </div>
 </div>
 
-{{-- Charts Grid --}}
+{{-- 3. Action Buttons --}}
+<div class="action-buttons">
+    <button class="btn-action btn-revenue" onclick="openModal('revenueModal')">
+        <i class="fas fa-plus-circle"></i>
+        <span>Record Revenue</span>
+    </button>
+    <button class="btn-action btn-expense" onclick="openModal('expenseModal')">
+        <i class="fas fa-minus-circle"></i>
+        <span>Record Expense</span>
+    </button>
+    <button class="btn-action btn-export" onclick="openModal('exportModal')">
+        <i class="fas fa-file-download"></i>
+        <span>Export Reports</span>
+    </button>
+</div>
+
+{{-- 4. Pending Approvals (For Treasurer to Approve) --}}
+@if(isset($pendingRequests) && $pendingRequests->count() > 0)
+<div class="pending-box">
+    <div class="pending-header">
+        <span><i class="fas fa-exclamation-circle"></i> Pending Expense Approvals</span>
+        <span style="background: white; color: #92400E; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem;">Action Required</span>
+    </div>
+    <div class="table-container" style="margin-bottom: 0; border-radius: 0;">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Requested By</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($pendingRequests as $req)
+                <tr>
+                    <td style="font-weight: 600;">{{ $req->title }}</td>
+                    <td>{{ $req->category }}</td>
+                    <td>{{ $req->requested_by }}</td>
+                    <td style="color: #DC2626; font-weight: 700;">₱{{ number_format($req->amount, 2) }}</td>
+                    <td>{{ $req->transaction_date->format('M d') }}</td>
+                    <td>
+                        <div style="display: flex; gap: 8px;">
+                            <form action="{{ route('treasurer.transaction.updateStatus', $req->id) }}" method="POST">
+                                @csrf @method('PUT')
+                                <input type="hidden" name="status" value="approved">
+                                <button type="submit" class="btn-action btn-revenue" style="padding: 6px 12px; font-size: 0.8rem;">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                            </form>
+                            <form action="{{ route('treasurer.transaction.updateStatus', $req->id) }}" method="POST">
+                                @csrf @method('PUT')
+                                <input type="hidden" name="status" value="rejected">
+                                <button type="submit" class="btn-action btn-expense" style="padding: 6px 12px; font-size: 0.8rem;">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
+
+{{-- 5. Charts / Progress Bars --}}
 <div class="finance-grid">
-    
     {{-- Budget Utilization --}}
     <div class="finance-card">
-        <div class="finance-header">
-            <h3><i class="fas fa-chart-pie text-primary me-2"></i> Budget Allocation & Utilization</h3>
+        <div class="finance-card-header">
+            <h3><i class="fas fa-chart-pie text-primary me-2"></i> Budget Utilization</h3>
         </div>
         <div class="scrollable-list">
             @foreach($utilization as $item)
@@ -287,11 +384,10 @@
         </div>
     </div>
 
-    {{-- Revenue Performance --}}
+    {{-- Revenue Sources --}}
     <div class="finance-card">
-        <div class="finance-header">
-            <h3><i class="fas fa-chart-bar text-success me-2"></i> Collection Sources</h3>
-            <span style="font-size: 0.75rem; background: #ECFDF5; color: #065F46; padding: 2px 8px; border-radius: 10px;">Live Data</span>
+        <div class="finance-card-header">
+            <h3><i class="fas fa-chart-bar text-success me-2"></i> Revenue Sources</h3>
         </div>
         <div class="scrollable-list">
             @foreach($revenuePerformance as $item)
@@ -313,299 +409,231 @@
     </div>
 </div>
 
-{{-- PENDING APPROVALS SECTION (NEW FEATURE FOR SECRETARY REQUESTS) --}}
-@if($pendingRequests->count() > 0)
-<div class="finance-card" style="margin-bottom: 24px; border: 1px solid #F59E0B;">
-    <div class="finance-header" style="background: #FFFBEB; margin: -24px -24px 20px -24px; padding: 15px 24px; border-bottom: 1px solid #FDE68A; border-radius: 12px 12px 0 0;">
-        <h3 style="color: #92400E;"><i class="fas fa-exclamation-circle me-2"></i> Pending Approvals</h3>
-        <span style="background: #F59E0B; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold;">Action Required</span>
+{{-- 6. Recent Transactions Table --}}
+<div class="directory-header">
+    <div class="directory-title">
+        <i class="fas fa-history"></i>
+        <span>Transaction History</span>
     </div>
-    <div class="table-container">
-        <table class="custom-table">
-            <thead>
-                <tr>
-                    <th>Description</th>
-                    <th>Category</th>
-                    <th>Requested By</th>
-                    <th>Amount</th>
-                    <th>Date</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($pendingRequests as $req)
-                <tr>
-                    <td style="font-weight: 600;">{{ $req->title }}</td>
-                    <td>{{ $req->category }}</td>
-                    <td>{{ $req->requested_by }}</td>
-                    <td style="color: #DC2626; font-weight: 600;">₱{{ number_format($req->amount, 2) }}</td>
-                    <td>{{ $req->transaction_date->format('M d') }}</td>
-                    <td>
-                        <div style="display: flex; gap: 8px;">
-                            {{-- Approve Button --}}
-                            <form action="{{ route('treasurer.transaction.updateStatus', $req->id) }}" method="POST">
-                                @csrf
-                                @method('PUT')
-                                <input type="hidden" name="status" value="approved">
-                                <button type="submit" class="action-btn btn-green btn-sm">
-                                    <i class="fas fa-check"></i> Approve
-                                </button>
-                            </form>
-
-                            {{-- Reject Button --}}
-                            <form action="{{ route('treasurer.transaction.updateStatus', $req->id) }}" method="POST">
-                                @csrf
-                                @method('PUT')
-                                <input type="hidden" name="status" value="rejected">
-                                <button type="submit" class="action-btn btn-danger btn-sm">
-                                    <i class="fas fa-times"></i> Reject
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
+    <form action="{{ route('treasurer.financial') }}" method="GET" class="filters-section">
+        <select name="type" class="filter-select" onchange="this.form.submit()">
+            <option value="all" {{ request('type') == 'all' ? 'selected' : '' }}>All Types</option>
+            <option value="revenue" {{ request('type') == 'revenue' ? 'selected' : '' }}>Revenue</option>
+            <option value="expense" {{ request('type') == 'expense' ? 'selected' : '' }}>Expense</option>
+        </select>
+        <input type="month" name="month" class="filter-select" value="{{ request('month') }}" onchange="this.form.submit()">
+    </form>
 </div>
-@endif
 
-{{-- Filter Bar --}}
-<form action="{{ route('treasurer.financial') }}" method="GET" class="filter-bar">
-    <div style="display:flex; align-items:center; gap:10px;">
-        <span style="font-weight: 600; color: #374151; font-size: 0.95rem;"><i class="fas fa-filter text-muted"></i> Filters:</span>
-    </div>
-    
-    <select name="type" class="filter-input" onchange="this.form.submit()">
-        <option value="all" {{ request('type') == 'all' ? 'selected' : '' }}>All Transaction Types</option>
-        <option value="revenue" {{ request('type') == 'revenue' ? 'selected' : '' }}>Revenue Only</option>
-        <option value="expense" {{ request('type') == 'expense' ? 'selected' : '' }}>Expenses Only</option>
-    </select>
-    
-    <input type="month" name="month" class="filter-input" value="{{ request('month') }}" onchange="this.form.submit()">
-    
-    @if(request('type') || request('month'))
-        <a href="{{ route('treasurer.financial') }}" style="color: #EF4444; font-size: 0.9rem; text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 5px;">
-            <i class="fas fa-times"></i> Clear
-        </a>
-    @endif
-</form>
-
-{{-- Transaction History Table --}}
-<div class="finance-card" style="padding: 0; overflow: hidden;">
-    <div class="finance-header" style="padding: 20px 24px; border-bottom: 1px solid #E5E7EB; margin-bottom: 0;">
-        <h3><i class="fas fa-history text-secondary me-2"></i> Recent Transactions</h3>
-    </div>
-    <div class="table-container">
-        <table class="custom-table">
-            <thead>
-                <tr>
-                    <th>Description</th>
-                    <th>Category</th>
-                    <th>Recorded By</th>
-                    <th>Amount</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($transactions as $transaction)
-                <tr>
-                    <td style="font-weight: 600; color: #111827;">{{ $transaction->title }}</td>
-                    <td>
-                        <span style="background: #F3F4F6; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; color: #4B5563;">
-                            {{ $transaction->category }}
-                        </span>
-                    </td>
-                    <td>{{ $transaction->requested_by ?? 'System' }}</td>
-                    <td style="font-weight: 600; {{ $transaction->type == 'revenue' ? 'color:#059669' : 'color:#DC2626' }}">
-                        {{ $transaction->type == 'revenue' ? '+' : '-' }}₱{{ number_format($transaction->amount, 2) }}
-                    </td>
-                    <td>{{ $transaction->transaction_date->format('M d, Y') }}</td>
-                    <td>
-                        @if($transaction->status == 'approved')
-                            <span class="status-badge status-approved">Approved</span>
-                        @elseif($transaction->status == 'rejected')
-                            <span class="status-badge status-rejected">Rejected</span>
-                        @else
-                            <span class="status-badge status-pending">Pending</span>
-                        @endif
-                    </td>
-                    <td>
-                        <div style="display: flex; gap: 6px;">
-                            <button onclick="editTransaction({{ json_encode($transaction) }})" class="action-btn btn-blue btn-icon-only" title="Edit">
-                                <i class="fas fa-edit"></i>
+<div class="table-container">
+    <table class="custom-table">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Recorded By</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($transactions as $transaction)
+            <tr>
+                <td style="font-weight: 600; color: #111827;">{{ $transaction->title }}</td>
+                <td>
+                    <span style="background: #F3F4F6; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; color: #4B5563;">
+                        {{ $transaction->category }}
+                    </span>
+                    @if($transaction->project_id)
+                         <br><span style="font-size: 0.75rem; color: #2563EB;"><i class="fas fa-link"></i> {{ $transaction->project->title }}</span>
+                    @endif
+                </td>
+                <td>{{ $transaction->requested_by ?? 'System' }}</td>
+                <td style="font-weight: 700; {{ $transaction->type == 'revenue' ? 'color:#059669' : 'color:#DC2626' }}">
+                    {{ $transaction->type == 'revenue' ? '+' : '-' }}₱{{ number_format($transaction->amount, 2) }}
+                </td>
+                <td>{{ $transaction->transaction_date->format('M d, Y') }}</td>
+                <td>
+                    @if($transaction->status == 'approved')
+                        <span class="status-badge status-approved">Approved</span>
+                    @elseif($transaction->status == 'rejected')
+                        <span class="status-badge status-rejected">Rejected</span>
+                    @else
+                        <span class="status-badge status-pending">Pending</span>
+                    @endif
+                </td>
+                <td>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="editTransaction({{ json_encode($transaction) }})" style="border:none; background:none; color: #2B5CE6; cursor: pointer;" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <form action="{{ route('treasurer.transaction.destroy', $transaction->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this transaction record?')">
+                            @csrf @method('DELETE')
+                            <button type="submit" style="border:none; background:none; color: #EF4444; cursor: pointer;" title="Delete">
+                                <i class="fas fa-trash"></i>
                             </button>
-                            <form action="{{ route('treasurer.transaction.destroy', $transaction->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this record?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="action-btn btn-secondary btn-icon-only" title="Delete">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="7" style="text-align:center; padding: 40px; color: #6B7280;">
-                        <i class="fas fa-folder-open fa-2x" style="margin-bottom: 10px; display: block; opacity: 0.5;"></i>
-                        No transactions found matching your filters.
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            @empty
+            <tr>
+                <td colspan="7" style="text-align:center; padding: 40px; color: #6B7280;">
+                    <i class="fas fa-folder-open fa-2x" style="margin-bottom: 10px; display: block; opacity: 0.5;"></i>
+                    No transactions found.
+                </td>
+            </tr>
+            @endforelse
+        </tbody>
+    </table>
     <div style="padding: 20px;">
         {{ $transactions->links('pagination::bootstrap-4') }}
     </div>
 </div>
 
-{{-- 1. Add/Edit Revenue Modal --}}
-<div id="revenueModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items: center; justify-content: center;">
-    <div style="background:white; width:450px; margin: 50px auto; padding:25px; border-radius:16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
-        <h3 id="revModalTitle" style="margin-top: 0; margin-bottom: 20px; color: #111827;">Record Revenue</h3>
+{{-- MODALS --}}
+
+{{-- 1. Revenue Modal --}}
+<div id="revenueModal" class="modal">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
+            <h3 id="revModalTitle" style="margin:0; color:#1F2937;">Record Revenue</h3>
+            <span style="cursor:pointer;" onclick="closeModal('revenueModal')">&times;</span>
+        </div>
         <form id="revForm" action="{{ route('treasurer.transaction.store') }}" method="POST">
             @csrf
             <div id="revMethod"></div> 
             <input type="hidden" name="type" value="revenue">
             
-            <div style="margin-bottom:15px;">
-                <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px;">Source/Title</label>
-                <input type="text" id="revTitle" name="title" class="form-control" placeholder="e.g. Daily Clearance Collection" required style="width:100%; padding:10px; border:1px solid #D1D5DB; border-radius:8px;">
-            </div>
-            <div style="margin-bottom:15px;">
-                <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px;">Category</label>
-                <select id="revCategory" name="category" class="form-control" style="width:100%; padding:10px; border:1px solid #D1D5DB; border-radius:8px;">
-                    <option>Barangay Clearance</option>
-                    <option>Business Permits</option>
-                    <option>Community Tax</option>
-                    <option>Government IRA</option>
-                    <option>Donations</option>
-                    <option>Other Fees</option>
-                </select>
-            </div>
-            <div style="margin-bottom:15px;">
-                <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px;">Amount (₱)</label>
-                <input type="number" id="revAmount" name="amount" class="form-control" step="0.01" required style="width:100%; padding:10px; border:1px solid #D1D5DB; border-radius:8px;">
-            </div>
-            <div style="margin-bottom:20px;">
-                 <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px;">Date Received</label>
-                 <input type="date" id="revDate" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" required style="width:100%; padding:10px; border:1px solid #D1D5DB; border-radius:8px;">
-            </div>
-            <div style="text-align:right; display: flex; gap: 10px; justify-content: flex-end;">
-                <button type="button" onclick="closeModal('revenueModal')" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Revenue</button>
+            <label style="font-weight:600; font-size:0.9rem;">Source/Title</label>
+            <input type="text" id="revTitle" name="title" class="form-control" placeholder="e.g. Daily Clearance Collection" required>
+            
+            <label style="font-weight:600; font-size:0.9rem; margin-top:15px; display:block;">Category</label>
+            <select id="revCategory" name="category" class="form-control">
+                <option>Barangay Clearance</option>
+                <option>Business Permits</option>
+                <option>Community Tax</option>
+                <option>Government IRA</option>
+                <option>Donations</option>
+                <option>Other Fees</option>
+            </select>
+
+            <label style="font-weight:600; font-size:0.9rem; margin-top:15px; display:block;">Amount (₱)</label>
+            <input type="number" id="revAmount" name="amount" class="form-control" step="0.01" required>
+
+            <label style="font-weight:600; font-size:0.9rem; margin-top:15px; display:block;">Date Received</label>
+            <input type="date" id="revDate" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" required>
+
+            <div style="text-align:right; margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="closeModal('revenueModal')" class="btn-action btn-export" style="border:none; background:#F3F4F6;">Cancel</button>
+                <button type="submit" class="btn-action btn-revenue">Save Revenue</button>
             </div>
         </form>
     </div>
 </div>
 
-{{-- 2. Add/Edit Expense Modal --}}
-<div id="expenseModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
-    <div style="background:white; width:450px; margin: 50px auto; padding:25px; border-radius:16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
-        <h3 id="expModalTitle" style="margin-top: 0; margin-bottom: 20px; color: #111827;">Record Expense</h3>
+{{-- 2. Expense Modal --}}
+<div id="expenseModal" class="modal">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
+            <h3 id="expModalTitle" style="margin:0; color:#1F2937;">Record Expense</h3>
+            <span style="cursor:pointer;" onclick="closeModal('expenseModal')">&times;</span>
+        </div>
         <form id="expForm" action="{{ route('treasurer.transaction.store') }}" method="POST">
             @csrf
             <div id="expMethod"></div> 
             <input type="hidden" name="type" value="expense">
             
-            <div style="margin-bottom:15px;">
-                <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px;">Description</label>
-                <input type="text" id="expTitle" name="title" class="form-control" placeholder="e.g. Office Supplies" required style="width:100%; padding:10px; border:1px solid #D1D5DB; border-radius:8px;">
-            </div>
-            <div style="margin-bottom:15px;">
-                <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px;">Category</label>
-                <select id="expCategory" name="category" class="form-control" style="width:100%; padding:10px; border:1px solid #D1D5DB; border-radius:8px;">
-                    <option>Infrastructure</option>
-                    <option>Health Programs</option>
-                    <option>Education</option>
-                    <option>Environmental</option>
-                    <option>Emergency Fund</option>
-                    <option>Office Supplies</option>
-                    <option>Utilities</option>
-                    <option>Honorarium</option>
+            <label style="font-weight:600; font-size:0.9rem;">Description</label>
+            <input type="text" id="expTitle" name="title" class="form-control" placeholder="e.g. Office Supplies" required>
+            
+            <label style="font-weight:600; font-size:0.9rem; margin-top:15px; display:block;">Category</label>
+            <select id="expCategory" name="category" class="form-control">
+                <option>Infrastructure</option>
+                <option>Health Programs</option>
+                <option>Education</option>
+                <option>Environmental</option>
+                <option>Social Services</option>
+                <option>Emergency Fund</option>
+                <option>Office Supplies</option>
+                <option>Utilities</option>
+                <option>Honorarium</option>
+                <option>Others</option>
+            </select>
+
+            <div style="margin-top:15px; background: #F9FAFB; padding: 10px; border-radius: 8px; border: 1px dashed #D1D5DB;">
+                <label style="font-weight:600; font-size:0.85rem; color:#4B5563;"><i class="fas fa-link"></i> Link to Project (Optional)</label>
+                <select name="project_id" id="expProject" class="form-control" style="margin-top:5px;">
+                    <option value="">-- None --</option>
+                    @if(isset($activeProjects) && count($activeProjects) > 0)
+                        @foreach($activeProjects as $project)
+                            <option value="{{ $project->id }}">{{ $project->title }}</option>
+                        @endforeach
+                    @endif
                 </select>
             </div>
-            <div style="margin-bottom:15px;">
-                <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px;">Amount (₱)</label>
-                <input type="number" id="expAmount" name="amount" class="form-control" step="0.01" required style="width:100%; padding:10px; border:1px solid #D1D5DB; border-radius:8px;">
-            </div>
-            <div style="margin-bottom:20px;">
-                 <label style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px;">Date Spent</label>
-                 <input type="date" id="expDate" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" required style="width:100%; padding:10px; border:1px solid #D1D5DB; border-radius:8px;">
-            </div>
-            <div style="text-align:right; display: flex; gap: 10px; justify-content: flex-end;">
-                <button type="button" onclick="closeModal('expenseModal')" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Record</button>
+
+            <label style="font-weight:600; font-size:0.9rem; margin-top:15px; display:block;">Amount (₱)</label>
+            <input type="number" id="expAmount" name="amount" class="form-control" step="0.01" required>
+
+            <label style="font-weight:600; font-size:0.9rem; margin-top:15px; display:block;">Date Spent</label>
+            <input type="date" id="expDate" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" required>
+
+            <div style="text-align:right; margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="closeModal('expenseModal')" class="btn-action btn-export" style="border:none; background:#F3F4F6;">Cancel</button>
+                <button type="submit" class="btn-action btn-expense">Save Expense</button>
             </div>
         </form>
     </div>
 </div>
 
-{{-- 3. Export Reports Modal --}}
-<div id="exportModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
-    <div style="background:white; width:400px; margin: 100px auto; padding:25px; border-radius:16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+{{-- 3. Export Modal --}}
+<div id="exportModal" class="modal">
+    <div class="modal-content">
         <h3 style="margin-top: 0; margin-bottom: 20px; color: #111827;">Export Reports</h3>
-        <p style="color: #666; font-size: 0.9rem;">Select the report type and period you want to download.</p>
         <div style="display: grid; gap: 10px;">
-            <a href="{{ route('treasurer.export', ['report_type' => 'transactions']) }}" class="action-btn btn-blue" style="justify-content: center; width: 100%;">
-                <i class="fas fa-file-pdf"></i> Monthly Financial Statement
-            </a>
-            <a href="{{ route('treasurer.export', ['report_type' => 'transactions']) }}" class="action-btn btn-green" style="justify-content: center; width: 100%;">
-                <i class="fas fa-file-excel"></i> Annual Budget Report
-            </a>
-            <a href="{{ route('treasurer.export', ['report_type' => 'transactions']) }}" class="action-btn btn-purple" style="justify-content: center; width: 100%;">
-                <i class="fas fa-list"></i> Transaction History (CSV)
+            <a href="{{ route('treasurer.export', ['report_type' => 'transactions']) }}" class="btn-action btn-export" style="justify-content: center;">
+                <i class="fas fa-list"></i> Download Transaction History (CSV)
             </a>
         </div>
         <div style="text-align:right; margin-top: 20px;">
-            <button type="button" onclick="closeModal('exportModal')" class="btn btn-secondary">Close</button>
+            <button type="button" onclick="closeModal('exportModal')" class="btn-action" style="background:#F3F4F6; color:#374151;">Close</button>
         </div>
     </div>
 </div>
 
-{{-- 4. Budget Modal (Updated: Dynamic Allocations) --}}
-<div id="budgetModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
-    <div style="background:white; width:450px; margin: 60px auto; padding:25px; border-radius:16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 85vh; overflow-y: auto;">
+{{-- 4. Budget Modal --}}
+<div id="budgetModal" class="modal">
+    <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
         <h3 style="margin-top: 0; margin-bottom: 20px; color: #111827;">Update Budget Allocations</h3>
-        <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Adjust the annual budget and limits per category.</p>
-        
         <form action="{{ route('treasurer.budget.update') }}" method="POST">
             @csrf
             
-            {{-- Global Budget --}}
             <div style="margin-bottom:20px; padding-bottom: 20px; border-bottom: 1px solid #E5E7EB;">
-                <label style="display: block; font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; color: #111827;">Total Annual Budget</label>
+                <label style="font-weight:700; font-size:0.95rem;">Total Annual Budget</label>
                 <div style="display: flex; align-items: center;">
                     <span style="background: #F3F4F6; padding: 10px; border: 1px solid #D1D5DB; border-right: none; border-radius: 8px 0 0 8px; color: #6B7280;">₱</span>
-                    <input type="number" name="annual_budget" class="form-control" value="{{ $annualBudget }}" required style="width:100%; padding:10px; border:1px solid #D1D5DB; border-radius: 0 8px 8px 0;">
+                    <input type="number" name="annual_budget" class="form-control" value="{{ $annualBudget }}" required style="border-radius: 0 8px 8px 0; margin-top:0;">
                 </div>
             </div>
 
-            {{-- Dynamic Category Inputs --}}
             <h4 style="font-size: 0.9rem; font-weight: 700; color: #4B5563; margin-bottom: 15px;">Category Limits</h4>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 @foreach($utilization as $item)
-                    @php
-                        $inputName = 'budget_' . strtolower(str_replace(' ', '_', $item['name']));
-                    @endphp
+                    @php $inputName = 'budget_' . strtolower(str_replace(' ', '_', $item['name'])); @endphp
                     <div>
                         <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: #374151;">{{ $item['name'] }}</label>
-                        <input type="number" name="{{ $inputName }}" class="form-control" 
-                               value="{{ $item['limit'] }}" 
-                               style="width:100%; padding:8px; border:1px solid #D1D5DB; border-radius:6px; font-size: 0.9rem;">
+                        <input type="number" name="{{ $inputName }}" class="form-control" value="{{ $item['limit'] }}">
                     </div>
                 @endforeach
             </div>
 
             <div style="text-align:right; margin-top: 25px; display: flex; gap: 10px; justify-content: flex-end; padding-top: 15px; border-top: 1px solid #E5E7EB;">
-                <button type="button" onclick="closeModal('budgetModal')" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Allocations</button>
+                <button type="button" onclick="closeModal('budgetModal')" class="btn-action btn-export" style="border:none; background:#F3F4F6;">Cancel</button>
+                <button type="submit" class="btn-action btn-revenue" style="background:#2B5CE6;">Save Allocations</button>
             </div>
         </form>
     </div>
@@ -613,7 +641,6 @@
 
 <script>
     function openModal(id) { 
-        // Reset form for "Add New"
         if(id === 'revenueModal') {
             document.getElementById('revForm').action = "{{ route('treasurer.transaction.store') }}";
             document.getElementById('revMethod').innerHTML = '';
@@ -629,47 +656,46 @@
             document.getElementById('expTitle').value = '';
             document.getElementById('expAmount').value = '';
             document.getElementById('expDate').value = "{{ date('Y-m-d') }}";
+            if(document.getElementById('expProject')) document.getElementById('expProject').value = "";
         }
-        document.getElementById(id).style.display = 'block'; 
+        document.getElementById(id).style.display = 'flex'; 
     }
 
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     
-    // JS to populate modal for editing
     function editTransaction(data) {
         let modalId = data.type === 'revenue' ? 'revenueModal' : 'expenseModal';
         let formId = data.type === 'revenue' ? 'revForm' : 'expForm';
         let prefix = data.type === 'revenue' ? 'rev' : 'exp';
 
-        // Update Form Action
         let updateUrl = "{{ route('treasurer.transaction.update', ':id') }}";
         updateUrl = updateUrl.replace(':id', data.id);
         document.getElementById(formId).action = updateUrl;
 
-        // Add Hidden PUT Method
         document.getElementById(prefix + 'Method').innerHTML = '<input type="hidden" name="_method" value="PUT">';
-
-        // Update Title
         document.getElementById(prefix + 'ModalTitle').innerText = 'Edit ' + (data.type === 'revenue' ? 'Revenue' : 'Expense');
 
-        // Populate Fields
         document.getElementById(prefix + 'Title').value = data.title;
         document.getElementById(prefix + 'Amount').value = data.amount;
         document.getElementById(prefix + 'Category').value = data.category;
         
-        // Format Date
         let dateVal = data.transaction_date.substring(0, 10);
         document.getElementById(prefix + 'Date').value = dateVal;
 
-        document.getElementById(modalId).style.display = 'block';
+        if (data.type === 'expense') {
+            let projectSelect = document.getElementById('expProject');
+            if (projectSelect) {
+                projectSelect.value = data.project_id ? data.project_id : "";
+            }
+        }
+
+        document.getElementById(modalId).style.display = 'flex';
     }
 
     window.onclick = function(event) {
-        if (event.target.id == 'revenueModal') closeModal('revenueModal');
-        if (event.target.id == 'expenseModal') closeModal('expenseModal');
-        if (event.target.id == 'exportModal') closeModal('exportModal');
-        if (event.target.id == 'budgetModal') closeModal('budgetModal');
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+        }
     }
 </script>
-
 @endsection

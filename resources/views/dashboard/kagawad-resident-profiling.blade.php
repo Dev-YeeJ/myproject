@@ -3,9 +3,9 @@
 @section('title', 'Resident Profiling (View Only)')
 
 @section('nav-items')
-    {{-- Kagawad Specific Navigation --}}
+    {{-- COMPLETE KAGAWAD NAVIGATION --}}
     <li class="nav-item">
-        <a href="{{ route('kagawad.dashboard') }}" class="nav-link">
+        <a href="{{ route('kagawad.dashboard') }}" class="nav-link ">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
@@ -17,35 +17,25 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="" class="nav-link">
+        <a href="{{ route('kagawad.projects') }}" class="nav-link">
             <i class="fas fa-tasks"></i>
             <span>Project Monitoring</span>
         </a>
     </li>
-    <li class="nav-item">
-        <a href="" class="nav-link">
+    <li class="nav-item active">
+        <a href="{{ route('kagawad.incidents') }}" class="nav-link">
             <i class="fas fa-gavel"></i>
-            <span>Blotter & Lupon</span>
+            <span>Incident & Blotter</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="" class="nav-link">
+        <a href={{ route('kagawad.announcements.index') }} class="nav-link">
             <i class="fas fa-bullhorn"></i>
             <span>Announcements</span>
         </a>
     </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-hand-holding-heart"></i>
-            <span>Committees</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="#" class="nav-link">
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
-        </a>
-    </li>
+   
+   
 @endsection
 
 @section('content')

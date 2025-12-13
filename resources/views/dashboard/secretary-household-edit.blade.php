@@ -5,9 +5,8 @@
 @section('title', 'Edit Household - ' . $household->household_name)
 
 @section('nav-items')
-    {{-- THIS IS THE SECRETARY'S NAVIGATION --}}
     <li class="nav-item">
-        <a href="{{ route('dashboard.secretary') }}" class="nav-link">
+        <a href="{{ route('secretary.dashboard') }}" class="nav-link ">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
@@ -19,25 +18,48 @@
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
-            <i class="fas fa-file-alt"></i>
+        <a href="{{ route('secretary.document-services') }}" class="nav-link">
+            <i class="far fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
-            <i class="fas fa-search"></i>
-            <span>Search Residents</span>
+        <a href="{{ route('secretary.financial-management') }}" class="nav-link">
+            <i class="fas fa-dollar-sign"></i>
+            <span>Financial Management</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="#" class="nav-link"> {{-- Add route later --}}
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
+        <a href="{{ route('secretary.health-services') }}" class="nav-link">
+            <i class="fas fa-heart"></i>
+            <span>Health & Social Services</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ route('secretary.incident-blotter') }}" class="nav-link">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Incident & Blotter</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ route('secretary.project-monitoring') }}" class="nav-link">
+            <i class="fas fa-flag"></i>
+            <span>Project Monitoring</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ route('secretary.announcements.index') }}" class="nav-link">
+            <i class="fas fa-bell"></i>
+            <span>Announcements</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ route('secretary.sk-overview') }}" class="nav-link">
+            <i class="fas fa-user-graduate"></i>
+            <span>SK Module</span>
         </a>
     </li>
 @endsection
-
 @section('content')
 <style>
     /* (Using the same green-themed styles from captain-household-create) */

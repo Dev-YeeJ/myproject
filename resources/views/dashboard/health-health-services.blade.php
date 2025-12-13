@@ -17,6 +17,12 @@
             <span>Health & Social Services</span>
         </a>
     </li>
+     <li class="nav-item">
+        <a href="{{ route('health.announcements') }}" class="nav-link">
+            <i class="fas fa-bullhorn"></i>
+            <span>Announcements</span>
+        </a>
+    </li>
 @endsection
 
 @section('content')

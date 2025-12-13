@@ -1,68 +1,46 @@
 @extends('layouts.dashboard-layout')
 
-@section('title', 'Announcements Management')
+@section('title', 'Kagawad Announcements')
 
 @section('nav-items')
+    {{-- COMPLETE KAGAWAD NAVIGATION --}}
     <li class="nav-item">
-        <a href="{{ route('secretary.dashboard') }}" class="nav-link">
+        <a href="{{ route('kagawad.dashboard') }}" class="nav-link ">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('secretary.resident-profiling') }}" class="nav-link">
+        <a href="{{ route('kagawad.residents') }}" class="nav-link">
             <i class="fas fa-users"></i>
             <span>Resident Profiling</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('secretary.document-services') }}" class="nav-link">
-            <i class="far fa-file-alt"></i>
-            <span>Documents Services</span>
+        <a href="{{ route('kagawad.projects') }}" class="nav-link">
+            <i class="fas fa-tasks"></i>
+            <span>Project Monitoring</span>
         </a>
     </li>
-    <li class="nav-item">
-        <a href="{{ route('secretary.financial-management') }}" class="nav-link">
-            <i class="fas fa-dollar-sign"></i>
-            <span>Financial Management</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="{{ route('secretary.health-services') }}" class="nav-link">
-            <i class="fas fa-heart"></i>
-            <span>Health & Social Services</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a href="{{ route('secretary.incident-blotter') }}" class="nav-link">
-            <i class="fas fa-exclamation-triangle"></i>
+    <li class="nav-item active">
+        <a href="{{ route('kagawad.incidents') }}" class="nav-link">
+            <i class="fas fa-gavel"></i>
             <span>Incident & Blotter</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('secretary.project-monitoring') }}" class="nav-link">
-            <i class="fas fa-flag"></i>
-            <span>Project Monitoring</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        {{-- ACTIVE PAGE --}}
-        <a href="{{ route('secretary.announcements.index') }}" class="nav-link active">
-            <i class="fas fa-bell"></i>
+        <a href={{ route('kagawad.announcements.index') }} class="nav-link active">
+            <i class="fas fa-bullhorn"></i>
             <span>Announcements</span>
         </a>
     </li>
-    <li class="nav-item">
-        <a href="{{ route('secretary.sk-overview') }}" class="nav-link">
-            <i class="fas fa-user-graduate"></i>
-            <span>SK Module</span>
-        </a>
-    </li>
+   
+   
 @endsection
 
 @section('content')
 <style>
-    /* --- HEADER STYLES (Matched) --- */
+    /* --- HEADER STYLES (Matched to Captain's Blue Theme) --- */
     .profiling-header {
         background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
         color: white;
@@ -85,7 +63,7 @@
         font-weight: 700; color: white;
     }
 
-    /* --- STATS BOXES (Matched) --- */
+    /* --- STATS BOXES --- */
     .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
     .stat-box {
         background: white; padding: 24px; border-radius: 12px;
@@ -163,7 +141,7 @@
     
     .card-actions { 
         padding: 15px 20px; background: #F9FAFB; border-top: 1px solid #F3F4F6; 
-        display: flex; justify-content: flex-end; gap: 10px; 
+        display: flex; justify-content: flex-end; gap: 10px; align-items: center;
     }
     
     .btn-icon {
@@ -186,13 +164,13 @@
 {{-- Header Section --}}
 <div class="profiling-header">
     <div class="profiling-title">Announcements</div>
-    <div class="profiling-subtitle">Manage barangay news, updates, and public advisories.</div>
+    <div class="profiling-subtitle">Post updates for residents.</div>
     <div class="barangay-badge">
-        <span class="badge-icon">PH</span>
-        <span>Barangay Calbueg Information</span>
+        <span class="badge-icon">K</span>
+        <span>Kagawad Panel</span>
     </div>
     
-    <a href="{{ route('secretary.announcements.create') }}" class="btn-create-announcement">
+    <a href="{{ route('kagawad.announcements.create') }}" class="btn-create-announcement">
         <i class="fas fa-plus-circle"></i> Create Announcement
     </a>
 </div>
@@ -209,7 +187,7 @@
     </div>
     <div class="stat-box">
         <div class="stat-content">
-            {{-- In a real app, calculate these counts in controller --}}
+            {{-- Note: These counts filter the *current page results* only in Blade. For accuracy, pass specific counts from Controller. --}}
             <h3>{{ $announcements->where('is_published', true)->count() }}</h3>
             <p>Published</p>
             <div class="stat-badge green"><i class="fas fa-check-circle"></i><span>Active</span></div>
@@ -235,7 +213,7 @@
 </div>
 
 {{-- Filter Bar --}}
-<form action="{{ route('secretary.announcements.index') }}" method="GET" class="filter-bar">
+<form action="{{ route('kagawad.announcements.index') }}" method="GET" class="filter-bar">
     <input type="text" name="search" class="search-input" placeholder="🔍 Search announcements by title or content..." value="{{ $search ?? '' }}">
     <button type="submit" class="btn-search">Search</button>
 </form>
@@ -267,7 +245,8 @@
             
             <div class="card-body">
                 <div class="card-meta">
-                    <i class="far fa-clock"></i> {{ $announcement->created_at->format('M d, Y • h:i A') }}
+                    <span class="me-2"><i class="far fa-clock"></i> {{ $announcement->created_at->format('M d, Y') }}</span>
+                    <span><i class="fas fa-user-circle"></i> {{ $announcement->user->first_name }}</span>
                 </div>
                 <h5 class="card-title">{{ $announcement->title }}</h5>
                 <p class="card-text">
@@ -276,15 +255,20 @@
             </div>
             
             <div class="card-actions">
-                <a href="{{ route('secretary.announcements.edit', $announcement->id) }}" class="btn-icon" title="Edit">
-                    <i class="fas fa-edit"></i>
-                </a>
-                <form action="{{ route('secretary.announcements.destroy', $announcement->id) }}" method="POST" onsubmit="return confirm('Delete this announcement?');" style="margin:0;">
-                    @csrf @method('DELETE')
-                    <button type="submit" class="btn-icon delete" title="Delete">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </form>
+                {{-- RESTRICTION: Only show actions if current Kagawad owns the post --}}
+                @if($announcement->user_id == Auth::id())
+                    <a href="{{ route('kagawad.announcements.edit', $announcement->id) }}" class="btn-icon" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <form action="{{ route('kagawad.announcements.destroy', $announcement->id) }}" method="POST" onsubmit="return confirm('Delete this announcement?');" style="margin:0;">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="btn-icon delete" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </form>
+                @else
+                    <span class="text-muted small fst-italic">Read Only</span>
+                @endif
             </div>
         </div>
     </div>

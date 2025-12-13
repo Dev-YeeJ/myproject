@@ -5,7 +5,7 @@
 @section('nav-items')
     {{-- Navigation for BHW Role --}}
     <li class="nav-item">
-        <a href="{{ route('dashboard.health') }}" class="nav-link">
+        <a href="{{ route('health.dashboard') }}" class="nav-link">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>    
         </a>

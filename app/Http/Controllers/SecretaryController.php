@@ -3,22 +3,28 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Carbon\Carbon;
+
+// Models
 use App\Models\User;
 use App\Models\Resident;
 use App\Models\Household;
+use App\Models\Medicine;
 use App\Models\DocumentRequest;
 use App\Models\DocumentType;
 use App\Models\Template;
-use App\Models\Announcements;
-use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Storage;
-use App\Models\FinancialTransaction;
 use App\Models\DocumentRequirement;
+use App\Models\Announcements;
+use App\Models\FinancialTransaction;
+use App\Models\Project;
+use App\Models\BlotterRecord;
+use App\Models\SkOfficial;
 
 class SecretaryController extends Controller
 {
@@ -28,7 +34,7 @@ class SecretaryController extends Controller
     }
 
     // ============================================
-    // RESIDENT PROFILING
+    // 1. RESIDENT PROFILING
     // ============================================
 
     public function residentProfiling(Request $request)
@@ -36,9 +42,9 @@ class SecretaryController extends Controller
         $user = Auth::user();
         $view = $request->input('view', 'residents');
         $search = $request->input('search');
-        $status = $request->input('status');
-        $gender = $request->input('gender');
-        $filter = $request->input('filter');
+        $status = $request->input('status'); 
+        $gender = $request->input('gender'); 
+        $filter = $request->input('filter'); 
 
         $residents = null;
         $households = null;
@@ -46,9 +52,9 @@ class SecretaryController extends Controller
         if ($view === 'residents') {
             $query = Resident::with(['household', 'user']) 
                 ->where('is_active', true)
-                ->search($search)
-                ->byHouseholdStatus($status)
-                ->byGender($gender);
+                ->search($search) 
+                ->byHouseholdStatus($status) 
+                ->byGender($gender); 
 
             if ($filter) {
                 switch ($filter) {
@@ -59,8 +65,10 @@ class SecretaryController extends Controller
                 }
             }
             $residents = $query->orderBy('last_name')->paginate(10);
+
         } else {
             $query = Household::with(['head', 'activeResidents']);
+
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('household_name', 'like', "%{$search}%")
@@ -70,9 +78,11 @@ class SecretaryController extends Controller
                         });
                 });
             }
+
             if ($status && $status !== 'All Status' && in_array($status, ['complete', 'incomplete'])) {
                 $query->where('status', $status);
             }
+
             $households = $query->orderBy('household_number')->paginate(5);
         }
 
@@ -87,9 +97,9 @@ class SecretaryController extends Controller
         $incompleteHouseholds = $totalHouseholds - $completeHouseholds;
 
         return view('dashboard.secretary-resident-profiling', compact(
-            'user', 'view', 'residents', 'households', 'totalResidents', 'totalHouseholds', 
-            'completeHouseholds', 'seniorCitizens', 'minors', 'filter', 
-            'totalPwd', 'total4ps', 'totalVoters', 'incompleteHouseholds'
+            'user', 'view', 'residents', 'households', 'totalResidents', 'totalHouseholds',
+            'completeHouseholds', 'seniorCitizens', 'minors', 'filter', 'totalPwd',
+            'total4ps', 'totalVoters', 'incompleteHouseholds'
         ));
     }
 
@@ -98,6 +108,7 @@ class SecretaryController extends Controller
         $user = Auth::user();
         $households = Household::orderBy('household_number')->get();
         $selectedHousehold = $request->input('household_id', null);
+
         return view('dashboard.secretary-resident-add', compact('user', 'households', 'selectedHousehold'));
     }
 
@@ -176,12 +187,14 @@ class SecretaryController extends Controller
     {
         $user = Auth::user();
         $resident = Resident::with(['household', 'user'])->findOrFail($id);
+
         $defaultPassword = null;
         if ($resident->date_of_birth) {
             $lastName = Str::slug($resident->last_name, '');
             $birthdate = Carbon::parse($resident->date_of_birth)->format('Ymd');
             $defaultPassword = $lastName . $birthdate;
         }
+
         return view('dashboard.secretary-resident-view', compact('user', 'resident', 'defaultPassword'));
     }
 
@@ -221,11 +234,7 @@ class SecretaryController extends Controller
             'household_status' => 'required|in:Household Head,Spouse,Child,Member',
             'address' => 'required|string|max:255',
             'contact_number' => 'nullable|string|max:20',
-            'email' => [
-                'nullable', 'email', 'max:255', 
-                Rule::unique('residents')->ignore($id),
-                Rule::unique('users')->ignore($resident->user_id)
-            ],
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('residents')->ignore($id), Rule::unique('users')->ignore($resident->user_id)],
             'occupation' => 'nullable|string|max:255',
             'monthly_income' => 'nullable|numeric|min:0',
             'is_registered_voter' => 'boolean',
@@ -294,10 +303,8 @@ class SecretaryController extends Controller
                 $household->updateHouseholdStatus();
             }
         }
-
         $view = request('view', 'residents');
-        return redirect()->route('secretary.resident-profiling', ['view' => $view])
-            ->with('success', 'Resident removed successfully!');
+        return redirect()->route('secretary.resident-profiling', ['view' => $view])->with('success', 'Resident removed successfully!');
     }
 
     public function resetPassword(Resident $resident)
@@ -306,15 +313,17 @@ class SecretaryController extends Controller
             $lastName = Str::slug($resident->last_name, '');
             $birthdate = Carbon::parse($resident->date_of_birth)->format('Ymd');
             $defaultPassword = $lastName . $birthdate;
-            $resident->user->password = \Illuminate\Support\Facades\Hash::make($defaultPassword);
+
+            $resident->user->password = Hash::make($defaultPassword);
             $resident->user->save();
+            
             return redirect()->back()->with('success', "Password for {$resident->user->username} has been reset to '{$defaultPassword}'.");
         }
         return redirect()->back()->with('error', 'This resident does not have a linked user account.');
     }
 
     // ============================================
-    // HOUSEHOLD MANAGEMENT
+    // 2. HOUSEHOLD MANAGEMENT
     // ============================================
 
     public function createHousehold()
@@ -331,9 +340,13 @@ class SecretaryController extends Controller
             'address' => 'required|string|max:255',
             'purok' => 'nullable|string|max:100',
         ]);
-        Household::create($validated + ['total_members' => 0, 'status' => 'incomplete']);
-        return redirect()->route('secretary.resident-profiling', ['view' => 'households'])
-            ->with('success', 'Household added successfully!');
+        
+        Household::create($validated + [
+            'total_members' => 0,
+            'status' => 'incomplete'
+        ]);
+
+        return redirect()->route('secretary.resident-profiling', ['view' => 'households'])->with('success', 'Household added successfully!');
     }
 
     public function editHousehold($id)
@@ -346,16 +359,18 @@ class SecretaryController extends Controller
     public function updateHousehold(Request $request, $id)
     {
         $household = Household::findOrFail($id);
+
         $validated = $request->validate([
             'household_name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
             'purok' => 'nullable|string|max:100',
         ]);
+
         $validated['total_members'] = Resident::where('household_id', $id)->where('is_active', true)->count();
         $household->update($validated);
         $household->updateHouseholdStatus();
-        return redirect()->route('secretary.resident-profiling', ['view' => 'households'])
-            ->with('success', 'Household updated successfully!');
+
+        return redirect()->route('secretary.resident-profiling', ['view' => 'households'])->with('success', 'Household updated successfully!');
     }
 
     public function destroyHousehold($id)
@@ -363,8 +378,7 @@ class SecretaryController extends Controller
         $household = Household::findOrFail($id);
         Resident::where('household_id', $id)->where('is_active', true)->update(['is_active' => false]);
         $household->delete();
-        return redirect()->route('secretary.resident-profiling', ['view' => 'households'])
-            ->with('success', 'Household and all associated residents removed successfully!');
+        return redirect()->route('secretary.resident-profiling', ['view' => 'households'])->with('success', 'Household and all associated residents removed successfully!');
     }
     
     public function showHousehold($id)
@@ -375,10 +389,54 @@ class SecretaryController extends Controller
     }
 
     // ============================================
-    // DOCUMENT SERVICES 
+    // 3. HEALTH & SOCIAL SERVICES
     // ============================================
     
-   public function documentServices(Request $request)
+    public function healthAndSocialServices(Request $request)
+    {
+        $user = Auth::user();
+        $allMedicines = Medicine::all();
+        $stats = [
+            'total_medicines' => $allMedicines->count(),
+            'low_stock_medicines' => $allMedicines->where('status', 'Low Stock')->count(),
+            'expired_medicines' => $allMedicines->where('status', 'Expired')->count(),
+            'pending_requests' => 0, 
+        ];
+        $medicines = Medicine::orderBy('item_name')->get();
+        return view('dashboard.secretary-health-services', compact('user', 'stats', 'medicines'));
+    }
+
+    public function createMedicine()
+    {
+        $user = Auth::user();
+        return view('dashboard.secretary-medicine-create', compact('user'));
+    }
+
+    public function storeMedicine(Request $request)
+    {
+        $validated = $request->validate([
+            'item_name' => 'required|string|max:255',
+            'category' => 'required|string',
+            'stock_quantity' => 'required|integer|min:0',
+            'expiration_date' => 'required|date',
+            'description' => 'nullable|string',
+        ]);
+
+        $status = 'In Stock';
+        if ($validated['stock_quantity'] <= 10) $status = 'Low Stock';
+        if ($validated['stock_quantity'] == 0) $status = 'Out of Stock';
+        if (Carbon::parse($validated['expiration_date'])->isPast()) $status = 'Expired';
+
+        Medicine::create($validated + ['status' => $status]);
+
+        return redirect()->route('secretary.health-services')->with('success', 'Medicine added successfully.');
+    }
+
+    // ============================================
+    // 4. DOCUMENT SERVICES 
+    // ============================================
+    
+    public function documentServices(Request $request)
     {
         $user = Auth::user();
         $view = $request->input('view', 'requests');
@@ -421,7 +479,7 @@ class SecretaryController extends Controller
             }
             $documentTypes = $typesQuery->orderBy('name')->paginate(9, ['*'], 'page')->appends($request->except('page'));
         
-        } else { // $view === 'templates'
+        } else { 
             $templatesQuery = Template::with('documentType'); 
             if ($request->filled('search_templates')) {
                 $templatesQuery->where('name', 'like', '%' . $request->search_templates . '%');
@@ -435,21 +493,20 @@ class SecretaryController extends Controller
     public function showDocumentRequest($id)
     {
         $user = Auth::user();
-        $documentRequest = DocumentRequest::with(['resident', 'documentType', 'requirements'])
-                                          ->findOrFail($id);
-        
+        $documentRequest = DocumentRequest::with(['resident', 'documentType', 'requirements'])->findOrFail($id);
         return view('dashboard.secretary-document-view', compact('user', 'documentRequest'));
     }
 
     public function updateDocumentRequest(Request $request, $id)
     {
-        $documentRequest = DocumentRequest::findOrFail($id);
+        $documentRequest = DocumentRequest::with('documentType', 'resident')->findOrFail($id);
+        $oldPaymentStatus = $documentRequest->payment_status;
 
         $validated = $request->validate([
             'status' => 'required|in:Pending,Processing,Under Review,Ready for Pickup,Completed,Rejected,Cancelled',
             'payment_status' => 'required|in:Unpaid,Paid,Waived,Verification Pending',
             'remarks' => 'nullable|string|max:1000',
-            'generated_file' => 'nullable|file|mimes:pdf,docx,doc|max:5120' // 5MB max
+            'generated_file' => 'nullable|file|mimes:pdf,docx,doc|max:5120'
         ]);
 
         if ($request->hasFile('generated_file')) {
@@ -465,8 +522,25 @@ class SecretaryController extends Controller
         $documentRequest->remarks = $validated['remarks'];
         $documentRequest->save();
 
+        // Auto-record Revenue if Paid
+        if ($validated['payment_status'] === 'Paid' && $oldPaymentStatus !== 'Paid' && $documentRequest->price > 0) {
+            $residentName = $documentRequest->resident ? $documentRequest->resident->first_name . ' ' . $documentRequest->resident->last_name : 'Unknown';
+            $docName = $documentRequest->documentType ? $documentRequest->documentType->name : 'Document';
+            $transactionTitle = "Payment: [{$documentRequest->tracking_number}] $docName - $residentName";
+
+            FinancialTransaction::create([
+                'title'            => $transactionTitle,
+                'amount'           => $documentRequest->price,
+                'type'             => 'revenue',
+                'category'         => 'Document Services',
+                'status'           => 'approved',
+                'transaction_date' => now(),
+                'requested_by'     => Auth::user()->first_name . ' ' . Auth::user()->last_name,
+            ]);
+        }
+
         return redirect()->route('secretary.document.show', $id)
-                         ->with('success', 'Document request and payment status updated successfully.');
+                          ->with('success', 'Document request updated. Financial transaction recorded if paid.');
     }
 
     public function downloadRequirement($id)
@@ -479,7 +553,7 @@ class SecretaryController extends Controller
     }
 
     // ============================================
-    // ANNOUNCEMENT MANAGEMENT
+    // 5. ANNOUNCEMENT MANAGEMENT
     // ============================================
 
     public function announcements(Request $request)
@@ -490,11 +564,9 @@ class SecretaryController extends Controller
 
         if ($search) {
             $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('content', 'like', "%{$search}%");
+                $q->where('title', 'like', "%{$search}%")->orWhere('content', 'like', "%{$search}%");
             });
         }
-
         $announcements = $query->paginate(9);
         return view('dashboard.secretary-announcements', compact('user', 'announcements', 'search'));
     }
@@ -524,13 +596,12 @@ class SecretaryController extends Controller
             'title' => $validated['title'],
             'content' => $validated['content'],
             'image_path' => $imagePath,
-            'audience' => $validated['audience'],
+            'audience' => $validated['audience'], 
             'is_published' => $request->has('is_published'),
             'user_id' => Auth::id(),
         ]);
 
-        return redirect()->route('secretary.announcements.index')
-            ->with('success', 'Announcement created successfully.');
+        return redirect()->route('secretary.announcements.index')->with('success', 'Announcement created successfully.');
     }
 
     public function editAnnouncement($id)
@@ -543,7 +614,6 @@ class SecretaryController extends Controller
     public function updateAnnouncement(Request $request, $id)
     {
         $announcement = Announcements::findOrFail($id);
-
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
@@ -564,8 +634,7 @@ class SecretaryController extends Controller
         $announcement->is_published = $request->has('is_published');
         $announcement->save();
 
-        return redirect()->route('secretary.announcements.index')
-            ->with('success', 'Announcement updated successfully.');
+        return redirect()->route('secretary.announcements.index')->with('success', 'Announcement updated successfully.');
     }
 
     public function destroyAnnouncement($id)
@@ -575,12 +644,11 @@ class SecretaryController extends Controller
             Storage::disk('public')->delete($announcement->image_path);
         }
         $announcement->delete();
-        return redirect()->route('secretary.announcements.index')
-            ->with('success', 'Announcement deleted successfully.');
+        return redirect()->route('secretary.announcements.index')->with('success', 'Announcement deleted successfully.');
     }
 
     // ============================================
-    // FINANCIAL MANAGEMENT
+    // 6. FINANCIAL MANAGEMENT (RESTRICTED FOR SECRETARY)
     // ============================================
 
     public function financialManagement(Request $request)
@@ -591,22 +659,19 @@ class SecretaryController extends Controller
         $annualBudget = DB::table('settings')->where('key', 'annual_budget')->value('value') ?? 2000000;
         
         // 2. Calculate Totals
-        // Revenue (Manual + Docs)
-        $manualRevenue = FinancialTransaction::where('type', 'revenue')
+        // Note: We rely on FinancialTransaction for the main totals to ensure consistency with Captain's view
+        $totalRevenue = FinancialTransaction::where('type', 'revenue')
             ->where('status', 'approved')
             ->sum('amount');
-        $documentRevenue = DocumentRequest::where('payment_status', 'Paid')->sum('price');
-        $totalRevenue = $manualRevenue + $documentRevenue;
 
-        // Expenses
         $totalSpent = FinancialTransaction::where('type', 'expense')
             ->where('status', 'approved')
             ->sum('amount');
         
         $availableBudget = ($annualBudget + $totalRevenue) - $totalSpent;
 
-        // 3. Utilization Data for Charts
-        $expenseCategories = ['Infrastructure', 'Health Programs', 'Education', 'Environmental', 'Others'];
+        // 3. Utilization Data for Charts (Expenses)
+        $expenseCategories = ['Infrastructure', 'Health Programs', 'Education', 'Environmental', 'Social Services', 'Emergency Fund', 'Office Supplies', 'Utilities', 'Honorarium', 'Others'];
         $utilization = [];
 
         foreach ($expenseCategories as $cat) {
@@ -626,15 +691,31 @@ class SecretaryController extends Controller
             ];
         }
 
-        // 4. Revenue Performance
-        $revenuePerformance = [];
-        $iraCollected = FinancialTransaction::where('category', 'Government IRA')->sum('amount');
-        $revenuePerformance[] = [
-            'name' => 'Government IRA',
-            'target' => 1500000, 
-            'collected' => $iraCollected,
-            'percentage' => ($iraCollected / 1500000) * 100
+        // 4. Revenue Performance (UPDATED TO MATCH CAPTAIN VIEW)
+        // We now define all targets and loop through them
+        $targets = [
+            'Government IRA'    => 1500000, 
+            'Community Tax'     => 20000, 
+            'Document Services' => 15000,
+            'Donations'         => 50000, 
+            'Other Fees'        => 10000
         ];
+
+        $revenuePerformance = [];
+        foreach($targets as $category => $target) {
+            // Calculate total collected for this specific category
+            $collected = FinancialTransaction::where('type', 'revenue')
+                ->where('status', 'approved')
+                ->where('category', $category)
+                ->sum('amount');
+            
+            $revenuePerformance[] = [
+                'name' => $category,
+                'collected' => $collected,
+                'target' => $target,
+                'percentage' => ($target > 0 ? ($collected / $target) * 100 : 0)
+            ];
+        }
 
         // 5. Transaction List (Filter Logic)
         $query = FinancialTransaction::latest();
@@ -645,9 +726,16 @@ class SecretaryController extends Controller
 
         $transactions = $query->paginate(10)->withQueryString();
 
+        // 6. Check for Pending Requests (For the Secretary's "Pending Approvals" box)
+        $pendingRequests = FinancialTransaction::where('type', 'expense')
+            ->where('status', 'pending')
+            ->where('requested_by', $user->first_name . ' ' . $user->last_name) // Optional: Only show their own requests
+            ->latest()
+            ->get();
+
         return view('dashboard.secretary-financial', compact(
             'user', 'transactions', 'annualBudget', 'totalRevenue', 
-            'totalSpent', 'availableBudget', 'utilization', 'revenuePerformance'
+            'totalSpent', 'availableBudget', 'utilization', 'revenuePerformance', 'pendingRequests'
         ));
     }
 
@@ -656,10 +744,20 @@ class SecretaryController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
-            'type' => 'required|in:revenue,expense',
+            'type' => 'required|in:revenue,expense,sync_docs',
             'category' => 'required|string',
             'transaction_date' => 'required|date',
         ]);
+        
+        // Handle Sync Docs logic separately
+        if($validated['type'] === 'sync_docs') {
+            // Logic: Count all paid document requests that haven't been synced yet could be implemented here.
+            // For now, this is a placeholder or you can implement logic to re-sum document payments if needed.
+            // Since DocumentRequest updates already create transactions, this button might just be a refresh or 
+            // a way to consolidate old records. 
+            // If you want it to do nothing but refresh:
+            return redirect()->back()->with('success', 'Revenue data refreshed.');
+        }
 
         // CRITICAL LOGIC FOR SECRETARY:
         // Revenue = Approved immediately (Collecting cash).
@@ -692,11 +790,11 @@ class SecretaryController extends Controller
             $filename = "secretary_report_" . date('Y-m-d') . ".csv";
             
             $headers = [
-                "Content-type" => "text/csv",
-                "Content-Disposition" => "attachment; filename=$filename",
-                "Pragma" => "no-cache",
-                "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-                "Expires" => "0"
+                'Content-type' => 'text/csv',
+                'Content-Disposition' => "attachment; filename=$filename",
+                'Pragma' => 'no-cache',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Expires' => '0'
             ];
 
             $columns = ['ID', 'Title', 'Type', 'Category', 'Amount', 'Status', 'Recorded By', 'Date'];
@@ -716,5 +814,261 @@ class SecretaryController extends Controller
             return response()->stream($callback, 200, $headers);
         }
         return redirect()->back()->with('error', 'Export type not supported.');
+    }
+
+    // ============================================
+    // 7. PROJECT MONITORING
+    // ============================================
+
+    public function projectMonitoring(Request $request)
+    {
+        $user = Auth::user();
+        $view = $request->input('view', 'active'); 
+
+        // 1. Proposals (Waiting for Approval)
+        $proposalsQuery = Project::where('status', 'Proposed')->latest();
+        $proposals = $proposalsQuery->paginate(6, ['*'], 'proposals_page');
+
+        // 2. Active/Completed Projects
+        $projectsQuery = Project::where('status', '!=', 'Proposed');
+
+        if ($request->has('category') && $request->category != 'All Projects') {
+            $projectsQuery->where('category', $request->category);
+        }
+        if ($request->has('search') && $request->search != '') {
+            $projectsQuery->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        $projects = $projectsQuery->latest()->paginate(6, ['*'], 'projects_page');
+        
+        $stats = [
+            'total_projects'    => Project::count(),
+            'active_projects'   => Project::where('status', 'In Progress')->count(),
+            'pending_proposals' => Project::where('status', 'Proposed')->count(),
+            'total_budget'      => Project::where('status', '!=', 'Proposed')->sum('budget'),
+            'total_spent'       => Project::sum('amount_spent'),
+            'completed_projects'=> Project::where('status', 'Completed')->count(),
+        ];
+
+        return view('dashboard.secretary-project-monitoring', compact('user', 'stats', 'projects', 'proposals', 'view'));
+    }
+
+    public function storeProject(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'category' => 'required|string',
+            'budget' => 'required|numeric|min:0',
+            'start_date' => 'required|date',
+            'end_date' => 'nullable|date',
+            'description' => 'required|string',
+        ]);
+
+        Project::create([
+            'title' => $validated['title'],
+            'category' => $validated['category'],
+            'budget' => $validated['budget'],
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'] ?? null,
+            'description' => $validated['description'],
+            'status' => 'Planning', 
+            'progress' => 0,
+            'amount_spent' => 0 
+        ]);
+
+        return redirect()->back()->with('success', 'Project created.');
+    }
+
+    public function updateProjectProgress(Request $request, $id)
+    {
+        $project = Project::findOrFail($id);
+        $project->update($request->only(['status', 'progress']));
+        return redirect()->back()->with('success', 'Project updated.');
+    }
+
+    public function destroyProject($id)
+    {
+        $project = Project::findOrFail($id);
+        $project->delete();
+        return redirect()->back()->with('success', 'Project deleted.');
+    }
+
+    // ============================================
+    // 8. INCIDENT & BLOTTER (Mediation)
+    // ============================================
+
+    public function incidentAndBlotter(Request $request)
+    {
+        $user = Auth::user();
+        $search = $request->input('search');
+        $statusFilter = $request->input('status');
+
+        $query = BlotterRecord::query();
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('case_number', 'like', "%{$search}%")
+                  ->orWhere('complainant', 'like', "%{$search}%")
+                  ->orWhere('respondent', 'like', "%{$search}%")
+                  ->orWhere('incident_type', 'like', "%{$search}%");
+            });
+        }
+
+        if ($statusFilter && $statusFilter !== 'All') {
+            $query->where('status', $statusFilter);
+        }
+
+        $stats = [
+            'total_cases'    => BlotterRecord::count(),
+            'high_priority'  => BlotterRecord::where('priority', 'High')->where('status', '!=', 'Resolved')->count(),
+            'hearings_set'   => BlotterRecord::where('status', 'Scheduled for Hearing')->count(),
+            'resolved_cases' => BlotterRecord::where('status', 'Resolved')->count(),
+        ];
+
+        $records = $query->orderByRaw("FIELD(status, 'Open', 'Scheduled for Hearing', 'Under Investigation', 'For Mediation', 'Resolved', 'Dismissed')")
+                         ->orderBy('priority', 'desc')
+                         ->orderBy('date_reported', 'desc')
+                         ->paginate(10)
+                         ->withQueryString();
+
+        return view('dashboard.secretary-incident-blotter', compact('user', 'stats', 'records', 'search', 'statusFilter'));
+    }
+
+    public function storeIncident(Request $request)
+    {
+        $validated = $request->validate([
+            'date_reported' => 'required|date',
+            'incident_type' => 'required|string',
+            'complainant'   => 'required|string',
+            'respondent'    => 'nullable|string',
+            'location'      => 'required|string',
+            'priority'      => 'required|in:Low,Medium,High',
+            'narrative'     => 'required|string',
+        ]);
+
+        $validated['case_number'] = BlotterRecord::generateCaseNumber();
+        $validated['status'] = 'Open'; 
+        $validated['actions_taken'] = "[" . now()->format('M d, Y h:i A') . "] Case manually filed by Secretary.";
+
+        BlotterRecord::create($validated);
+
+        return redirect()->back()->with('success', 'Incident logged successfully. Case #: ' . $validated['case_number']);
+    }
+
+    public function processIncident(Request $request, $id)
+    {
+        $record = BlotterRecord::findOrFail($id);
+        
+        $request->validate([
+            'action_type' => 'required|in:status_update,schedule_hearing,resolve_case',
+            'remarks' => 'required|string'
+        ]);
+
+        $timestamp = now()->format('M d, Y h:i A');
+        $newLog = "";
+        $newStatus = $record->status;
+
+        switch ($request->action_type) {
+            case 'schedule_hearing':
+                $newStatus = 'Scheduled for Hearing';
+                $newLog = "[$timestamp] [Secretary] STATUS: Scheduled for Hearing. DETAILS: " . $request->remarks;
+                break;
+            case 'resolve_case':
+                $newStatus = 'Resolved';
+                $newLog = "[$timestamp] [Secretary] STATUS: Case Resolved. REMARKS: " . $request->remarks;
+                break;
+            case 'status_update':
+                $newStatus = $request->new_status ?? $record->status;
+                $newLog = "[$timestamp] [Secretary] STATUS: Updated to $newStatus. UPDATE: " . $request->remarks;
+                break;
+        }
+
+        $updatedHistory = $record->actions_taken . "\n" . $newLog;
+
+        $record->update([
+            'status' => $newStatus,
+            'actions_taken' => $updatedHistory
+        ]);
+        
+        return redirect()->back()->with('success', 'Case workflow updated successfully.');
+    }
+
+    public function updateIncidentDetails(Request $request, $id)
+    {
+        $record = BlotterRecord::findOrFail($id);
+
+        $validated = $request->validate([
+            'complainant' => 'required|string',
+            'respondent' => 'nullable|string',
+            'incident_type' => 'required|string',
+            'location' => 'required|string',
+            'date_reported' => 'required|date',
+            'priority' => 'required|in:Low,Medium,High',
+            'narrative' => 'required|string',
+        ]);
+
+        $record->update($validated);
+        return redirect()->back()->with('success', 'Incident details updated.');
+    }
+
+    public function destroyIncident($id)
+    {
+        $record = BlotterRecord::findOrFail($id);
+        $record->delete();
+        return redirect()->back()->with('success', 'Incident record deleted successfully.');
+    }
+
+    // ============================================
+    // 9. SK OVERVIEW
+    // ============================================
+
+    public function skOverview()
+    {
+        $user = Auth::user();
+
+        // 1. Demographics
+        $minDate = Carbon::now()->subYears(15)->format('Y-m-d');
+        $maxDate = Carbon::now()->subYears(30)->format('Y-m-d');
+
+        $kkQuery = Resident::where('is_active', true)
+            ->whereDate('date_of_birth', '<=', $minDate)
+            ->whereDate('date_of_birth', '>=', $maxDate);
+
+        $youthStats = [
+            'total_youth' => (clone $kkQuery)->count(),
+            'registered_voters' => (clone $kkQuery)->where('is_registered_voter', true)->count(),
+            'out_of_school' => (clone $kkQuery)->where('occupation', '!=', 'Student')->whereNull('monthly_income')->count(),
+            'students' => (clone $kkQuery)->where('occupation', 'Student')->count(),
+        ];
+
+        // 2. Budget
+        $barangayBudget = DB::table('settings')->where('key', 'annual_budget')->value('value') ?? 0;
+        $skAllocation = $barangayBudget * 0.10;
+        
+        $skSpent = FinancialTransaction::where('status', 'approved')
+            ->where(function($q) {
+                $q->where('category', 'SK Fund')
+                  ->orWhereHas('project', function($p) { $p->where('category', 'SK Project'); });
+            })->sum('amount');
+        
+        $skCommitted = Project::where('category', 'SK Project')
+            ->where('status', '!=', 'Cancelled')
+            ->sum('budget');
+
+        $budgetStats = [
+            'allocation' => $skAllocation,
+            'spent' => $skSpent,
+            'committed' => $skCommitted,
+            'remaining' => $skAllocation - $skSpent, 
+            'available_cash' => $skAllocation - $skSpent, 
+            'uncommitted_balance' => $skAllocation - $skCommitted,
+            'utilization_rate' => ($skAllocation > 0) ? ($skSpent / $skAllocation) * 100 : 0
+        ];
+
+        // 3. Projects & Officials
+        $skProjects = Project::where('category', 'SK Project')->orderBy('status', 'desc')->get();
+        $officials = SkOfficial::with('resident')->where('is_active', true)->get();
+
+        return view('dashboard.secretary-sk-overview', compact('user', 'youthStats', 'budgetStats', 'skProjects', 'officials'));
     }
 }

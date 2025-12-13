@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\MedicineRequest; // --- IMPORT ADDED ---
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Models\Announcements;
 
 class HealthController extends Controller
 {
@@ -267,5 +268,32 @@ class HealthController extends Controller
         ]);
 
         return back()->with('success', 'Request ' . $validated['status'] . ' successfully.');
+    }
+
+    // ==========================================
+    // HEALTH WORKER: VIEW ANNOUNCEMENTS
+    // ==========================================
+
+    public function healthAnnouncements(Request $request)
+    {
+        $user = Auth::user();
+        $search = $request->input('search');
+
+        // Filter: Show announcements for 'All' or 'Barangay Officials' (Health workers are officials)
+        $query = Announcements::where('is_published', true)
+                              ->whereIn('audience', ['All', 'Barangay Officials']) 
+                              ->with('user')
+                              ->latest();
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+
+        $announcements = $query->paginate(9);
+
+        return view('dashboard.health-announcements', compact('user', 'announcements', 'search'));
     }
 }

@@ -3,57 +3,57 @@
 @section('title', 'Incident & Blotter Management')
 
 @section('nav-items')
-    {{-- Active class on Dashboard link --}}
     <li class="nav-item">
-        <a href="{{ route('captain.dashboard') }}" class="nav-link ">
+        <a href="{{ route('secretary.dashboard') }}" class="nav-link">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.resident-profiling') }}" class="nav-link">
+        <a href="{{ route('secretary.resident-profiling') }}" class="nav-link">
             <i class="fas fa-users"></i>
             <span>Resident Profiling</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.document-services') }}" class="nav-link">
+        <a href="{{ route('secretary.document-services') }}" class="nav-link">
             <i class="far fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.financial') }}" class="nav-link">
+        <a href="{{ route('secretary.financial-management') }}" class="nav-link">
             <i class="fas fa-dollar-sign"></i>
             <span>Financial Management</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.health-services') }}" class="nav-link ">
+        <a href="{{ route('secretary.health-services') }}" class="nav-link">
             <i class="fas fa-heart"></i>
             <span>Health & Social Services</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.incident.index') }}" class="nav-link active">
+        {{-- ACTIVE PAGE --}}
+        <a href="{{ route('secretary.incident-blotter') }}" class="nav-link active">
             <i class="fas fa-exclamation-triangle"></i>
             <span>Incident & Blotter</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.project.monitoring') }}" class="nav-link">
+        <a href="{{ route('secretary.project-monitoring') }}" class="nav-link">
             <i class="fas fa-flag"></i>
             <span>Project Monitoring</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="{{ route('captain.announcements.index') }}" class="nav-link">
+        <a href="{{ route('secretary.announcements.index') }}" class="nav-link">
             <i class="fas fa-bell"></i>
             <span>Announcements</span>
         </a>
     </li>
-   <li class="nav-item">
-        <a href="{{ route('captain.sk.overview') }}" class="nav-link">
+    <li class="nav-item">
+        <a href="{{ route('secretary.sk-overview') }}" class="nav-link">
             <i class="fas fa-user-graduate"></i>
             <span>SK Module</span>
         </a>
@@ -120,10 +120,10 @@
     }
     .search-input:focus, .filter-select:focus { outline: none; border-color: #2B5CE6; }
 
-    /* --- TABLE STYLES (EXPANDED COLUMNS) --- */
+    /* --- TABLE STYLES --- */
     .table-container {
         background: white; border-radius: 0 0 16px 16px;
-        overflow-x: auto; /* Allow horizontal scroll if needed */
+        overflow-x: auto;
         box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
     .table { width: 100%; margin: 0; border-collapse: separate; border-spacing: 0; min-width: 1000px; }
@@ -159,8 +159,8 @@
     .status-Open { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
     .status-Scheduled { background: #EEF2FF; color: #4338CA; border: 1px solid #C7D2FE; }
     .status-Resolved { background: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; }
-    .status-Mediation { background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; } /* NEW */
-    .status-Investigation { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; } /* NEW */
+    .status-Mediation { background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; }
+    .status-Investigation { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
     .status-Dismissed { background: #F9FAFB; color: #4B5563; border: 1px solid #E5E7EB; }
 
     .priority-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
@@ -205,7 +205,7 @@
 
 @if(session('success'))
 <div class="alert alert-success d-flex align-items-center mb-3" style="background: #ECFDF5; color: #065F46; border: 1px solid #6EE7B7; border-radius: 12px; padding: 20px;">
-    <i class="fas fa-check-circle mr-3 fa-lg"></i> {{-- BS4 uses mr-3 --}}
+    <i class="fas fa-check-circle mr-3 fa-lg"></i>
     <span style="font-weight: 500;">{{ session('success') }}</span>
 </div>
 @endif
@@ -218,7 +218,7 @@
         <span class="badge-icon">PH</span>
         <span>Barangay Calbueg Security</span>
     </div>
-    {{-- BS4 FIX: data-toggle/target --}}
+    
     <button class="btn-log-case" data-toggle="modal" data-target="#logIncidentModal">
         <i class="fas fa-plus-circle fa-lg"></i> 
         <span>Log New Case</span>
@@ -267,9 +267,8 @@
         <i class="fas fa-book-open fa-lg"></i>
         <span>Case Directory</span>
     </div>
-    <form action="{{ route('captain.incident.index') }}" method="GET" class="filters-section">
+    <form action="{{ route('secretary.incident-blotter') }}" method="GET" class="filters-section">
         <input type="text" name="search" class="search-input" placeholder="🔍 Search Case #..." value="{{ $search }}">
-        {{-- UPDATED STATUS SELECT TO INCLUDE KAGAWAD STATUSES --}}
         <select name="status" class="filter-select" onchange="this.form.submit()">
             <option value="All">All Statuses</option>
             <option value="Open" {{ $statusFilter == 'Open' ? 'selected' : '' }}>Open</option>
@@ -280,7 +279,7 @@
             <option value="Dismissed" {{ $statusFilter == 'Dismissed' ? 'selected' : '' }}>Dismissed</option>
         </select>
         @if($search || $statusFilter && $statusFilter != 'All')
-            <a href="{{ route('captain.incident.index') }}" class="btn btn-light text-primary fw-bold" style="padding: 12px 20px; border-radius: 10px;">Reset</a>
+            <a href="{{ route('secretary.incident-blotter') }}" class="btn btn-light text-primary fw-bold" style="padding: 12px 20px; border-radius: 10px;">Reset</a>
         @endif
     </form>
 </div>
@@ -330,7 +329,6 @@
                 </td>
                 <td>
                     <div class="action-icons">
-                        {{-- BS4 FIX: data-toggle/target --}}
                         <button class="action-icon process" data-toggle="modal" data-target="#processModal{{ $record->id }}" title="Process">
                             <i class="fas fa-tasks"></i>
                         </button>
@@ -361,8 +359,8 @@
                                     <div class="history-log-box">{{ $record->actions_taken }}</div>
                                 </div>
                                 <div class="col-md-6 pl-md-4">
-                                    <form action="{{ route('captain.incident.process', $record->id) }}" method="POST">
-                                        @csrf @method('PUT')
+                                    <form action="{{ route('secretary.incident.process', $record->id) }}" method="POST">
+                                        @csrf 
                                         <div class="form-group">
                                             <label class="small fw-bold text-muted mb-1">Action</label>
                                             <select name="action_type" class="form-control" id="actSel{{ $record->id }}" onchange="toggleP{{ $record->id }}()">
@@ -406,7 +404,7 @@
             <div class="modal fade" id="editModal{{ $record->id }}" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content border-0 shadow-lg">
-                        <form action="{{ route('captain.incident.update_details', $record->id) }}" method="POST">
+                        <form action="{{ route('secretary.incident.update-details', $record->id) }}" method="POST">
                             @csrf @method('PUT')
                             <div class="modal-header bg-light border-bottom-0 py-3">
                                 <h5 class="modal-title fw-bold pl-2">Edit Details</h5>
@@ -465,7 +463,7 @@
                         <div class="mb-3 text-danger"><i class="fas fa-exclamation-circle fa-3x"></i></div>
                         <h5 class="fw-bold mb-2">Delete Record?</h5>
                         <p class="text-muted small mb-4">Are you sure? This cannot be undone.</p>
-                        <form action="{{ route('captain.incident.destroy', $record->id) }}" method="POST">
+                        <form action="{{ route('secretary.incident.destroy', $record->id) }}" method="POST">
                             @csrf @method('DELETE')
                             <button type="submit" class="btn btn-danger w-100 mb-2 py-2 fw-bold">Yes, Delete it</button>
                             <button type="button" class="btn btn-light w-100 py-2" data-dismiss="modal">Cancel</button>
@@ -489,7 +487,7 @@
 <div class="modal fade" id="logIncidentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <form action="{{ route('captain.incident.store') }}" method="POST">
+            <form action="{{ route('secretary.incident.store') }}" method="POST">
                 @csrf
                 <div class="modal-header bg-primary text-white py-3">
                     <h5 class="modal-title fw-bold">Log New Incident</h5>
