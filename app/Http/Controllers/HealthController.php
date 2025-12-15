@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Medicine;
 use App\Models\User;
-use App\Models\MedicineRequest; // --- IMPORT ADDED ---
+use App\Models\MedicineRequest;
+use App\Models\HealthProgram; // --- IMPORT ADDED ---
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Models\Announcements;
@@ -21,18 +22,18 @@ class HealthController extends Controller
     }
 
     /**
-     * Display the health and social services page (Inventory Dashboard)
+     * Display the health and social services page (Inventory Dashboard & Programs)
      */
     public function showHealthServices(Request $request)
     {
         $user = Auth::user();
 
-        // --- Get Filter Inputs ---
+        // --- Get Filter Inputs for Medicines ---
         $selectedCategory = $request->query('category');
         $searchQuery = $request->query('search');
 
         // --- Query Real Data (Stats) ---
-        $allMedicines = Medicine::all(); 
+        $allMedicines = Medicine::all();
         $stats = [
             'total_medicines' => $allMedicines->count(),
             'low_stock_medicines' => $allMedicines->where('status', 'Low Stock')->count(),
@@ -40,17 +41,21 @@ class HealthController extends Controller
             'total_categories' => $allMedicines->whereNotNull('category')->unique('category')->count(),
             // Count pending requests for notification badge
             'pending_requests' => MedicineRequest::where('status', 'Pending')->count(),
+            // Count upcoming programs
+            'upcoming_programs' => HealthProgram::where('status', 'Upcoming')->count(),
         ];
 
-        // --- Get Medicine Data for Table (Filtered) ---
+        // ==========================================
+        // 1. MEDICINE INVENTORY LOGIC
+        // ==========================================
         $query = Medicine::query();
 
-        // 1. Apply category filter
+        // Apply category filter
         if ($selectedCategory) {
             $query->where('category', $selectedCategory);
         }
 
-        // 2. Apply search filter
+        // Apply search filter
         if ($searchQuery) {
             $query->where(function($q) use ($searchQuery) {
                 $q->where('item_name', 'like', '%' . $searchQuery . '%')
@@ -59,15 +64,21 @@ class HealthController extends Controller
             });
         }
 
-        // Get the filtered results with pagination
-        $medicines = $query->orderBy('item_name')->paginate(15);
+        // Get the filtered results with pagination (renamed page parameter to avoid conflict)
+        $medicines = $query->orderBy('item_name')->paginate(10, ['*'], 'inventory_page');
 
-        // --- Get Category List for Dropdown ---
+        // Get Category List for Dropdown
         $categories = Medicine::select('category')
                             ->whereNotNull('category')
                             ->distinct()
                             ->orderBy('category')
                             ->pluck('category');
+
+        // ==========================================
+        // 2. HEALTH PROGRAMS LOGIC
+        // ==========================================
+        $programs = HealthProgram::orderBy('schedule_date', 'desc')
+                        ->paginate(5, ['*'], 'programs_page');
 
         return view('dashboard.health-health-services', compact(
             'user',
@@ -75,7 +86,8 @@ class HealthController extends Controller
             'medicines',
             'categories',
             'selectedCategory',
-            'searchQuery'
+            'searchQuery',
+            'programs' // Passed to view
         ));
     }
 
@@ -115,15 +127,11 @@ class HealthController extends Controller
         } elseif ($validated['quantity'] <= $validated['low_stock_threshold']) {
             $status = 'Low Stock';
         }
-        // Note: Expiration check usually happens via a scheduled task or accessor, 
-        // but we can set it initially here if needed.
+        
         if (Carbon::parse($validated['expiration_date'])->isPast()) {
             $status = 'Expired';
         }
 
-        // Merge calculated status if your model fillable includes it, 
-        // otherwise handle it via Model Observer or Accessor.
-        // Assuming 'status' is a column:
         $medicine = new Medicine($validated);
         $medicine->status = $status; 
         $medicine->save();
@@ -196,6 +204,68 @@ class HealthController extends Controller
 
 
     // ============================================
+    // HEALTH PROGRAMS CRUD (NEW)
+    // ============================================
+
+    /**
+     * Store a new health program
+     */
+    public function storeProgram(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'schedule_date' => 'required|date',
+            'organizer' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        // Auto-determine status based on date
+        $status = Carbon::parse($validated['schedule_date'])->isPast() ? 'Completed' : 'Upcoming';
+        
+        $program = new HealthProgram($validated);
+        $program->status = $status;
+        $program->save();
+
+        return redirect()->route('health.health-services')
+            ->with('success', 'Health Program created successfully!');
+    }
+
+    /**
+     * Update an existing health program
+     */
+    public function updateProgram(Request $request, $id)
+    {
+        $program = HealthProgram::findOrFail($id);
+        
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'schedule_date' => 'required|date',
+            'organizer' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'required|in:Upcoming,Completed,Cancelled',
+        ]);
+
+        $program->update($validated);
+
+        return redirect()->route('health.health-services')
+            ->with('success', 'Health Program updated successfully!');
+    }
+
+    /**
+     * Delete a health program
+     */
+    public function destroyProgram($id)
+    {
+        HealthProgram::findOrFail($id)->delete();
+        
+        return redirect()->route('health.health-services')
+            ->with('success', 'Health Program deleted successfully!');
+    }
+
+
+    // ============================================
     // MEDICINE REQUESTS MANAGEMENT
     // ============================================
 
@@ -229,7 +299,6 @@ class HealthController extends Controller
     {
         $medicineRequest = MedicineRequest::findOrFail($id);
         
-        // We validate remarks, but they might not be present in the request (e.g. Approve button)
         $validated = $request->validate([
             'status' => 'required|in:Approved,Rejected',
             'remarks' => 'nullable|string|max:255',
@@ -261,7 +330,6 @@ class HealthController extends Controller
         }
 
         // Update the request record
-        // FIX: Use null coalescing operator (??) to handle missing remarks in Approval form
         $medicineRequest->update([
             'status' => $validated['status'],
             'remarks' => $validated['remarks'] ?? null 

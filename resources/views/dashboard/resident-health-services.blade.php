@@ -17,32 +17,30 @@
         </a>
     </li>
     <li class="nav-item">
-    <a href="{{ route('resident.health-services') }}" class="nav-link active">
-        <i class="fas fa-heartbeat"></i>
-        <span>Health Services</span>
-    </a>
-</li>
+        <a href="{{ route('resident.health-services') }}" class="nav-link active">
+            <i class="fas fa-heartbeat"></i>
+            <span>Health Services</span>
+        </a>
+    </li>
 
-{{-- NEW LINK HERE --}}
-<li class="nav-item">
-    <a href="{{ route('resident.incidents.index') }}" class="nav-link {{ request()->routeIs('resident.incidents.*') ? 'active' : '' }}">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>Incident Reports</span>
-    </a>
-</li>
+    <li class="nav-item">
+        <a href="{{ route('resident.incidents.index') }}" class="nav-link {{ request()->routeIs('resident.incidents.*') ? 'active' : '' }}">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Incident Reports</span>
+        </a>
+    </li>
 
-<li class="nav-item">
-    <a href="{{ route('resident.announcements.index') }}" class="nav-link">
-        <i class="fas fa-bullhorn"></i>
-        <span>Announcements</span>
-    </a>
-</li>
-
+    <li class="nav-item">
+        <a href="{{ route('resident.announcements.index') }}" class="nav-link">
+            <i class="fas fa-bullhorn"></i>
+            <span>Announcements</span>
+        </a>
+    </li>
 @endsection
 
 @section('content')
 <style>
-    /* --- Blue Theme Palette (Matching Document Services) --- */
+    /* --- Blue Theme Palette --- */
     :root {
         --primary-blue: #2B5CE6;
         --dark-blue: #1E3A8A;
@@ -51,7 +49,7 @@
         --text-grey: #6B7280;
     }
 
-    /* Header - Cleaner layout, no floating stat */
+    /* Header */
     .health-header {
         background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
         color: white; padding: 40px; border-radius: 16px;
@@ -61,7 +59,7 @@
     .health-title { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
     .health-subtitle { opacity: 0.9; font-size: 1rem; max-width: 600px; }
 
-    /* Stats - Distinct "Wide Bar" layout */
+    /* Stats */
     .stats-container {
         display: grid; grid-template-columns: repeat(3, 1fr);
         gap: 20px; margin-bottom: 30px;
@@ -87,7 +85,7 @@
     .bg-light-green { background: #D1FAE5; color: #059669; }
     .bg-light-red { background: #FEE2E2; color: #DC2626; }
 
-    /* View Toggles - Centered Pills */
+    /* View Toggles */
     .view-switcher {
         display: flex; justify-content: flex-start; gap: 10px;
         margin-bottom: 25px; border-bottom: 1px solid #E5E7EB;
@@ -97,10 +95,10 @@
         background: transparent; border: none; padding: 10px 20px;
         font-weight: 600; color: var(--text-grey); cursor: pointer;
         border-radius: 8px; transition: all 0.2s;
-        display: flex; align-items: center; gap: 8px;
+        display: flex; align-items: center; gap: 8px; text-decoration: none;
     }
     .switch-btn.active { background: var(--light-blue-bg); color: var(--primary-blue); }
-    .switch-btn:hover:not(.active) { background: #F3F4F6; }
+    .switch-btn:hover:not(.active) { background: #F3F4F6; color: var(--text-dark); }
 
     /* Content Layout - Wide Cards (2 Columns) */
     .medicine-grid {
@@ -144,7 +142,25 @@
     }
     .btn-request:hover { background: var(--dark-blue); }
 
-    /* Table Styles (Clean Blue) */
+    /* --- New Program Card Styles --- */
+    .program-card {
+        background: white; border-radius: 12px; border: 1px solid #E5E7EB;
+        overflow: hidden; display: flex; flex-direction: column;
+        transition: transform 0.2s;
+    }
+    .program-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    .program-date-box {
+        background: var(--light-blue-bg); color: var(--primary-blue);
+        padding: 15px; text-align: center; font-weight: 700;
+        border-bottom: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .program-body { padding: 20px; flex: 1; display: flex; flex-direction: column;}
+    .program-title { font-size: 1.15rem; font-weight: 700; color: var(--text-dark); margin-bottom: 10px; }
+    .program-info { font-size: 0.9rem; color: #4B5563; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .program-desc { font-size: 0.85rem; color: #6B7280; margin-top: 10px; line-height: 1.5; }
+    .badge-upcoming { background: #DBEAFE; color: #1E40AF; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+
+    /* Table Styles */
     .table-wrapper { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #E5E7EB; }
     .custom-table { width: 100%; border-collapse: collapse; }
     .custom-table th {
@@ -187,10 +203,10 @@
 {{-- 1. Header Section --}}
 <div class="health-header">
     <div class="health-title">Health Services</div>
-    <div class="health-subtitle">Browse available medicines in the Barangay Health Center and request assistance online.</div>
+    <div class="health-subtitle">Browse medicines, check upcoming health programs, and request assistance online.</div>
 </div>
 
-{{-- 2. Distinct Stats Row (Cards with Left Border) --}}
+{{-- 2. Stats Row --}}
 <div class="stats-container">
     <div class="stat-bar pending">
         <div>
@@ -220,6 +236,10 @@
     <a href="{{ route('resident.health-services', ['view' => 'available']) }}" 
        class="switch-btn {{ $view === 'available' ? 'active' : '' }}">
        <i class="fas fa-pills"></i> Available Medicines
+    </a>
+    <a href="{{ route('resident.health-services', ['view' => 'programs']) }}" 
+       class="switch-btn {{ $view === 'programs' ? 'active' : '' }}">
+       <i class="fas fa-calendar-check"></i> Health Programs
     </a>
     <a href="{{ route('resident.health-services', ['view' => 'history']) }}" 
        class="switch-btn {{ $view === 'history' ? 'active' : '' }}">
@@ -263,6 +283,46 @@
 
     <div class="mt-4">
         {{ $medicines->withQueryString()->links('pagination::bootstrap-4') }}
+    </div>
+
+@elseif($view === 'programs')
+
+    {{-- HEALTH PROGRAMS VIEW --}}
+    <div class="medicine-grid">
+        @forelse($programs as $program)
+        <div class="program-card">
+            <div class="program-date-box">
+                <i class="fas fa-calendar-day"></i> {{ $program->schedule_date->format('M d, Y') }}
+                <span style="font-weight: 400; font-size: 0.9rem;">| {{ $program->schedule_date->format('h:i A') }}</span>
+            </div>
+            <div class="program-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="program-title">{{ $program->title }}</div>
+                    <span class="badge-upcoming">{{ $program->status }}</span>
+                </div>
+                
+                <div class="program-info">
+                    <i class="fas fa-map-marker-alt text-primary"></i> {{ $program->location }}
+                </div>
+                <div class="program-info">
+                    <i class="fas fa-user-md text-primary"></i> Organized by: {{ $program->organizer ?? 'Barangay Health Center' }}
+                </div>
+
+                <div class="program-desc">
+                    {{ Str::limit($program->description, 100) }}
+                </div>
+            </div>
+        </div>
+        @empty
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #6B7280; background: white; border-radius: 12px; border: 1px dashed #E5E7EB;">
+            <i class="fas fa-calendar-times" style="font-size: 2rem; margin-bottom: 10px;"></i>
+            <p>No upcoming health programs scheduled at this time.</p>
+        </div>
+        @endforelse
+    </div>
+
+    <div class="mt-4">
+        {{ $programs->withQueryString()->links('pagination::bootstrap-4') }}
     </div>
 
 @elseif($view === 'history')

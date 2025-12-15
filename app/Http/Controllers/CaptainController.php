@@ -25,6 +25,7 @@ use App\Models\FinancialTransaction;
 use App\Models\Project;
 use App\Models\BlotterRecord;
 use App\Models\SkOfficial;
+use App\Models\HealthProgram; // --- IMPORT ADDED ---
 
 class CaptainController extends Controller
 {
@@ -389,21 +390,37 @@ class CaptainController extends Controller
     }
 
     // ============================================
-    // 3. HEALTH & SOCIAL SERVICES
+    // 3. HEALTH & SOCIAL SERVICES (UPDATED)
     // ============================================
     
     public function healthAndSocialServices(Request $request)
     {
         $user = Auth::user();
+        $view = $request->input('view', 'inventory'); // Default to inventory view
+
+        // --- Global Stats (Always visible) ---
         $allMedicines = Medicine::all();
         $stats = [
             'total_medicines' => $allMedicines->count(),
             'low_stock_medicines' => $allMedicines->where('status', 'Low Stock')->count(),
             'expired_medicines' => $allMedicines->where('status', 'Expired')->count(),
-            'pending_requests' => 0, 
+            // Count upcoming programs instead of pending requests for Captain's overview
+            'upcoming_programs' => HealthProgram::where('status', 'Upcoming')->count(), 
         ];
-        $medicines = Medicine::orderBy('item_name')->get();
-        return view('dashboard.captain-health-services', compact('user', 'stats', 'medicines'));
+
+        $medicines = null;
+        $programs = null;
+
+        if ($view === 'inventory') {
+            // Fetch Medicines
+            $medicines = Medicine::orderBy('item_name')->paginate(10);
+        } 
+        elseif ($view === 'programs') {
+            // Fetch Health Programs
+            $programs = HealthProgram::orderBy('schedule_date', 'desc')->paginate(9);
+        }
+
+        return view('dashboard.captain-health-services', compact('user', 'stats', 'medicines', 'programs', 'view'));
     }
 
     public function createMedicine()
@@ -941,7 +958,7 @@ class CaptainController extends Controller
         }
     }
 
-   // ============================================
+    // ============================================
     // 8. INCIDENT & BLOTTER (UPDATED for Mediation)
     // ============================================
 

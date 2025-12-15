@@ -12,6 +12,7 @@ use App\Models\Medicine;
 use App\Models\MedicineRequest; 
 use App\Models\DocumentRequirement;
 use App\Models\BlotterRecord;
+use App\Models\HealthProgram; // Ensure this is imported
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -43,9 +44,7 @@ class ResidentController extends Controller
         // --- Announcement Stats ---
         $announcementsQuery = Announcements::forUser($user);
         
-        // --- FIX: Use paginate() so ->links() works in your Blade view ---
         $announcements = (clone $announcementsQuery)->latest()->paginate(6);
-        // -----------------------------------------------------------------
 
         $newCount = (clone $announcementsQuery)
             ->where('created_at', '>=', Carbon::now()->subDays(7))
@@ -272,7 +271,7 @@ class ResidentController extends Controller
     }
 
     // ============================================
-    // HEALTH SERVICES
+    // HEALTH SERVICES (UPDATED WITH PROGRAMS)
     // ============================================
 
     public function showHealthServices(Request $request)
@@ -281,6 +280,7 @@ class ResidentController extends Controller
         $residentId = $user->resident ? $user->resident->id : null;
         $view = $request->input('view', 'available');
 
+        // Stats Logic
         $myRequests = MedicineRequest::where('resident_id', $residentId);
         $stats = [
             'pending' => (clone $myRequests)->where('status', 'Pending')->count(),
@@ -289,21 +289,31 @@ class ResidentController extends Controller
         ];
 
         $medicines = null;
-        $myRequestsPagination = null; 
+        $myRequestsPagination = null;
+        $programs = null; 
 
         if ($view === 'available') {
+            // View 1: Medicine Inventory
             $medicines = Medicine::where('quantity', '>', 0)
                 ->whereDate('expiration_date', '>=', Carbon::now())
                 ->orderBy('item_name')
                 ->paginate(12);
-        } else {
+        } 
+        elseif ($view === 'programs') { 
+            // View 2: Health Programs
+            $programs = HealthProgram::where('status', 'Upcoming')
+                ->orderBy('schedule_date', 'asc')
+                ->paginate(9);
+        } 
+        else {
+            // View 3: Request History (Default if view is not 'available' or 'programs')
             $myRequestsPagination = MedicineRequest::with('medicine')
                 ->where('resident_id', $residentId)
                 ->orderBy('created_at', 'desc')
                 ->paginate(10);
         }
 
-        return view('dashboard.resident-health-services', compact('user', 'stats', 'view', 'medicines', 'myRequestsPagination'));
+        return view('dashboard.resident-health-services', compact('user', 'stats', 'view', 'medicines', 'myRequestsPagination', 'programs'));
     }
 
     public function storeMedicineRequest(Request $request)
@@ -338,7 +348,7 @@ class ResidentController extends Controller
     }
 
     // ============================================
-    // INCIDENT & BLOTTER (Resident Side - UPDATED)
+    // INCIDENT & BLOTTER
     // ============================================
 
     public function showIncidents(Request $request)
@@ -386,7 +396,7 @@ class ResidentController extends Controller
         ]);
 
         BlotterRecord::create([
-            'case_number' => BlotterRecord::generateCaseNumber(), // Ensure model has this function
+            'case_number' => BlotterRecord::generateCaseNumber(),
             'resident_id' => $residentId,
             'complainant' => $user->first_name . ' ' . $user->last_name, 
             'incident_type' => $validated['incident_type'],
@@ -402,9 +412,6 @@ class ResidentController extends Controller
         return redirect()->back()->with('success', 'Incident report submitted successfully.');
     }
 
-    /**
-     * UPDATE: Allow resident to edit details IF status is still 'Open'
-     */
     public function updateIncident(Request $request, $id)
     {
         $user = Auth::user();
@@ -428,9 +435,6 @@ class ResidentController extends Controller
         return back()->with('success', 'Report details updated successfully.');
     }
 
-    /**
-     * CANCEL: Allow resident to cancel/withdraw IF status is still 'Open'
-     */
     public function cancelIncident(Request $request, $id)
     {
         $user = Auth::user();
@@ -442,7 +446,7 @@ class ResidentController extends Controller
             return back()->with('error', 'You cannot cancel this report as it is already under investigation or scheduled.');
         }
 
-        $incident->status = 'Dismissed'; // Or 'Cancelled'
+        $incident->status = 'Dismissed'; 
         $incident->actions_taken .= "\n[" . now()->format('M d, Y h:i A') . "] Case withdrawn/cancelled by resident.";
         $incident->save();
 

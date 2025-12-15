@@ -241,6 +241,10 @@ Route::middleware('auth')->group(function () {
         Route::put('/medicine/{medicine}', [HealthController::class, 'updateMedicine'])->name('medicine.update');
         Route::delete('/medicine/{medicine}', [HealthController::class, 'destroyMedicine'])->name('medicine.destroy'); 
         Route::get('/health/announcements', [HealthController::class, 'healthAnnouncements'])->name('announcements');
+        // Health Programs
+Route::post('/health/programs/store', [HealthController::class, 'storeProgram'])->name('programs.store');
+Route::put('/health/programs/{id}', [HealthController::class, 'updateProgram'])->name('programs.update');
+Route::delete('/health/programs/{id}', [HealthController::class, 'destroyProgram'])->name('programs.destroy');
     });
 
     Route::middleware(CheckRole::class . ':resident')->prefix('resident')->name('resident.')->group(function () {
@@ -250,8 +254,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/document/store', [ResidentController::class, 'storeDocumentRequest'])->name('document.store');
         Route::delete('/document-request/{id}/cancel', [ResidentController::class, 'cancelDocumentRequest'])->name('document.cancel');
         Route::get('/document-request/{id}/download', [ResidentController::class, 'downloadGeneratedDocument'])->name('document.download');
-        Route::get('/health-services', [ResidentController::class, 'showHealthServices'])->name('health-services');
-        Route::post('/health-services/request', [ResidentController::class, 'storeMedicineRequest'])->name('health.request.store');
+        // --- HEALTH SERVICES (Covers Inventory & Programs) ---
+    // The controller handles '?view=programs' or '?view=available' logic here
+    Route::get('/health-services', [ResidentController::class, 'showHealthServices'])->name('health-services');
+    Route::post('/health-services/request', [ResidentController::class, 'storeMedicineRequest'])->name('health.request.store');
         Route::get('/announcements', [ResidentController::class, 'announcements'])->name('announcements.index');
         
         // Incident Routes (Resident)

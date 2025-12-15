@@ -17,51 +17,47 @@
         </a>
     </li>
     <li class="nav-item">
-        {{-- UPDATED: Link to the new document services route --}}
         <a href="{{ route('captain.document-services') }}" class="nav-link">
             <i class="far fa-file-alt"></i>
             <span>Documents Services</span>
         </a>
     </li>
     <li class="nav-item">
-    <a href="{{ route('captain.financial') }}" class="nav-link {{ request()->routeIs('captain.financial*') ? 'active' : '' }}">
-        <i class="fas fa-dollar-sign"></i>
-        <span>Financial Management</span>
-    </a>
-</li>
+        <a href="{{ route('captain.financial') }}" class="nav-link">
+            <i class="fas fa-dollar-sign"></i>
+            <span>Financial Management</span>
+        </a>
+    </li>
     <li class="nav-item">
-        {{-- UPDATED: Link to the new health services route --}}
         <a href="{{ route('captain.health-services') }}" class="nav-link active">
             <i class="fas fa-heart"></i>
             <span>Health & Social Services</span>
         </a>
     </li>
     <li class="nav-item">
-    <a href="{{ route('captain.incident.index') }}" class="nav-link {{ request()->routeIs('captain.incident.*') ? 'active' : '' }}">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>Incident & Blotter</span>
-    </a>
-</li>
+        <a href="{{ route('captain.incident.index') }}" class="nav-link">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Incident & Blotter</span>
+        </a>
+    </li>
     <li class="nav-item">
-        <a href="{{ route('captain.project.monitoring') }}" class="nav-link"> {{-- Add route later --}}
+        <a href="{{ route('captain.project.monitoring') }}" class="nav-link">
             <i class="fas fa-flag"></i>
             <span>Project Monitoring</span>
         </a>
     </li>
     <li class="nav-item">
-    <a href="{{ route('captain.announcements.index') }}" class="nav-link {{ request()->routeIs('captain.announcements.*') ? 'active' : '' }}">
-        <i class="fas fa-bell"></i>
-        <span>Announcements</span>
-    </a>
-</li>
+        <a href="{{ route('captain.announcements.index') }}" class="nav-link">
+            <i class="fas fa-bell"></i>
+            <span>Announcements</span>
+        </a>
+    </li>
    <li class="nav-item">
-        {{-- Use the new captain.sk.overview route --}}
-        <a href="{{ route('captain.sk.overview') }}" class="nav-link {{ request()->routeIs('captain.sk.overview') ? 'active' : '' }}">
+        <a href="{{ route('captain.sk.overview') }}" class="nav-link">
             <i class="fas fa-user-graduate"></i>
             <span>SK Module</span>
         </a>
     </li>
-   
 @endsection
 
 @section('content')
@@ -112,6 +108,17 @@
     .icon-red-bg { background: #EF4444; } .stat-badge.red { color: #EF4444; }
     .icon-purple-bg { background: #A855F7; } .stat-badge.purple { color: #A855F7; }
 
+    /* --- TABS / VIEW SWITCHER --- */
+    .view-switcher {
+        display: flex; gap: 15px; margin-bottom: 25px; border-bottom: 1px solid #E5E7EB; padding-bottom: 15px;
+    }
+    .switch-btn {
+        padding: 10px 20px; border-radius: 8px; font-weight: 600; text-decoration: none;
+        color: #6B7280; transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+    }
+    .switch-btn.active { background: #EFF6FF; color: #2B5CE6; }
+    .switch-btn:hover:not(.active) { background: #F3F4F6; }
+
     /* --- DIRECTORY HEADER & FILTER --- */
     .directory-header {
         background: linear-gradient(135deg, #2B5CE6 0%, #1E3A8A 100%);
@@ -142,13 +149,31 @@
     .table td { padding: 18px 20px; vertical-align: middle; border-bottom: 1px solid #F3F4F6; color: #4B5563; }
     .table tbody tr:hover { background: #F9FAFB; }
 
+    /* --- PROGRAM CARD STYLES --- */
+    .programs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .program-card {
+        background: white; border-radius: 12px; overflow: hidden;
+        border: 1px solid #E5E7EB; transition: transform 0.2s;
+        display: flex; flex-direction: column;
+    }
+    .program-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+    .program-date {
+        background: #EFF6FF; color: #2B5CE6; padding: 12px; text-align: center;
+        font-weight: 700; border-bottom: 1px solid #E5E7EB;
+    }
+    .program-body { padding: 20px; flex: 1; }
+    .program-title { font-size: 1.1rem; font-weight: 700; color: #1F2937; margin-bottom: 10px; }
+    .program-meta { font-size: 0.9rem; color: #6B7280; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+    .program-desc { margin-top: 15px; font-size: 0.85rem; color: #4B5563; line-height: 1.5; }
+    
     /* --- BADGES --- */
     .badge { padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 0.75rem; }
     .bg-success { background: #D1FAE5 !important; color: #065F46; }
     .bg-warning { background: #FEF3C7 !important; color: #92400E; }
     .bg-danger { background: #FEE2E2 !important; color: #991B1B; }
+    .bg-info { background: #DBEAFE !important; color: #1E40AF; }
 
-    .no-results { text-align: center; padding: 40px; color: #9CA3AF; }
+    .no-results { text-align: center; padding: 40px; color: #9CA3AF; grid-column: 1 / -1; }
 </style>
 
 {{-- Header Section --}}
@@ -159,8 +184,6 @@
         <span class="badge-icon">HC</span>
         <span>Barangay Health Center</span>
     </div>
-    
-    {{-- REMOVED: Add Medicine Button (View Only Mode) --}}
 </div>
 
 {{-- Stats Row --}}
@@ -191,83 +214,158 @@
     </div>
     <div class="stat-box">
         <div class="stat-content">
-            <h3>{{ number_format($stats['pending_requests'] ?? 0) }}</h3>
-            <p>Pending Requests</p>
-            <div class="stat-badge purple"><i class="fas fa-clock"></i><span>Action Required</span></div>
+            {{-- Updated Stat: Upcoming Programs --}}
+            <h3>{{ number_format($stats['upcoming_programs'] ?? 0) }}</h3>
+            <p>Upcoming Programs</p>
+            <div class="stat-badge green"><i class="fas fa-calendar-check"></i><span>Scheduled</span></div>
         </div>
-        <div class="stat-box-icon icon-purple-bg"><i class="fas fa-hand-holding-medical"></i></div>
+        <div class="stat-box-icon icon-green-bg"><i class="fas fa-heartbeat"></i></div>
     </div>
 </div>
 
-{{-- Directory Header --}}
-<div class="directory-header">
-    <div class="directory-title">
-        <i class="fas fa-medkit"></i>
-        <span>Medicine Inventory</span>
-    </div>
-    <div class="filters-section">
-        <input type="text" class="search-input" placeholder="🔍 Search medicine name or brand...">
-    </div>
+{{-- View Switcher --}}
+<div class="view-switcher">
+    <a href="{{ route('captain.health-services', ['view' => 'inventory']) }}" 
+       class="switch-btn {{ $view === 'inventory' ? 'active' : '' }}">
+        <i class="fas fa-medkit"></i> Medicine Inventory
+    </a>
+    <a href="{{ route('captain.health-services', ['view' => 'programs']) }}" 
+       class="switch-btn {{ $view === 'programs' ? 'active' : '' }}">
+        <i class="fas fa-calendar-alt"></i> Health Programs
+    </a>
 </div>
 
-{{-- Table --}}
-<div class="table-container">
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Medicine Name</th>
-                <th>Brand</th>
-                <th>Dosage</th>
-                <th>Stock Quantity</th>
-                <th>Expiration Date</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($medicines as $medicine)
-            <tr>
-                <td style="font-weight: 600; color: #1F2937;">{{ $medicine->item_name }}</td>
-                <td>{{ $medicine->brand_name ?? 'Generic' }}</td>
-                <td>{{ $medicine->dosage }}</td>
-                <td>
-                    <span class="{{ $medicine->status === 'Low Stock' || $medicine->status === 'Out of Stock' ? 'text-danger fw-bold' : '' }}">
-                        {{ $medicine->quantity }}
-                    </span>
-                </td>
-                <td>
-                    <span class="{{ $medicine->status === 'Expired' ? 'text-danger fw-bold' : '' }}">
-                        {{ $medicine->expiration_date ? \Carbon\Carbon::parse($medicine->expiration_date)->format('M d, Y') : 'N/A' }}
-                    </span>
-                </td>
-                <td>
-                    @if ($medicine->status === 'In Stock')
-                        <span class="badge bg-success">IN STOCK</span>
-                    @elseif ($medicine->status === 'Low Stock')
-                        <span class="badge bg-warning">LOW STOCK</span>
-                    @elseif ($medicine->status === 'Expired')
-                        <span class="badge bg-danger">EXPIRED</span>
+{{-- CONTENT: MEDICINE INVENTORY --}}
+@if($view === 'inventory')
+    <div class="directory-header">
+        <div class="directory-title">
+            <i class="fas fa-pills"></i>
+            <span>Inventory List</span>
+        </div>
+        {{-- Only show search for inventory for now --}}
+        <div class="filters-section">
+            <input type="text" class="search-input" placeholder="🔍 Search medicine...">
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Medicine Name</th>
+                    <th>Brand</th>
+                    <th>Dosage</th>
+                    <th>Stock Quantity</th>
+                    <th>Expiration Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($medicines as $medicine)
+                <tr>
+                    <td style="font-weight: 600; color: #1F2937;">{{ $medicine->item_name }}</td>
+                    <td>{{ $medicine->brand_name ?? 'Generic' }}</td>
+                    <td>{{ $medicine->dosage }}</td>
+                    <td>
+                        <span class="{{ $medicine->status === 'Low Stock' || $medicine->status === 'Out of Stock' ? 'text-danger fw-bold' : '' }}">
+                            {{ $medicine->quantity }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="{{ $medicine->status === 'Expired' ? 'text-danger fw-bold' : '' }}">
+                            {{ $medicine->expiration_date ? \Carbon\Carbon::parse($medicine->expiration_date)->format('M d, Y') : 'N/A' }}
+                        </span>
+                    </td>
+                    <td>
+                        @if ($medicine->status === 'In Stock')
+                            <span class="badge bg-success">IN STOCK</span>
+                        @elseif ($medicine->status === 'Low Stock')
+                            <span class="badge bg-warning">LOW STOCK</span>
+                        @elseif ($medicine->status === 'Expired')
+                            <span class="badge bg-danger">EXPIRED</span>
+                        @else
+                            <span class="badge bg-danger">OUT OF STOCK</span>
+                        @endif
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="6">
+                        <div class="no-results">
+                            <i class="fas fa-box-open fa-3x mb-3 opacity-25"></i>
+                            <p>No medicines found in the inventory.</p>
+                        </div>
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+        
+        @if(method_exists($medicines, 'links'))
+        <div class="p-3 bg-white border-top">
+            {{ $medicines->appends(['view' => 'inventory'])->links('pagination::bootstrap-5') }}
+        </div>
+        @endif
+    </div>
+
+{{-- CONTENT: HEALTH PROGRAMS --}}
+@elseif($view === 'programs')
+    <div class="directory-header mb-3" style="border-radius: 12px;">
+        <div class="directory-title">
+            <i class="fas fa-calendar-check"></i>
+            <span>Health Programs</span>
+        </div>
+    </div>
+
+    <div class="programs-grid">
+        @forelse($programs as $program)
+        <div class="program-card">
+            <div class="program-date">
+                <div>{{ $program->schedule_date->format('M') }}</div>
+                <div style="font-size: 1.5rem; line-height: 1;">{{ $program->schedule_date->format('d') }}</div>
+                <div style="font-weight: 400; font-size: 0.8rem;">{{ $program->schedule_date->format('Y') }}</div>
+            </div>
+            <div class="program-body">
+                <div class="program-title">{{ $program->title }}</div>
+                
+                <div class="program-meta">
+                    <i class="far fa-clock text-primary"></i>
+                    {{ $program->schedule_date->format('h:i A') }}
+                </div>
+                <div class="program-meta">
+                    <i class="fas fa-map-marker-alt text-danger"></i>
+                    {{ $program->location }}
+                </div>
+
+                <div class="program-desc">
+                    {{ \Illuminate\Support\Str::limit($program->description, 100) }}
+                </div>
+
+                <div class="mt-3">
+                    @if($program->status == 'Upcoming')
+                        <span class="badge bg-info text-dark">Upcoming</span>
+                    @elseif($program->status == 'Completed')
+                        <span class="badge bg-success">Completed</span>
                     @else
-                        <span class="badge bg-danger">OUT OF STOCK</span>
+                        <span class="badge bg-danger">Cancelled</span>
                     @endif
-                </td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="6">
-                    <div class="no-results">
-                        <i class="fas fa-box-open fa-3x mb-3 opacity-25"></i>
-                        <p>No medicines found in the inventory.</p>
-                    </div>
-                </td>
-            </tr>
-            @endforelse
-        </tbody>
-    </table>
-    
-    @if(method_exists($medicines, 'links'))
-    <div class="p-3 bg-white border-top">
-        {{ $medicines->links('pagination::bootstrap-5') }}
+                </div>
+            </div>
+        </div>
+        @empty
+        <div class="no-results">
+            <i class="fas fa-calendar-times fa-3x mb-3 opacity-25"></i>
+            <p>No health programs found.</p>
+        </div>
+        @endforelse
+    </div>
+
+    @if(method_exists($programs, 'links'))
+    <div class="mt-4">
+        {{ $programs->appends(['view' => 'programs'])->links('pagination::bootstrap-5') }}
     </div>
     @endif
-</div>
+
+@endif
+
 @endsection
