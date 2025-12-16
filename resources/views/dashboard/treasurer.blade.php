@@ -290,7 +290,7 @@
                     <div class="pending-label">Transactions Waiting Review</div>
                     
                     @if($pendingCount > 0)
-                        <a href="{{ route('treasurer.financial-management') }}" class="btn btn-warning text-white fw-bold w-100" style="background: #F59E0B; border: none; padding: 12px; border-radius: 8px;">
+                        <a href="{{ route('treasurer.financial') }}" class="btn btn-warning text-white fw-bold w-100" style="background: #F59E0B; border: none; padding: 12px; border-radius: 8px;">
                             Review Requests
                         </a>
                     @else
